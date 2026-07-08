@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Timeline - Case {{ case_id }}</h2>
+<table border="1" cellpadding="6" cellspacing="0" style="width:100%;">
+  <tr>
+    <th>Time</th>
+    <th>Channel</th>
+    <th>Event ID</th>
+    <th>Severity</th>
+    <th>Details</th>
+  </tr>
+  {% for e in events %}
+  <tr>
+    <td>{{ e.timestamp }}</td>
+    <td>{{ e.channel }}</td>
+    <td>{{ e.event_id }}</td>
+    <td>{{ e.severity }}</td>
+    <td>{{ e.details }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}

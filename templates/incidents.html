@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Incident Dashboard</h2>
+<p><a href="/cases">← Back to Cases</a></p>
+
+{% if incidents %}
+<table border="1" cellpadding="8" cellspacing="0" style="width:100%;">
+  <tr>
+    <th>Title</th>
+    <th>Severity</th>
+    <th>Rule</th>
+    <th>Events</th>
+    <th>First Seen</th>
+    <th>Last Seen</th>
+  </tr>
+  {% for i in incidents %}
+  <tr>
+    <td>{{ i.title }}</td>
+    <td>{{ i.severity }}</td>
+    <td>{{ i.rule }}</td>
+    <td>{{ i.event_count }}</td>
+    <td>{{ i.first_seen }}</td>
+    <td>{{ i.last_seen }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% else %}
+<p>No suspicious incidents detected.</p>
+{% endif %}
+{% endblock %}

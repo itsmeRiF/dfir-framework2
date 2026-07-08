@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Cases</h2>
+
+<form method="POST" action="/cases/create" style="margin-bottom:24px;">
+  <input type="text" name="case_name" placeholder="Case name" required>
+  <input type="text" name="description" placeholder="Description">
+  <button type="submit">Create Case</button>
+</form>
+
+<table border="1" cellpadding="8" cellspacing="0">
+  <tr>
+    <th>ID</th>
+    <th>Name</th>
+    <th>Status</th>
+    <th>Created</th>
+    <th>Actions</th>
+  </tr>
+  {% for c in cases %}
+  <tr>
+    <td>{{ c.id }}</td>
+    <td>{{ c.case_name }}</td>
+    <td>{{ c.status }}</td>
+    <td>{{ c.created_at }}</td>
+    <td>
+      <a href="/events/{{ c.id }}">Events</a> |
+      <a href="/evidence/{{ c.id }}">Add Evidence</a> |
+      <a href="/incidents/{{ c.id }}">Incidents</a> |
+      <a href="/timeline/{{ c.id }}">Timeline</a>
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Incidents Explorer (Case {{ case_id }})</h2>
+<p><a href="/events/export/{{ case_id }}">Export CSV</a></p>
+
+<p>
+  Total: {{ total }} |
+  Critical: {{ critical }} |
+  High: {{ high }} |
+  Medium: {{ medium }} |
+  Low: {{ low }} |
+  Info: {{ informational }}
+</p>
+
+<form method="GET">
+  <input type="text" name="search" value="{{ search }}" placeholder="Search">
+  <select name="severity">
+    <option value="">Severity</option>
+    <option value="critical">Critical</option>
+    <option value="high">High</option>
+    <option value="medium">Medium</option>
+    <option value="low">Low</option>
+    <option value="informational">Informational</option>
+  </select>
+  <select name="channel">
+    <option value="">Channel</option>
+    {% for c in channels %}
+    <option value="{{ c[0] }}">{{ c[0] }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit">Apply Filters</button>
+</form>
+
+<table border="1" cellpadding="6" cellspacing="0" style="width:100%;margin-top:16px;">
+  <tr>
+    <th>Timestamp</th>
+    <th>Channel</th>
+    <th>Severity</th>
+    <th>Rule</th>
+    <th>Computer</th>
+    <th>Event ID</th>
+    <th>Details</th>
+  </tr>
+  {% for e in events %}
+  <tr>
+    <td>{{ e.timestamp }}</td>
+    <td>{{ e.channel }}</td>
+    <td>{{ e.severity }}</td>
+    <td>{{ e.rule_title }}</td>
+    <td>{{ e.computer }}</td>
+    <td>{{ e.event_id }}</td>
+    <td>{{ e.details[:200] if e.details else '-' }}</td>
+  </tr>
+  {% else %}
+  <tr><td colspan="7">No events found.</td></tr>
+  {% endfor %}
+</table>
+
+{% if pagination.has_prev %}
+  <a href="?page={{ pagination.prev_num }}">Previous</a>
+{% endif %}
+{% if pagination.has_next %}
+  <a href="?page={{ pagination.next_num }}">Next</a>
+{% endif %}
+{% endblock %}
