@@ -57,5 +57,17 @@ modules/
     incident_engine.py   # Extended with artifact incidents
 ```
 
+
+## Road Map
+## Artifact Support Status
+
+* ✅ Event Logs
+* ✅ Registry Hives
+* ✅ Prefetch Files
+* ✅ Jump Lists
+* ✅ Memory Dumps
+* <span style="color:gray">☐ Browser History</span>
+
+
 ## Notes
 Made with <3 in India
