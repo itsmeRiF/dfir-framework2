@@ -1,49 +1,229 @@
-# CyberX | DFIR Framework
+# 🛡️ CyberX | DFIR Framework
 
-End-to-end DFIR pipeline with Flask — case management, evidence upload, artifact parsing, timeline, and incident correlation.
+**End-to-End Digital Forensics & Incident Response Framework**
 
-## Artifact Analysis Modules
+Case Management • Evidence Processing • Artifact Parsing • Timeline Analysis • Incident Correlation
 
-| Type | Extensions | Parser | Output |
-|------|-----------|--------|--------|
-| **EVTX** | `.evtx` | Hayabusa | Sigma-detected events |
-| **Prefetch** | `.pf` | Execution history | LOLbin detection |
-| **JumpList** | `.automaticDestinations-ms`, `.customDestinations-ms` | OLE + LNK parser | Recent app targets, suspicious paths |
-| **Registry** | `SYSTEM`, `SOFTWARE`, `SAM`, `NTUSER.DAT`, etc. | Suspicious hive paths | Persistence mechanisms of malware
-| **Memory** | `.raw`, `.mem`, `.dmp`, `.vmem` | Strings IOC + optional Volatility3 | Process/network/malfind + string IOCs |
+---
 
-All parsed records normalize into the shared **Event** model so they appear in Events, Timeline, and Incidents views.
+## 📌 Overview
 
-## Setup
+CyberX DFIR Framework is a modular **Digital Forensics and Incident Response (DFIR)** platform built using Flask.
+
+The framework provides a unified investigation workspace for:
+
+* 📁 Case Management
+* 📤 Evidence Upload & Processing
+* 🔍 Artifact Analysis
+* 🕒 Timeline Reconstruction
+* 🚨 Incident Detection & Correlation
+* 📊 Investigation Data Export
+
+All forensic artifacts are normalized into a common **Event Model**, allowing investigators to analyze artifacts across:
+
+* Events Explorer
+* Timeline View
+* Incident Dashboard
+
+---
+
+# 🔎 Artifact Analysis Modules
+
+| Artifact             | Extensions                                            | Parser / Engine              | Output                                          |
+| -------------------- | ----------------------------------------------------- | ---------------------------- | ----------------------------------------------- |
+| ✅ Windows Event Logs | `.evtx`                                               | Hayabusa + Sigma Rules       | Threat detections, suspicious activities        |
+| ✅ Registry Hives     | SYSTEM, SOFTWARE, SAM, NTUSER.DAT                     | Registry Parser              | Persistence mechanisms, configuration artifacts |
+| ✅ Prefetch Files     | `.pf`                                                 | Prefetch Parser              | Execution history, LOLBin detection             |
+| ✅ Jump Lists         | `.automaticDestinations-ms`, `.customDestinations-ms` | OLE + LNK Parser             | Recent applications, accessed files             |
+| 🚧 Memory Dumps      | `.raw`, `.mem`, `.dmp`, `.vmem`                       | Volatility3 + IOC Extraction | Processes, network artifacts, memory analysis   |
+| 🔮 Browser History   | Chrome / Edge / Firefox                               | Browser Parser               | Web activity reconstruction                     |
+
+---
+
+# 🏗️ DFIR Processing Pipeline
+
+```
+                Evidence Upload
+                       |
+                       ↓
+              Artifact Identification
+                       |
+        +--------------+--------------+
+        |              |              |
+      EVTX        Registry       Memory
+        |              |              |
+    Hayabusa      Hive Parser   Volatility3
+        |              |              |
+        +--------------+--------------+
+                       |
+                       ↓
+              Normalized Event Model
+                       |
+          +------------+------------+
+          |                         |
+       Timeline              Incident Engine
+          |                         |
+          ↓                         ↓
+ Investigation View          Threat Detection
+```
+
+---
+
+# ⚙️ Installation
+
+## Clone Repository
 
 ```bash
-cd dfir-framework2
-python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
-python bootstrap.py
-python app.py
+git clone <repository-url>
 
----Then, do this if you are using this tool for the first time----
-cd tools/
+cd dfir-framework2
+```
+
+---
+
+## Create Virtual Environment
+
+```bash
+python -m venv .venv
+
+.venv\Scripts\activate
+```
+
+---
+
+## Install Requirements
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+## Initialize Framework
+
+```bash
+python bootstrap.py
+```
+
+---
+
+## Start Application
+
+```bash
+python app.py
+```
+
+Access:
+
+```
+http://127.0.0.1:1338
+```
+
+Default Credentials:
+
+```
+Username: analyst
+Password: analyst123
+```
+
+---
+
+# 🔥 Hayabusa Setup (EVTX Analysis)
+
+Download Hayabusa and place:
+
+```
+hayabusa.exe
+```
+
+inside:
+
+```
+tools/
+```
+
+Before first use:
+
+```bash
+cd tools
+
 hayabusa.exe update-rules
 ```
 
-Open http://127.0.0.1:1338 — login with `analyst` / `analyst123`.
+This downloads:
 
-Place `hayabusa.exe` in the `tools/` folder for EVTX analysis
+* Sigma Detection Rules
+* Detection Metadata
+* Hayabusa Rule Configuration
 
-```
+---
 
+# 🗺️ Development Roadmap
 
-## Road Map | Artifact Support Status
+## Phase 1 — Core Windows Artifacts ✅
 
-* [x] Event Logs
+* [x] Windows Event Logs (EVTX)
 * [x] Registry Hives
 * [x] Prefetch Files
 * [x] Jump Lists
 * [x] Memory Dumps
+
+## Phase 2 — Advanced Artifact Support 🚧
+
 * [ ] Browser History
 
-## Notes
-Made with ❤️ in India
+
+## Phase 3 — File System Forensics 🔮
+
+* [ ] Master File Table (MFT)
+* [ ] USN Journal
+* [ ] SRUM Database
+* [ ] Recycle Bin Analysis
+
+---
+
+# 🚀 Current Features
+
+✅ Case Management
+✅ Evidence Repository
+✅ Artifact Auto Detection
+✅ Hayabusa Integration
+✅ Sigma Rule Detection
+✅ Event Normalization
+✅ Timeline Analysis
+✅ Incident Correlation
+✅ Severity Classification
+✅ CSV Export
+
+---
+
+# 🔮 Future Integrations
+
+* Volatility3 Memory Framework
+* YARA Malware Detection
+* MITRE ATT&CK Mapping
+* Threat Intelligence Integration
+* IOC Extraction Engine
+* Automated Investigation Reports
+
+---
+
+# 🤝 Contribution
+
+Contributions and suggestions are welcome.
+
+You can contribute through:
+
+* Bug Reports
+* Feature Requests
+* Pull Requests
+
+---
+
+<p align="center">
+
+Made with ❤️ in India 🇮🇳
+
+<b>CyberX DFIR Framework</b>
+
+</p>
