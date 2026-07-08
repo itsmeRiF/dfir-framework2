@@ -1,23 +1,362 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h2>Timeline - Case {{ case_id }}</h2>
-<table border="1" cellpadding="6" cellspacing="0" style="width:100%;">
-  <tr>
-    <th>Time</th>
-    <th>Channel</th>
-    <th>Event ID</th>
-    <th>Severity</th>
-    <th>Details</th>
-  </tr>
-  {% for e in events %}
-  <tr>
-    <td>{{ e.timestamp }}</td>
-    <td>{{ e.channel }}</td>
-    <td>{{ e.event_id }}</td>
-    <td>{{ e.severity }}</td>
-    <td>{{ e.details }}</td>
-  </tr>
-  {% endfor %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+<h2 class="fw-bold">
+
+<i class="bi bi-clock-history text-primary"></i>
+
+Timeline - Case #{{ case_id }}
+
+</h2>
+
+</div>
+
+
+<!-- Time Filter -->
+
+<div class="card mb-4">
+
+<div class="card-header">
+
+<i class="bi bi-calendar-range"></i>
+
+Timeline Range Filter
+
+</div>
+
+
+<div class="card-body">
+
+
+<form method="GET">
+
+
+<div class="row">
+
+
+<div class="col-md-5">
+
+<label class="form-label">
+Start Time
+</label>
+
+
+<input 
+type="datetime-local"
+name="start"
+class="form-control"
+value="{{ start }}">
+
+
+</div>
+
+
+
+<div class="col-md-5">
+
+<label class="form-label">
+End Time
+</label>
+
+
+<input 
+type="datetime-local"
+name="end"
+class="form-control"
+value="{{ end }}">
+
+
+</div>
+
+
+
+<div class="col-md-2 d-grid">
+
+<label class="form-label">&nbsp;</label>
+
+<button class="btn btn-primary">
+
+<i class="bi bi-funnel"></i>
+
+Apply
+
+</button>
+
+
+</div>
+
+
+</div>
+
+
+</form>
+
+
+</div>
+
+</div>
+
+
+
+
+<!-- Graph -->
+
+
+<div class="card mb-4">
+
+
+<div class="card-header">
+
+<i class="bi bi-bar-chart"></i>
+
+Event Frequency
+
+</div>
+
+
+<div class="card-body">
+
+
+<canvas id="timelineChart"
+height="90"></canvas>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+<!-- Timeline Table -->
+
+
+<div class="card">
+
+
+<div class="card-header">
+
+Timeline Events
+
+<span class="badge bg-primary">
+
+{{ events|length }}
+
+</span>
+
+
+</div>
+
+
+<div class="card-body p-0">
+
+
+<div style="max-height:600px;overflow:auto;">
+
+
+<table class="table table-hover mb-0">
+
+
+<thead class="table-light sticky-top">
+
+
+<tr>
+
+<th>Time</th>
+<th>Channel</th>
+<th>Event ID</th>
+<th>Severity</th>
+<th>Details</th>
+
+
+</tr>
+
+
+</thead>
+
+
+<tbody>
+
+
+
+{% for e in events %}
+
+
+<tr>
+
+
+<td>
+{% if e.timestamp %}
+    {{ e.timestamp }}
+{% else %}
+    Unknown
+{% endif %}
+</td>
+
+
+<td>
+
+{{ e.channel }}
+
+</td>
+
+
+
+<td>
+
+<code>
+
+{{ e.event_id }}
+
+</code>
+
+</td>
+
+
+
+<td>
+
+
+{% if e.severity=="critical" %}
+
+<span class="badge bg-danger">
+Critical
+</span>
+
+
+{% elif e.severity=="high" %}
+
+
+<span class="badge bg-warning text-dark">
+High
+</span>
+
+
+{% elif e.severity=="medium" %}
+
+
+<span class="badge bg-info">
+Medium
+</span>
+
+
+{% else %}
+
+
+<span class="badge bg-secondary">
+
+{{ e.severity }}
+
+</span>
+
+
+{% endif %}
+
+
+
+</td>
+
+
+
+<td>
+
+{{ e.details[:120] }}
+
+{% if e.details|length > 120 %}
+...
+{% endif %}
+
+
+</td>
+
+
+</tr>
+
+
+{% endfor %}
+
+
+</tbody>
+
+
 </table>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+<script>
+
+
+const ctx=document
+.getElementById('timelineChart');
+
+
+new Chart(ctx,{
+
+type:'line',
+
+data:{
+
+
+labels: {{ graph_labels | safe }},
+
+
+datasets:[{
+
+label:'Events',
+
+data: {{ graph_values | safe }},
+
+borderWidth:2,
+
+tension:.3
+
+}]
+
+
+},
+
+
+options:{
+
+
+responsive:true,
+
+scales:{
+
+y:{
+
+beginAtZero:true
+
+}
+
+}
+
+}
+
+
+});
+
+
+</script>
+
+
+
 {% endblock %}
