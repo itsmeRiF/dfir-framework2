@@ -1,66 +1,398 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h2>Incidents Explorer (Case {{ case_id }})</h2>
-<p><a href="/events/export/{{ case_id }}">Export CSV</a></p>
 
-<p>
-  Total: {{ total }} |
-  Critical: {{ critical }} |
-  High: {{ high }} |
-  Medium: {{ medium }} |
-  Low: {{ low }} |
-  Info: {{ informational }}
-</p>
+<div class="d-flex justify-content-between align-items-center mb-4">
 
-<form method="GET">
-  <input type="text" name="search" value="{{ search }}" placeholder="Search">
-  <select name="severity">
-    <option value="">Severity</option>
-    <option value="critical">Critical</option>
-    <option value="high">High</option>
-    <option value="medium">Medium</option>
-    <option value="low">Low</option>
-    <option value="informational">Informational</option>
-  </select>
-  <select name="channel">
-    <option value="">Channel</option>
-    {% for c in channels %}
-    <option value="{{ c[0] }}">{{ c[0] }}</option>
-    {% endfor %}
-  </select>
-  <button type="submit">Apply Filters</button>
-</form>
+    <div>
 
-<table border="1" cellpadding="6" cellspacing="0" style="width:100%;margin-top:16px;">
-  <tr>
-    <th>Timestamp</th>
-    <th>Channel</th>
-    <th>Severity</th>
-    <th>Rule</th>
-    <th>Computer</th>
-    <th>Event ID</th>
-    <th>Details</th>
-  </tr>
-  {% for e in events %}
-  <tr>
-    <td>{{ e.timestamp }}</td>
-    <td>{{ e.channel }}</td>
-    <td>{{ e.severity }}</td>
-    <td>{{ e.rule_title }}</td>
-    <td>{{ e.computer }}</td>
-    <td>{{ e.event_id }}</td>
-    <td>{{ e.details[:200] if e.details else '-' }}</td>
-  </tr>
-  {% else %}
-  <tr><td colspan="7">No events found.</td></tr>
-  {% endfor %}
-</table>
+        <h2 class="fw-bold">
 
-{% if pagination.has_prev %}
-  <a href="?page={{ pagination.prev_num }}">Previous</a>
-{% endif %}
-{% if pagination.has_next %}
-  <a href="?page={{ pagination.next_num }}">Next</a>
-{% endif %}
+            <i class="bi bi-list-ul text-primary"></i>
+
+            Incidents Explorer
+
+        </h2>
+
+        <p class="text-muted mb-0">
+
+            Investigation Case #{{ case_id }}
+
+        </p>
+
+    </div>
+
+    <a href="/events/export/{{ case_id }}"
+       class="btn btn-success">
+
+        <i class="bi bi-download"></i>
+
+        Export CSV
+
+    </a>
+
+</div>
+
+<!-- Statistics -->
+
+<div class="row mb-4">
+
+    <div class="col-md">
+
+        <div class="card">
+
+            <div class="card-body">
+
+                <h6 class="text-muted">Total Events</h6>
+
+                <h3>{{ total }}</h3>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md">
+
+        <div class="card border-start border-4 border-danger">
+
+            <div class="card-body">
+
+                <h6 class="text-muted">Critical</h6>
+
+                <h3 class="text-danger">{{ critical }}</h3>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md">
+
+        <div class="card border-start border-4 border-warning">
+
+            <div class="card-body">
+
+                <h6 class="text-muted">High</h6>
+
+                <h3 class="text-warning">{{ high }}</h3>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md">
+
+        <div class="card border-start border-4 border-info">
+
+            <div class="card-body">
+
+                <h6 class="text-muted">Medium</h6>
+
+                <h3 class="text-info">{{ medium }}</h3>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md">
+
+        <div class="card border-start border-4 border-success">
+
+            <div class="card-body">
+
+                <h6 class="text-muted">Low</h6>
+
+                <h3 class="text-success">{{ low }}</h3>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md">
+
+        <div class="card">
+
+            <div class="card-body">
+
+                <h6 class="text-muted">Info</h6>
+
+                <h3>{{ informational }}</h3>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Filters -->
+
+<div class="card mb-4">
+
+    <div class="card-header">
+
+        <i class="bi bi-funnel"></i>
+
+        Search & Filters
+
+    </div>
+
+    <div class="card-body">
+
+        <form method="GET">
+
+            <div class="row g-3">
+
+                <div class="col-md-5">
+
+                    <input
+                        class="form-control"
+                        name="search"
+                        value="{{ search }}"
+                        placeholder="Search rule, hostname, event id...">
+
+                </div>
+
+                <div class="col-md-3">
+
+                    <select class="form-select" name="severity">
+
+                        <option value="">All Severities</option>
+
+                        <option value="critical">Critical</option>
+
+                        <option value="high">High</option>
+
+                        <option value="medium">Medium</option>
+
+                        <option value="low">Low</option>
+
+                        <option value="informational">Informational</option>
+
+                    </select>
+
+                </div>
+
+                <div class="col-md-2">
+
+                    <select class="form-select" name="channel">
+
+                        <option value="">All Channels</option>
+
+                        {% for c in channels %}
+
+                        <option value="{{ c[0] }}">
+
+                            {{ c[0] }}
+
+                        </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+                <div class="col-md-2 d-grid">
+
+                    <button class="btn btn-primary">
+
+                        <i class="bi bi-search"></i>
+
+                        Apply
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+<!-- Events -->
+
+<div class="card">
+
+    <div class="card-header">
+
+        <i class="bi bi-table"></i>
+
+        Incident Events
+
+    </div>
+
+    <div class="card-body">
+
+        <div class="table-responsive">
+
+            <table class="table table-hover align-middle">
+
+                <thead class="table-light">
+
+                <tr>
+
+                    <th>Time</th>
+                    <th>Channel</th>
+                    <th>Severity</th>
+                    <th>Rule</th>
+                    <th>Computer</th>
+                    <th>Event ID</th>
+                    <th>Details</th>
+
+                </tr>
+
+                </thead>
+
+                <tbody>
+
+                {% for e in events %}
+
+                <tr>
+
+                    <td>{{ e.timestamp }}</td>
+
+                    <td>{{ e.channel }}</td>
+
+                    <td>
+
+                        {% if e.severity=="critical" %}
+
+                        <span class="badge bg-danger">
+
+                            Critical
+
+                        </span>
+
+                        {% elif e.severity=="high" %}
+
+                        <span class="badge bg-warning text-dark">
+
+                            High
+
+                        </span>
+
+                        {% elif e.severity=="medium" %}
+
+                        <span class="badge bg-info">
+
+                            Medium
+
+                        </span>
+
+                        {% elif e.severity=="low" %}
+
+                        <span class="badge bg-success">
+
+                            Low
+
+                        </span>
+
+                        {% else %}
+
+                        <span class="badge bg-secondary">
+
+                            Info
+
+                        </span>
+
+                        {% endif %}
+
+                    </td>
+
+                    <td>{{ e.rule_title }}</td>
+
+                    <td>{{ e.computer }}</td>
+
+                    <td>{{ e.event_id }}</td>
+
+                    <td style="max-width:350px">
+
+                        {{ e.details[:200] if e.details else "-" }}
+
+                    </td>
+
+                </tr>
+
+                {% else %}
+
+                <tr>
+
+                    <td colspan="7" class="text-center py-5 text-muted">
+
+                        <i class="bi bi-search display-5"></i>
+
+                        <br><br>
+
+                        No incidents found.
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Pagination -->
+
+<div class="d-flex justify-content-between mt-4">
+
+    <div>
+
+        {% if pagination.has_prev %}
+
+        <a class="btn btn-outline-primary"
+           href="?page={{ pagination.prev_num }}">
+
+            <i class="bi bi-arrow-left"></i>
+
+            Previous
+
+        </a>
+
+        {% endif %}
+
+    </div>
+
+    <div>
+
+        {% if pagination.has_next %}
+
+        <a class="btn btn-outline-primary"
+           href="?page={{ pagination.next_num }}">
+
+            Next
+
+            <i class="bi bi-arrow-right"></i>
+
+        </a>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
 {% endblock %}
