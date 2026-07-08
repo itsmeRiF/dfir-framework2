@@ -23,6 +23,10 @@ python -m venv .venv
 pip install -r requirements.txt
 python bootstrap.py
 python app.py
+
+---Then, do this if you are using this tool for the first time----
+cd tools/
+hayabusa.exe update-rules
 ```
 
 Open http://127.0.0.1:1338 — login with `analyst` / `analyst123`.
