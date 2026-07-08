@@ -1,11 +1,339 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h2>Dashboard</h2>
-<p>Welcome to CyberX DFIR Investigation Workspace</p>
-<ul>
-  <li>Cases: manage investigations</li>
-  <li>Evidence: upload EVTX, Prefetch, JumpList, Registry, Memory dumps</li>
-  <li>Events / Timeline / Incidents: review parsed artifacts</li>
-</ul>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <div>
+
+        <h2 class="fw-bold">
+
+            <i class="bi bi-speedometer2 text-primary"></i>
+
+            Dashboard
+
+        </h2>
+
+        <p class="text-muted">
+
+            Welcome to CyberX DFIR Investigation Workspace
+
+        </p>
+
+    </div>
+
+</div>
+
+<!-- Statistics -->
+
+<div class="row g-4 mb-4">
+
+    <div class="col-md-3">
+
+        <div class="card">
+
+            <div class="card-body">
+
+                <div class="d-flex justify-content-between">
+
+                    <div>
+
+                        <small class="text-muted">
+
+                            Active Cases
+
+                        </small>
+
+                        <h2>{{ total_cases|default(0) }}</h2>
+
+                    </div>
+
+                    <i class="bi bi-folder2-open fs-1 text-primary"></i>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-3">
+
+        <div class="card">
+
+            <div class="card-body">
+
+                <div class="d-flex justify-content-between">
+
+                    <div>
+
+                        <small class="text-muted">
+
+                            Evidence Files
+
+                        </small>
+
+                        <h2>{{ evidence_count|default(0) }}</h2>
+
+                    </div>
+
+                    <i class="bi bi-hdd-fill fs-1 text-success"></i>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-3">
+
+        <div class="card">
+
+            <div class="card-body">
+
+                <div class="d-flex justify-content-between">
+
+                    <div>
+
+                        <small class="text-muted">
+
+                            Events Parsed
+
+                        </small>
+
+                        <h2>{{ event_count|default(0) }}</h2>
+
+                    </div>
+
+                    <i class="bi bi-list-ul fs-1 text-warning"></i>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-3">
+
+        <div class="card">
+
+            <div class="card-body">
+
+                <div class="d-flex justify-content-between">
+
+                    <div>
+
+                        <small class="text-muted">
+
+                            Critical Alerts
+
+                        </small>
+
+                        <h2 class="text-danger">
+
+                            {{ critical_count|default(0) }}
+
+                        </h2>
+
+                    </div>
+
+                    <i class="bi bi-exclamation-triangle-fill fs-1 text-danger"></i>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Quick Actions -->
+
+<div class="row mb-4">
+
+    <div class="col-lg-6">
+
+        <div class="card h-100">
+
+            <div class="card-header">
+
+                <i class="bi bi-lightning-charge"></i>
+
+                Quick Actions
+
+            </div>
+
+            <div class="card-body">
+
+                <div class="d-grid gap-3">
+
+                    <a href="/cases" class="btn btn-outline-primary">
+
+                        <i class="bi bi-folder-plus"></i>
+
+                        Manage Investigation Cases
+
+                    </a>
+
+                    <a href="/evidence" class="btn btn-outline-success">
+
+                        <i class="bi bi-upload"></i>
+
+                        Upload Evidence
+
+                    </a>
+
+                    <a href="/timeline" class="btn btn-outline-secondary">
+
+                        <i class="bi bi-clock-history"></i>
+
+                        Investigation Timeline
+
+                    </a>
+
+                    <a href="/incidents" class="btn btn-outline-danger">
+
+                        <i class="bi bi-shield-exclamation"></i>
+
+                        Incident Explorer
+
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-lg-6">
+
+        <div class="card h-100">
+
+            <div class="card-header">
+
+                <i class="bi bi-info-circle"></i>
+
+                Supported Evidence
+
+            </div>
+
+            <div class="card-body">
+
+                <div class="row">
+
+                    <div class="col-6">
+
+                        ✅ EVTX Logs<br>
+                        ✅ Registry Hives<br>
+                        ✅ Prefetch Files<br>
+                        ✅ Jump Lists<br>
+                        ✅ Browser History
+
+                    </div>
+
+                    <div class="col-6">
+
+                        ✅ Memory Dumps<br>
+                        ✅ MFT<br>
+                        ✅ USN Journal<br>
+                        ✅ SRUM<br>
+                        ✅ Recycle Bin
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Recent Activity -->
+
+<div class="card">
+
+    <div class="card-header">
+
+        <i class="bi bi-clock-history"></i>
+
+        Recent Investigation Activity
+
+    </div>
+
+    <div class="card-body">
+
+        <table class="table table-hover">
+
+            <thead>
+
+            <tr>
+
+                <th>Time</th>
+                <th>Activity</th>
+                <th>Status</th>
+
+            </tr>
+
+            </thead>
+
+            <tbody>
+
+            {% if recent_activity %}
+
+                {% for item in recent_activity %}
+
+                <tr>
+
+                    <td>{{ item.time }}</td>
+
+                    <td>{{ item.description }}</td>
+
+                    <td>
+
+                        <span class="badge bg-success">
+
+                            {{ item.status }}
+
+                        </span>
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            {% else %}
+
+                <tr>
+
+                    <td colspan="3" class="text-center text-muted">
+
+                        No recent investigation activity.
+
+                    </td>
+
+                </tr>
+
+            {% endif %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
 {% endblock %}
