@@ -208,17 +208,14 @@ This downloads:
 
 ---
 
-# 🤝 Contribution
 
-Contributions and suggestions are welcome.
+# 👥 Contributors
 
-You can contribute through:
+Thanks to all contributors who helped build and test this CyberX DFIR Framework.
 
-* Bug Reports
-* Feature Requests
-* Pull Requests
-
----
+<a href="https://github.com/itsmeRiF/dfir-framework2/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=itsmeRiF/dfir-framework2" />
+</a>
 
 <p align="center">
 
