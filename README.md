@@ -27,7 +27,7 @@ python app.py
 
 Open http://127.0.0.1:1338 — login with `analyst` / `analyst123`.
 
-Place `hayabusa.exe` in the `tools/` folder for EVTX analysis (copy from your existing repo).
+Place `hayabusa.exe` in the `tools/` folder for EVTX analysis
 
 ## Upload Flow
 
