@@ -1,4 +1,4 @@
-# CyberX DFIR Framework
+# DFIR Framework
 
 End-to-end DFIR pipeline with Flask — case management, evidence upload, artifact parsing, timeline, and incident correlation.
 
@@ -17,7 +17,7 @@ All parsed records normalize into the shared **Event** model so they appear in E
 ## Setup
 
 ```bash
-cd cyberx-dfir-framework
+cd dfir-framework2
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
@@ -25,7 +25,7 @@ python bootstrap.py
 python app.py
 ```
 
-Open http://127.0.0.1:1337 — login with `admin` / `admin`.
+Open http://127.0.0.1:1338 — login with `analyst` / `analyst123`.
 
 Place `hayabusa.exe` in the `tools/` folder for EVTX analysis (copy from your existing repo).
 
@@ -37,7 +37,7 @@ Place `hayabusa.exe` in the `tools/` folder for EVTX analysis (copy from your ex
 4. Upload file — parser runs automatically
 5. Review **Events**, **Timeline**, and **Incidents**
 
-## Project Structure (new modules)
+## Project Structure
 
 ```
 modules/
@@ -54,7 +54,4 @@ modules/
 ```
 
 ## Notes
-
-- **Prefetch**: Win10+ MAM-compressed `.pf` files are decompressed via Windows `RtlDecompressBufferEx`.
-- **Memory**: Volatility3 is optional; if installed, `pslist`, `netscan`, and `malfind` run automatically.
-- **Registry**: Large hives may produce many events; IOC filtering focuses on forensic paths (Run, Services, UserAssist).
+Made with <3 in India
