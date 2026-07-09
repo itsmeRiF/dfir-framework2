@@ -99,7 +99,7 @@ pip install -r requirements.txt
 
 ---
 
-## Initialize Framework
+## Create user
 
 ```bash
 python bootstrap.py
