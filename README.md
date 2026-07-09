@@ -35,7 +35,7 @@ All forensic artifacts are normalized into a common **Event Model**, allowing in
 | ✅ Registry Hives     | SYSTEM, SOFTWARE, SAM, NTUSER.DAT                     | Registry Parser              | Persistence mechanisms, configuration artifacts |
 | ✅ Prefetch Files     | `.pf`                                                 | Prefetch Parser              | Execution history, LOLBin detection             |
 | ✅ Jump Lists         | `.automaticDestinations-ms`, `.customDestinations-ms` | OLE + LNK Parser             | Recent applications, accessed files             |
-| 🚧 Memory Dumps      | `.raw`, `.mem`, `.dmp`, `.vmem`                       | Volatility3 + IOC Extraction | Processes, network artifacts, memory analysis   |
+| ✅ Memory Dumps      | `.raw`, `.mem`, `.dmp`, `.vmem`                       | Volatility3 + IOC Extraction | Processes, network artifacts, memory analysis   |
 
 ---
 
@@ -127,7 +127,7 @@ Password: analyst123
 
 ---
 
-# 🔥 Hayabusa Setup (EVTX Analysis)
+# For Event Logs Analysis
 
 Download Hayabusa and place:
 
@@ -166,6 +166,12 @@ This downloads:
 * [x] Prefetch Files
 * [x] Jump Lists
 * [x] Memory Dumps
+
+
+## To-do:
+* [ ] Display summary of RAM Analysis
+* [ ] Running processes
+* [ ] Active network connections
 
 ## Phase 2 — Advanced Artifact Support 🚧
 
