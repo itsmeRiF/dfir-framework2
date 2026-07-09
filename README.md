@@ -36,7 +36,6 @@ All forensic artifacts are normalized into a common **Event Model**, allowing in
 | ✅ Prefetch Files     | `.pf`                                                 | Prefetch Parser              | Execution history, LOLBin detection             |
 | ✅ Jump Lists         | `.automaticDestinations-ms`, `.customDestinations-ms` | OLE + LNK Parser             | Recent applications, accessed files             |
 | 🚧 Memory Dumps      | `.raw`, `.mem`, `.dmp`, `.vmem`                       | Volatility3 + IOC Extraction | Processes, network artifacts, memory analysis   |
-| 🔮 Browser History   | Chrome / Edge / Firefox                               | Browser Parser               | Web activity reconstruction                     |
 
 ---
 
