@@ -12,12 +12,12 @@ CyberX DFIR Framework is a modular **Digital Forensics and Incident Response (DF
 
 The framework provides a unified investigation workspace for:
 
-* 📁 Case Management
-* 📤 Evidence Upload & Processing
-* 🔍 Artifact Analysis
-* 🕒 Timeline Reconstruction
-* 🚨 Incident Detection & Correlation
-* 📊 Investigation Data Export
+📁 Case Management\
+📤 Evidence Upload & Processing\
+🔍 Artifact Analysis\
+🕒 Timeline Reconstruction\
+🚨 Incident Detection & Correlation\
+📊 Investigation Data Export
 
 All forensic artifacts are normalized into a common **Event Model**, allowing investigators to analyze artifacts across:
 
@@ -189,15 +189,15 @@ This downloads:
 
 # 🚀 Current Features
 
-✅ Case Management
-✅ Evidence Repository
-✅ Artifact Auto Detection
-✅ Hayabusa Integration
-✅ Sigma Rule Detection
-✅ Event Normalization
-✅ Timeline Analysis
-✅ Incident Correlation
-✅ Severity Classification
+✅ Case Management\
+✅ Evidence Repository\
+✅ Artifact Auto Detection\
+✅ Hayabusa Integration\
+✅ Sigma Rule Detection\
+✅ Event Normalization\
+✅ Timeline Analysis\
+✅ Incident Correlation\
+✅ Severity Classification\
 ✅ CSV Export
 
 ---
