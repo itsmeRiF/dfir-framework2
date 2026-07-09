@@ -25,22 +25,11 @@
 </div>
 
 <div style="max-width:640px;">
-<!--
-  <h3>Supported Artifacts</h3>
-  <ul>
-    <li><strong>EVTX</strong> — Windows Event Logs (Hayabusa)</li>
-    <li><strong>Prefetch</strong> — .pf execution artifacts</li>
-    <li><strong>JumpList</strong> — .automaticDestinations-ms / .customDestinations-ms</li>
-    <li><strong>Registry</strong> — SYSTEM, SOFTWARE, SAM, NTUSER.DAT hives</li>
-    <li><strong>Memory</strong> — .raw / .mem / .dmp RAM dumps (strings + optional Volatility3)</li>
-  </ul>
-</div>
--->
 <script>
 document.getElementById("uploadForm").addEventListener("submit", async function (e) {
   e.preventDefault();
   const status = document.getElementById("status");
-  status.textContent = "Processing...";
+  status.textContent = "Uploading...";
 
   const formData = new FormData(this);
   try {

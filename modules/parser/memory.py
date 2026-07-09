@@ -75,7 +75,7 @@ def _run_volatility(filepath: str, output_dir: str) -> list[dict]:
 
     if not vol_cmd:
         return events
-
+## Lets add other plugins while we perform better with this as we grow! --itsmeRiF
     plugins = (
         ("windows.pslist.PsList", "Process List"),
         ("windows.netscan.NetScan", "Network Connections"),

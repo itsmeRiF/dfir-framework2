@@ -22,7 +22,7 @@ ARTIFACT_TYPES = {
         "extensions": {".automaticdestinations-ms", ".customdestinations-ms"},
     },
     "registry": {
-        "label": "Registry Hive (SYSTEM/SOFTWARE/SAM/NTUSER/etc.)",
+        "label": "Registry Hive (SYSTEM/SOFTWARE/etc.)",
         "extensions": {".dat", ".hiv", ".registry"},
     },
     "memory": {
