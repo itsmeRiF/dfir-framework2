@@ -74,7 +74,7 @@ All forensic artifacts are normalized into a common **Event Model**, allowing in
 ## Clone Repository
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/itsmeRiF/dfir-framework2
 
 cd dfir-framework2
 ```
