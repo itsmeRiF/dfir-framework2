@@ -12,12 +12,12 @@ CyberX DFIR Framework is a modular **Digital Forensics and Incident Response (DF
 
 The framework provides a unified investigation workspace for:
 
-* 📁 Case Management
-* 📤 Evidence Upload & Processing
-* 🔍 Artifact Analysis
-* 🕒 Timeline Reconstruction
-* 🚨 Incident Detection & Correlation
-* 📊 Investigation Data Export
+📁 Case Management\
+📤 Evidence Upload & Processing\
+🔍 Artifact Analysis\
+🕒 Timeline Reconstruction\
+🚨 Incident Detection & Correlation\
+📊 Investigation Data Export
 
 All forensic artifacts are normalized into a common **Event Model**, allowing investigators to analyze artifacts across:
 
@@ -35,8 +35,7 @@ All forensic artifacts are normalized into a common **Event Model**, allowing in
 | ✅ Registry Hives     | SYSTEM, SOFTWARE, SAM, NTUSER.DAT                     | Registry Parser              | Persistence mechanisms, configuration artifacts |
 | ✅ Prefetch Files     | `.pf`                                                 | Prefetch Parser              | Execution history, LOLBin detection             |
 | ✅ Jump Lists         | `.automaticDestinations-ms`, `.customDestinations-ms` | OLE + LNK Parser             | Recent applications, accessed files             |
-| 🚧 Memory Dumps      | `.raw`, `.mem`, `.dmp`, `.vmem`                       | Volatility3 + IOC Extraction | Processes, network artifacts, memory analysis   |
-| 🔮 Browser History   | Chrome / Edge / Firefox                               | Browser Parser               | Web activity reconstruction                     |
+| ✅ Memory Dumps      | `.raw`, `.mem`, `.dmp`, `.vmem`                       | Volatility3 + IOC Extraction | Processes, network artifacts, memory analysis   |
 
 ---
 
@@ -74,7 +73,7 @@ All forensic artifacts are normalized into a common **Event Model**, allowing in
 ## Clone Repository
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/itsmeRiF/dfir-framework2.git
 
 cd dfir-framework2
 ```
@@ -99,7 +98,7 @@ pip install -r requirements.txt
 
 ---
 
-## Initialize Framework
+## Create user
 
 ```bash
 python bootstrap.py
@@ -128,7 +127,7 @@ Password: analyst123
 
 ---
 
-# 🔥 Hayabusa Setup (EVTX Analysis)
+# For Event Logs Analysis
 
 Download Hayabusa and place:
 
@@ -168,6 +167,12 @@ This downloads:
 * [x] Jump Lists
 * [x] Memory Dumps
 
+
+## To-do:
+* [ ] Display summary of RAM Analysis
+* [ ] Running processes
+* [ ] Active network connections
+
 ## Phase 2 — Advanced Artifact Support 🚧
 
 * [ ] Browser History
@@ -184,15 +189,15 @@ This downloads:
 
 # 🚀 Current Features
 
-✅ Case Management
-✅ Evidence Repository
-✅ Artifact Auto Detection
-✅ Hayabusa Integration
-✅ Sigma Rule Detection
-✅ Event Normalization
-✅ Timeline Analysis
-✅ Incident Correlation
-✅ Severity Classification
+✅ Case Management\
+✅ Evidence Repository\
+✅ Artifact Auto Detection\
+✅ Hayabusa Integration\
+✅ Sigma Rule Detection\
+✅ Event Normalization\
+✅ Timeline Analysis\
+✅ Incident Correlation\
+✅ Severity Classification\
 ✅ CSV Export
 
 ---
