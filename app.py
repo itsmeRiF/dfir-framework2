@@ -6,7 +6,7 @@ from routes.auth import auth_bp, login_manager
 from routes.dashboard import dashboard_bp
 from routes.cases import cases_bp
 from routes.evidence import evidence_bp
-from routes.events import events_bp
+# from routes.events import events_bp
 from routes.timeline import timeline_bp
 from routes.incidents import incident_bp
 
@@ -24,7 +24,7 @@ def create_app():
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(cases_bp)
     app.register_blueprint(evidence_bp)
-    app.register_blueprint(events_bp)
+    # app.register_blueprint(events_bp)
     app.register_blueprint(timeline_bp)
     app.register_blueprint(incident_bp)
     with app.app_context():
@@ -39,4 +39,4 @@ def create_app():
 
 if __name__ == "__main__":
     app = create_app()
-    app.run(debug=True, port=1338)
+    app.run(debug=True, port=1338, use_reloader=False)
