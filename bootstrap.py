@@ -13,7 +13,7 @@ def main():
         os.makedirs(app.config["OUTPUT_FOLDER"], exist_ok=True)
         os.makedirs(os.path.join(os.path.dirname(__file__), "instance"), exist_ok=True)
 
-        if not User.query.filter_by(username="admin").first():
+        if not User.query.filter_by(username="analyst").first():
             db.session.add(User(username="analyst", password="analyst123", role="analyst"))
             db.session.commit()
             print("Created default user: analyst / analyst123")
