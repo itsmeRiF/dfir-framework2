@@ -20,7 +20,7 @@ def login():
         user = User.query.filter_by(username=username, password=password).first()
         if user:
             login_user(user)
-            return redirect(url_for("dashboard.home"))
+            return redirect(url_for("dashboard.dashboard"))
     return render_template("login.html")
 
 
