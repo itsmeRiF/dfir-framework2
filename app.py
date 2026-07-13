@@ -9,7 +9,18 @@ from routes.evidence import evidence_bp
 from routes.events import events_bp
 from routes.timeline import timeline_bp
 from routes.incidents import incident_bp
-
+from routes.analysis import analysis_bp
+##adding new routes -fingersCrossed
+from routes.memory import memory_bp
+from routes.registry import registry_bp
+from routes.prefetch import prefetch_bp
+from routes.browser import browser_bp
+from routes.jumplist import jumplist_bp
+from routes.mft import mft_bp
+from routes.usn import usn_bp
+from routes.srum import srum_bp
+from routes.recyclebin import recyclebin_bp
+from routes.reports import reports_bp
 
 def create_app():
 
@@ -27,6 +38,18 @@ def create_app():
     app.register_blueprint(events_bp)
     app.register_blueprint(timeline_bp)
     app.register_blueprint(incident_bp)
+    app.register_blueprint(analysis_bp)
+## yahan new blueprints ko register karre.. yahan bhi fingers crossed!
+    app.register_blueprint(memory_bp)
+    app.register_blueprint(registry_bp)
+    app.register_blueprint(prefetch_bp)
+    app.register_blueprint(browser_bp)
+    app.register_blueprint(jumplist_bp)
+    app.register_blueprint(mft_bp)
+    app.register_blueprint(usn_bp)
+    app.register_blueprint(srum_bp)
+    app.register_blueprint(recyclebin_bp)
+    app.register_blueprint(reports_bp)
     with app.app_context():
         db.create_all()
 

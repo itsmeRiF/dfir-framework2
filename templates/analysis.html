@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="row">
+
+    <div class="col-md-3">
+
+        <div class="list-group shadow-sm">
+
+            <a href="/events/{{ case_id }}" class="list-group-item list-group-item-action">
+                📜 Event Logs
+            </a>
+
+            <a href="/memory/{{ case_id }}" class="list-group-item list-group-item-action">
+                🧠 Memory
+            </a>
+
+            <a href="/registry/{{ case_id }}" class="list-group-item list-group-item-action">
+                🗄 Registry
+            </a>
+
+            <a href="/prefetch/{{ case_id }}" class="list-group-item list-group-item-action">
+                ⚡ Prefetch
+            </a>
+
+            <a href="/jumplist/{{ case_id }}" class="list-group-item list-group-item-action">
+                📑 Jump Lists
+            </a>
+
+            <a href="/browser/{{ case_id }}" class="list-group-item list-group-item-action">
+                🌐 Browser
+            </a>
+
+            <a href="/mft/{{ case_id }}" class="list-group-item list-group-item-action">
+                💽 MFT
+            </a>
+
+            <a href="/usn/{{ case_id }}" class="list-group-item list-group-item-action">
+                📝 USN Journal
+            </a>
+
+            <a href="/srum/{{ case_id }}" class="list-group-item list-group-item-action">
+                📊 SRUM
+            </a>
+
+            <a href="/recyclebin/{{ case_id }}" class="list-group-item list-group-item-action">
+                🗑 Recycle Bin
+            </a>
+
+            <a href="/timeline/{{ case_id }}" class="list-group-item list-group-item-action">
+                ⏱ Timeline
+            </a>
+
+            <a href="/incidents/{{ case_id }}" class="list-group-item list-group-item-action">
+                🚨 Incidents
+            </a>
+
+            <a href="/reports/{{ case_id }}" class="list-group-item list-group-item-action">
+                📄 Report
+            </a>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-9">
+
+        <div class="card shadow-sm">
+
+            <div class="card-body">
+
+                <h3>Case {{ case_id }}</h3>
+
+                <hr>
+
+                <h5>Analysis Workspace</h5>
+
+                <p class="text-muted">
+
+                    Select an artifact category from the left sidebar.
+
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
