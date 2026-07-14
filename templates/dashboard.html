@@ -2,55 +2,611 @@
 
 {% block content %}
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+<style>
 
-    <div>
+/* ---------- Hero ---------- */
 
-        <h2 class="fw-bold">
+.hero{
 
-            <i class="bi bi-speedometer2 text-primary"></i>
+    position:relative;
+    overflow:hidden;
+    border-radius:18px;
+    padding:28px 32px;
+    margin-bottom:28px;
+    color:#fff;
+    background:linear-gradient(120deg,#0d3b8f 0%,#0d6efd 55%,#3a9bfc 100%);
+    box-shadow:0 10px 30px rgba(13,110,253,.28);
 
-            Dashboard
+}
 
-        </h2>
+/* Soft moving glow behind the hero text */
 
-        <p class="text-muted">
+.hero::after{
 
-            Welcome to CyberX DFIR Investigation Workspace
+    content:"";
+    position:absolute;
+    top:-60%;
+    right:-10%;
+    width:420px;
+    height:420px;
+    border-radius:50%;
+    background:radial-gradient(circle,rgba(255,255,255,.22),transparent 65%);
+    animation:drift 9s ease-in-out infinite alternate;
 
-        </p>
+}
+
+@keyframes drift{
+
+    from{ transform:translate(0,0); }
+    to{   transform:translate(-40px,30px); }
+
+}
+
+.hero h2{
+
+    font-weight:700;
+    margin:0;
+
+}
+
+.hero p{
+
+    margin:6px 0 0;
+    opacity:.9;
+
+}
+
+.hero .hero-actions{
+
+    position:relative;
+    z-index:2;
+
+}
+
+.hero-clock{
+
+    font-variant-numeric:tabular-nums;
+    font-weight:600;
+
+}
+
+/* ---------- Stat cards ---------- */
+
+.stat-card{
+
+    position:relative;
+    overflow:hidden;
+    border-radius:var(--cx-radius);
+    background:#fff;
+    box-shadow:var(--cx-shadow);
+    padding:20px;
+    height:100%;
+    display:block;
+    text-decoration:none;
+    color:inherit;
+    transition:transform .22s ease, box-shadow .22s ease;
+
+}
+
+.stat-card:hover{
+
+    transform:translateY(-5px);
+    box-shadow:var(--cx-shadow-lg);
+    color:inherit;
+
+}
+
+/* Coloured accent stripe down the left edge */
+
+.stat-card::before{
+
+    content:"";
+    position:absolute;
+    left:0;
+    top:0;
+    bottom:0;
+    width:5px;
+    background:var(--accent,#0d6efd);
+
+}
+
+.stat-icon{
+
+    width:52px;
+    height:52px;
+    border-radius:14px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:24px;
+    color:var(--accent,#0d6efd);
+    background:var(--accent-soft,#e9f2ff);
+    flex-shrink:0;
+
+}
+
+.stat-value{
+
+    font-size:32px;
+    font-weight:700;
+    line-height:1.1;
+    font-variant-numeric:tabular-nums;
+
+}
+
+.stat-label{
+
+    font-size:13px;
+    color:#6c757d;
+    text-transform:uppercase;
+    letter-spacing:.4px;
+    font-weight:600;
+
+}
+
+.stat-foot{
+
+    font-size:12px;
+    color:#8a939b;
+    margin-top:10px;
+    display:flex;
+    align-items:center;
+    gap:5px;
+
+}
+
+/* Pulse ring on the critical-alerts card when alerts exist */
+
+.pulse::after{
+
+    content:"";
+    position:absolute;
+    inset:0;
+    border-radius:var(--cx-radius);
+    border:2px solid var(--cx-critical);
+    opacity:0;
+    animation:pulse 2.4s ease-out infinite;
+    pointer-events:none;
+
+}
+
+@keyframes pulse{
+
+    0%{   opacity:.55; transform:scale(1); }
+    70%{  opacity:0;   transform:scale(1.03); }
+    100%{ opacity:0;   transform:scale(1.03); }
+
+}
+
+/* Chart.js fills its parent when maintainAspectRatio is off,
+   so the line chart needs an explicit box to grow into. */
+
+.chart-wrap{
+
+    position:relative;
+    height:260px;
+
+}
+
+/* ---------- Severity legend ---------- */
+
+.sev-row{
+
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:9px 10px;
+    border-radius:10px;
+    transition:background .18s ease;
+
+}
+
+.sev-row:hover{
+
+    background:#f6f9fe;
+
+}
+
+.sev-dot{
+
+    width:11px;
+    height:11px;
+    border-radius:50%;
+    display:inline-block;
+    margin-right:9px;
+
+}
+
+/* ---------- Ranked bars (detections / hosts) ---------- */
+
+.rank-item + .rank-item{
+
+    margin-top:16px;
+
+}
+
+.rank-head{
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    margin-bottom:6px;
+
+}
+
+.rank-title{
+
+    font-weight:600;
+    font-size:14px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+
+}
+
+.rank-track{
+
+    height:8px;
+    border-radius:999px;
+    background:#eef1f5;
+    overflow:hidden;
+
+}
+
+.rank-fill{
+
+    height:100%;
+    border-radius:999px;
+    width:0;
+    transition:width 1s cubic-bezier(.22,1,.36,1);
+
+}
+
+/* ---------- Case cards ---------- */
+
+.case-card{
+
+    border-radius:var(--cx-radius);
+    background:#fff;
+    box-shadow:var(--cx-shadow);
+    padding:18px;
+    height:100%;
+    display:flex;
+    flex-direction:column;
+    transition:transform .22s ease, box-shadow .22s ease;
+
+}
+
+.case-card:hover{
+
+    transform:translateY(-4px);
+    box-shadow:var(--cx-shadow-lg);
+
+}
+
+.case-avatar{
+
+    width:44px;
+    height:44px;
+    border-radius:12px;
+    background:linear-gradient(135deg,#0d6efd,#3a9bfc);
+    color:#fff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:20px;
+    flex-shrink:0;
+
+}
+
+.case-metric{
+
+    text-align:center;
+    padding:8px 4px;
+    border-radius:10px;
+    background:#f6f9fe;
+
+}
+
+.case-metric .val{
+
+    font-weight:700;
+    font-size:17px;
+    line-height:1.2;
+
+}
+
+.case-metric .lbl{
+
+    font-size:11px;
+    color:#8a939b;
+    text-transform:uppercase;
+    letter-spacing:.3px;
+
+}
+
+.tool-link{
+
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    font-size:12px;
+    font-weight:600;
+    padding:5px 10px;
+    border-radius:999px;
+    background:#f1f5fb;
+    color:#44546a;
+    text-decoration:none;
+    transition:.18s;
+
+}
+
+.tool-link:hover{
+
+    background:#0d6efd;
+    color:#fff;
+
+}
+
+/* ---------- Activity feed ---------- */
+
+.filter-chip{
+
+    border:1px solid #dfe3e8;
+    background:#fff;
+    border-radius:999px;
+    padding:5px 13px;
+    font-size:12px;
+    font-weight:600;
+    color:#5b6672;
+    cursor:pointer;
+    transition:.18s;
+
+}
+
+.filter-chip:hover{
+
+    border-color:#0d6efd;
+    color:#0d6efd;
+
+}
+
+.filter-chip.active{
+
+    background:#0d6efd;
+    border-color:#0d6efd;
+    color:#fff;
+
+}
+
+.activity-row{
+
+    cursor:default;
+    transition:background .15s ease;
+
+}
+
+.activity-row:hover{
+
+    background:#f6f9fe;
+
+}
+
+.empty-state{
+
+    text-align:center;
+    padding:46px 20px;
+    color:#9aa3ab;
+
+}
+
+.empty-state i{
+
+    font-size:44px;
+    opacity:.45;
+    display:block;
+    margin-bottom:12px;
+
+}
+
+</style>
+
+
+<!-- ============ HERO ============ -->
+
+<div class="hero">
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+
+        <div>
+
+            <h2>
+                <i class="bi bi-speedometer2"></i>
+                Dashboard
+            </h2>
+
+            <p>
+                Welcome to the CyberX DFIR investigation workspace &mdash;
+                {{ total_cases }} case{{ '' if total_cases == 1 else 's' }},
+                {{ event_count }} parsed event{{ '' if event_count == 1 else 's' }}.
+            </p>
+
+        </div>
+
+        <div class="hero-actions text-end">
+
+            <div class="hero-clock mb-2">
+                <i class="bi bi-clock"></i>
+                <span id="liveClock">--:--:--</span>
+                <span class="opacity-75 ms-1">IST</span>
+            </div>
+
+            <a href="/cases" class="btn btn-light fw-semibold">
+                <i class="bi bi-folder-plus"></i>
+                New Case
+            </a>
+
+        </div>
 
     </div>
 
 </div>
 
-<!-- Statistics -->
+
+<!-- ============ STAT CARDS ============ -->
 
 <div class="row g-4 mb-4">
 
-    <div class="col-md-3">
+    <div class="col-md-6 col-xl-3">
 
-        <div class="card">
+        <a class="stat-card"
+           href="/cases"
+           style="--accent:#0d6efd; --accent-soft:#e9f2ff;">
+
+            <div class="d-flex justify-content-between align-items-start">
+
+                <div>
+                    <div class="stat-label">Active Cases</div>
+                    <div class="stat-value counter" data-target="{{ total_cases|default(0) }}">0</div>
+                </div>
+
+                <div class="stat-icon">
+                    <i class="bi bi-folder2-open"></i>
+                </div>
+
+            </div>
+
+            <div class="stat-foot">
+                <i class="bi bi-unlock"></i>
+                {{ open_cases }} open &bull; {{ closed_cases }} closed
+            </div>
+
+        </a>
+
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+
+        <div class="stat-card"
+             style="--accent:#198754; --accent-soft:#e6f4ec;">
+
+            <div class="d-flex justify-content-between align-items-start">
+
+                <div>
+                    <div class="stat-label">Evidence Files</div>
+                    <div class="stat-value counter" data-target="{{ evidence_count|default(0) }}">0</div>
+                </div>
+
+                <div class="stat-icon">
+                    <i class="bi bi-hdd-fill"></i>
+                </div>
+
+            </div>
+
+            <div class="stat-foot">
+                <i class="bi bi-hdd-stack"></i>
+                Across all investigations
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+
+        <div class="stat-card"
+             style="--accent:#ffc107; --accent-soft:#fff8e1;">
+
+            <div class="d-flex justify-content-between align-items-start">
+
+                <div>
+                    <div class="stat-label">Events Parsed</div>
+                    <div class="stat-value counter" data-target="{{ event_count|default(0) }}">0</div>
+                </div>
+
+                <div class="stat-icon">
+                    <i class="bi bi-list-ul"></i>
+                </div>
+
+            </div>
+
+            <div class="stat-foot">
+                <i class="bi bi-activity"></i>
+                {{ activity_total }} in last {{ activity_days }} days
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+
+        <div class="stat-card {% if critical_count %}pulse{% endif %}"
+             style="--accent:#dc3545; --accent-soft:#fdeaec;">
+
+            <div class="d-flex justify-content-between align-items-start">
+
+                <div>
+                    <div class="stat-label">Critical Alerts</div>
+                    <div class="stat-value counter text-danger" data-target="{{ critical_count|default(0) }}">0</div>
+                </div>
+
+                <div class="stat-icon">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                </div>
+
+            </div>
+
+            <div class="stat-foot">
+                <i class="bi bi-exclamation-triangle"></i>
+                {{ high_count }} high severity
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ============ CHARTS ============ -->
+
+<div class="row g-4 mb-4">
+
+    <div class="col-lg-7">
+
+        <div class="card h-100 card-hover">
+
+            <div class="card-header d-flex justify-content-between align-items-center">
+
+                <span>
+                    <i class="bi bi-graph-up-arrow text-primary"></i>
+                    Detection Activity
+                </span>
+
+                <span class="badge bg-primary-subtle text-primary-emphasis">
+                    Last {{ activity_days }} days
+                </span>
+
+            </div>
 
             <div class="card-body">
 
-                <div class="d-flex justify-content-between">
+                {% if activity_total %}
 
-                    <div>
-
-                        <small class="text-muted">
-
-                            Active Cases
-
-                        </small>
-
-                        <h2>{{ total_cases|default(0) }}</h2>
-
+                    <div class="chart-wrap">
+                        <canvas id="activityChart"></canvas>
                     </div>
 
-                    <i class="bi bi-folder2-open fs-1 text-primary"></i>
+                {% else %}
 
-                </div>
+                    <div class="empty-state">
+                        <i class="bi bi-graph-up"></i>
+                        No events recorded in the last {{ activity_days }} days.
+                    </div>
+
+                {% endif %}
 
             </div>
 
@@ -58,93 +614,54 @@
 
     </div>
 
-    <div class="col-md-3">
+    <div class="col-lg-5">
 
-        <div class="card">
+        <div class="card h-100 card-hover">
 
-            <div class="card-body">
-
-                <div class="d-flex justify-content-between">
-
-                    <div>
-
-                        <small class="text-muted">
-
-                            Evidence Files
-
-                        </small>
-
-                        <h2>{{ evidence_count|default(0) }}</h2>
-
-                    </div>
-
-                    <i class="bi bi-hdd-fill fs-1 text-success"></i>
-
-                </div>
-
+            <div class="card-header">
+                <i class="bi bi-pie-chart-fill text-primary"></i>
+                Severity Breakdown
             </div>
 
-        </div>
-
-    </div>
-
-    <div class="col-md-3">
-
-        <div class="card">
-
             <div class="card-body">
 
-                <div class="d-flex justify-content-between">
+                {% if event_count %}
 
-                    <div>
+                    <div class="row align-items-center g-3">
 
-                        <small class="text-muted">
+                        <div class="col-5">
+                            <canvas id="severityChart"></canvas>
+                        </div>
 
-                            Events Parsed
+                        <div class="col-7">
 
-                        </small>
+                            {% for sev in severity_breakdown %}
 
-                        <h2>{{ event_count|default(0) }}</h2>
+                                <div class="sev-row">
+
+                                    <span class="text-truncate">
+                                        <span class="sev-dot" style="background:{{ sev.color }}"></span>
+                                        {{ sev.label }}
+                                    </span>
+
+                                    <strong>{{ sev.count }}</strong>
+
+                                </div>
+
+                            {% endfor %}
+
+                        </div>
 
                     </div>
 
-                    <i class="bi bi-list-ul fs-1 text-warning"></i>
+                {% else %}
 
-                </div>
-
-            </div>
-
-        </div>
-
-    </div>
-
-    <div class="col-md-3">
-
-        <div class="card">
-
-            <div class="card-body">
-
-                <div class="d-flex justify-content-between">
-
-                    <div>
-
-                        <small class="text-muted">
-
-                            Critical Alerts
-
-                        </small>
-
-                        <h2 class="text-danger">
-
-                            {{ critical_count|default(0) }}
-
-                        </h2>
-
+                    <div class="empty-state">
+                        <i class="bi bi-pie-chart"></i>
+                        No events parsed yet.
                     </div>
 
-                    <i class="bi bi-exclamation-triangle-fill fs-1 text-danger"></i>
-
-                </div>
+                {% endif %}
 
             </div>
 
@@ -154,154 +671,665 @@
 
 </div>
 
-<!-- Quick Actions -->
 
-<div class="row mb-4">
+<!-- ============ RECENT CASES ============ -->
 
-    <div class="col-lg-6">
+<div class="card mb-4 card-hover">
 
-        <div class="card h-100">
+    <div class="card-header d-flex justify-content-between align-items-center">
 
-            <div class="card-header">
+        <span>
+            <i class="bi bi-folder2-open text-primary"></i>
+            Recent Cases
+        </span>
 
-                <i class="bi bi-lightning-charge"></i>
-
-                Quick Actions
-
-            </div>
-
-            <div class="card-body">
-
-                <div class="d-grid gap-3">
-
-                    <a href="/cases" class="btn btn-outline-primary">
-
-                        <i class="bi bi-folder-plus"></i>
-
-                        Manage Cases
-
-                    </a>
-
-
-                </div>
-
-            </div>
-
-        </div>
-
-    </div>
-
-    <div class="col-lg-6">
-
-        <div class="card h-100">
-
-            <div class="card-header">
-
-                <i class="bi bi-info-circle"></i>
-
-                Supported Evidence
-
-            </div>
-
-            <div class="card-body">
-
-                <div class="row">
-
-                    <div class="col-6">
-
-                        ✅ Event Logs<br>
-                        ✅ Registry Hives<br>
-                        ✅ Prefetch Files<br>
-                        ✅ Jump Lists<br>
-						✅ Memory Dumps<br>
-
-                    </div>
-
-
-                </div>
-
-            </div>
-
-        </div>
-
-    </div>
-
-</div>
-
-<!-- Recent Activity -->
-
-<div class="card">
-
-    <div class="card-header">
-
-        <i class="bi bi-clock-history"></i>
-
-        Recent Investigation Activity
+        <a href="/cases" class="btn btn-sm btn-outline-primary">
+            View all
+            <i class="bi bi-arrow-right"></i>
+        </a>
 
     </div>
 
     <div class="card-body">
 
-        <table class="table table-hover">
+        {% if recent_cases %}
 
-            <thead>
+            <div class="row g-3">
 
-            <tr>
+                {% for case in recent_cases %}
 
-                <th>Time</th>
-                <th>Activity</th>
-                <th>Status</th>
+                    <div class="col-md-6 col-xl-3">
 
-            </tr>
+                        <div class="case-card">
 
-            </thead>
+                            <div class="d-flex align-items-center gap-2 mb-3">
 
-            <tbody>
+                                <div class="case-avatar">
+                                    <i class="bi bi-folder-fill"></i>
+                                </div>
 
-            {% if recent_activity %}
+                                <div class="flex-grow-1 overflow-hidden">
 
-                {% for item in recent_activity %}
+                                    <div class="fw-bold text-truncate" title="{{ case.name }}">
+                                        {{ case.name }}
+                                    </div>
 
-                <tr>
+                                    <div class="small text-muted">
+                                        #{{ case.id }} &bull;
+                                        {% if case.status == 'Open' %}
+                                            <span class="text-success fw-semibold">Open</span>
+                                        {% elif case.status == 'Closed' %}
+                                            <span class="text-danger fw-semibold">Closed</span>
+                                        {% else %}
+                                            {{ case.status }}
+                                        {% endif %}
+                                    </div>
 
-                    <td>{{ item.time }}</td>
+                                </div>
 
-                    <td>{{ item.description }}</td>
+                            </div>
 
-                    <td>
+                            <div class="row g-2 mb-3">
 
-                        <span class="badge bg-success">
+                                <div class="col-4">
+                                    <div class="case-metric">
+                                        <div class="val">{{ case.evidence_count }}</div>
+                                        <div class="lbl">Files</div>
+                                    </div>
+                                </div>
 
-                            {{ item.status }}
+                                <div class="col-4">
+                                    <div class="case-metric">
+                                        <div class="val">{{ case.event_count }}</div>
+                                        <div class="lbl">Events</div>
+                                    </div>
+                                </div>
 
-                        </span>
+                                <div class="col-4">
+                                    <div class="case-metric">
+                                        <div class="val {% if case.alert_count %}text-danger{% endif %}">
+                                            {{ case.alert_count }}
+                                        </div>
+                                        <div class="lbl">Alerts</div>
+                                    </div>
+                                </div>
 
-                    </td>
+                            </div>
 
-                </tr>
+                            <div class="d-flex flex-wrap gap-1 mt-auto">
+
+                                {% for label, slug, icon in case_tools %}
+
+                                    <a class="tool-link"
+                                       href="/{{ slug }}/{{ case.id }}"
+                                       title="{{ label }} for {{ case.name }}">
+                                        <i class="bi {{ icon }}"></i>
+                                        {{ label }}
+                                    </a>
+
+                                {% endfor %}
+
+                            </div>
+
+                        </div>
+
+                    </div>
 
                 {% endfor %}
 
-            {% else %}
+            </div>
 
-                <tr>
+        {% else %}
 
-                    <td colspan="3" class="text-center text-muted">
+            <div class="empty-state">
+                <i class="bi bi-folder-x"></i>
+                No investigation cases yet.
+                <div class="mt-3">
+                    <a href="/cases" class="btn btn-primary btn-sm">
+                        <i class="bi bi-plus-circle"></i>
+                        Create your first case
+                    </a>
+                </div>
+            </div>
 
-                        No recent investigation activity.
-
-                    </td>
-
-                </tr>
-
-            {% endif %}
-
-            </tbody>
-
-        </table>
+        {% endif %}
 
     </div>
 
 </div>
+
+
+<!-- ============ TOP DETECTIONS + TOP HOSTS ============ -->
+
+<div class="row g-4 mb-4">
+
+    <div class="col-lg-7">
+
+        <div class="card h-100 card-hover">
+
+            <div class="card-header">
+                <i class="bi bi-shield-exclamation text-danger"></i>
+                Top Detections
+            </div>
+
+            <div class="card-body">
+
+                {% if top_detections %}
+
+                    {% for rule in top_detections %}
+
+                        <div class="rank-item">
+
+                            <div class="rank-head">
+
+                                <span class="rank-title" title="{{ rule.title }}">
+                                    {{ rule.title }}
+                                </span>
+
+                                <span class="d-flex align-items-center gap-2 flex-shrink-0">
+                                    <span class="sev-badge sev-{{ rule.severity }}">
+                                        {{ rule.severity }}
+                                    </span>
+                                    <strong>{{ rule.hits }}</strong>
+                                </span>
+
+                            </div>
+
+                            <div class="rank-track">
+                                <div class="rank-fill"
+                                     data-width="{{ rule.percent }}"
+                                     style="background:linear-gradient(90deg,#0d6efd,#3a9bfc)"></div>
+                            </div>
+
+                        </div>
+
+                    {% endfor %}
+
+                {% else %}
+
+                    <div class="empty-state">
+                        <i class="bi bi-shield-check"></i>
+                        No detections triggered yet.
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-lg-5">
+
+        <div class="card h-100 card-hover">
+
+            <div class="card-header">
+                <i class="bi bi-pc-display text-primary"></i>
+                Most Active Hosts
+            </div>
+
+            <div class="card-body">
+
+                {% if top_hosts %}
+
+                    {% for host in top_hosts %}
+
+                        <div class="rank-item">
+
+                            <div class="rank-head">
+
+                                <span class="rank-title" title="{{ host.computer }}">
+                                    <i class="bi bi-hdd-network text-muted"></i>
+                                    {{ host.computer }}
+                                </span>
+
+                                <strong class="flex-shrink-0">{{ host.hits }}</strong>
+
+                            </div>
+
+                            <div class="rank-track">
+                                <div class="rank-fill"
+                                     data-width="{{ host.percent }}"
+                                     style="background:linear-gradient(90deg,#198754,#4bc38a)"></div>
+                            </div>
+
+                        </div>
+
+                    {% endfor %}
+
+                {% else %}
+
+                    <div class="empty-state">
+                        <i class="bi bi-pc-display-horizontal"></i>
+                        No host activity yet.
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ============ RECENT ACTIVITY ============ -->
+
+<div class="card card-hover">
+
+    <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+
+        <span>
+            <i class="bi bi-clock-history text-primary"></i>
+            Recent Investigation Activity
+        </span>
+
+        <div class="d-flex flex-wrap align-items-center gap-2">
+
+            <div class="d-flex gap-1" role="group" aria-label="Filter by severity">
+
+                <button type="button" class="filter-chip active" data-filter="all">
+                    All
+                </button>
+
+                <button type="button" class="filter-chip" data-filter="critical">
+                    Critical
+                </button>
+
+                <button type="button" class="filter-chip" data-filter="high">
+                    High
+                </button>
+
+                <button type="button" class="filter-chip" data-filter="medium">
+                    Medium
+                </button>
+
+            </div>
+
+            <div class="input-group input-group-sm" style="width:220px;">
+
+                <span class="input-group-text bg-white">
+                    <i class="bi bi-search"></i>
+                </span>
+
+                <input id="activitySearch"
+                       type="search"
+                       class="form-control"
+                       placeholder="Search activity...">
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="card-body">
+
+        <div class="table-responsive">
+
+            <table class="table table-hover align-middle mb-0">
+
+                <thead>
+
+                    <tr>
+                        <th><i class="bi bi-calendar3"></i> Time</th>
+                        <th><i class="bi bi-bullseye"></i> Detection</th>
+                        <th><i class="bi bi-pc-display"></i> Host</th>
+                        <th><i class="bi bi-flag-fill"></i> Severity</th>
+                        <th class="text-end">Action</th>
+                    </tr>
+
+                </thead>
+
+                <tbody id="activityBody">
+
+                    {% for item in recent_activity %}
+
+                        <tr class="activity-row" data-severity="{{ item.severity }}">
+
+                            <td class="text-nowrap small text-muted">
+                                {% if item.time_display %}
+                                    {{ item.time_display }}
+                                    <span class="opacity-75">IST</span>
+                                {% else %}
+                                    &mdash;
+                                {% endif %}
+                            </td>
+
+                            <td>
+
+                                <i class="bi {{ item.icon }}" style="color:{{
+                                    '#dc3545' if item.severity == 'critical' else
+                                    '#fd7e14' if item.severity == 'high' else
+                                    '#ffc107' if item.severity == 'medium' else
+                                    '#0dcaf0' if item.severity == 'low' else '#6c757d'
+                                }}"></i>
+
+                                <span class="fw-semibold">
+                                    {{ item.rule_title or 'Unknown detection' }}
+                                </span>
+
+                                {% if item.channel %}
+                                    <div class="small text-muted ms-4">
+                                        {{ item.channel }}
+                                    </div>
+                                {% endif %}
+
+                            </td>
+
+                            <td class="small">
+                                {{ item.computer or '—' }}
+                            </td>
+
+                            <td>
+                                <span class="sev-badge sev-{{ item.severity }}">
+                                    {{ item.status }}
+                                </span>
+                            </td>
+
+                            <td class="text-end">
+
+                                {% if item.case_id %}
+                                    <a href="/timeline/{{ item.case_id }}"
+                                       class="btn btn-sm btn-outline-primary"
+                                       title="Open timeline for case #{{ item.case_id }}">
+                                        <i class="bi bi-box-arrow-up-right"></i>
+                                    </a>
+                                {% endif %}
+
+                            </td>
+
+                        </tr>
+
+                    {% else %}
+
+                        <tr>
+
+                            <td colspan="5">
+                                <div class="empty-state">
+                                    <i class="bi bi-inbox"></i>
+                                    No recent investigation activity.
+                                </div>
+                            </td>
+
+                        </tr>
+
+                    {% endfor %}
+
+                    <!-- Shown when a filter/search hides every row -->
+                    <tr id="noMatchRow" class="d-none">
+
+                        <td colspan="5">
+                            <div class="empty-state">
+                                <i class="bi bi-funnel"></i>
+                                No activity matches your filter.
+                            </div>
+                        </td>
+
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+
+(function () {
+
+    // ---------- Live IST clock ----------
+
+    // Formatting against the Asia/Kolkata zone keeps this correct even when the
+    // viewer's own machine is set to another timezone.
+    const istTime = new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Asia/Kolkata',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+    });
+
+    const clock = document.getElementById('liveClock');
+
+    function tick() {
+        clock.textContent = istTime.format(new Date());
+    }
+
+    tick();
+    setInterval(tick, 1000);
+
+
+    // ---------- Count-up stat values ----------
+
+    document.querySelectorAll('.counter').forEach(el => {
+
+        const target = parseInt(el.dataset.target, 10) || 0;
+
+        if (target === 0) {
+            el.textContent = '0';
+            return;
+        }
+
+        const duration = 900;
+        const start = performance.now();
+
+        function step(now) {
+
+            const progress = Math.min((now - start) / duration, 1);
+
+            // Ease-out so the number decelerates into its final value.
+            const eased = 1 - Math.pow(1 - progress, 3);
+
+            el.textContent = Math.round(target * eased).toLocaleString();
+
+            if (progress < 1) {
+                requestAnimationFrame(step);
+            }
+
+        }
+
+        requestAnimationFrame(step);
+
+    });
+
+
+    // ---------- Animate ranked bars into place ----------
+
+    requestAnimationFrame(() => {
+
+        document.querySelectorAll('.rank-fill').forEach(bar => {
+            bar.style.width = (bar.dataset.width || 0) + '%';
+        });
+
+    });
+
+
+    // ---------- Activity filtering (severity chips + search) ----------
+
+    const rows       = Array.from(document.querySelectorAll('.activity-row'));
+    const searchBox  = document.getElementById('activitySearch');
+    const noMatchRow = document.getElementById('noMatchRow');
+    const chips      = Array.from(document.querySelectorAll('.filter-chip'));
+
+    let activeSeverity = 'all';
+
+    function applyFilters() {
+
+        const term = (searchBox.value || '').trim().toLowerCase();
+        let visible = 0;
+
+        rows.forEach(row => {
+
+            const matchesSeverity =
+                activeSeverity === 'all' || row.dataset.severity === activeSeverity;
+
+            const matchesTerm =
+                !term || row.textContent.toLowerCase().includes(term);
+
+            const show = matchesSeverity && matchesTerm;
+
+            row.classList.toggle('d-none', !show);
+
+            if (show) visible++;
+
+        });
+
+        // Only offer the "no matches" message when there were rows to begin with.
+        if (noMatchRow) {
+            noMatchRow.classList.toggle('d-none', visible > 0 || rows.length === 0);
+        }
+
+    }
+
+    chips.forEach(chip => {
+
+        chip.addEventListener('click', () => {
+
+            chips.forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+
+            activeSeverity = chip.dataset.filter;
+
+            applyFilters();
+
+        });
+
+    });
+
+    if (searchBox) {
+        searchBox.addEventListener('input', applyFilters);
+    }
+
+
+    // ---------- Charts ----------
+
+    const activityCanvas = document.getElementById('activityChart');
+
+    if (activityCanvas && window.Chart) {
+
+        const ctx = activityCanvas.getContext('2d');
+
+        // Vertical fade under the line.
+        const fill = ctx.createLinearGradient(0, 0, 0, 240);
+        fill.addColorStop(0, 'rgba(13,110,253,.35)');
+        fill.addColorStop(1, 'rgba(13,110,253,0)');
+
+        new Chart(ctx, {
+
+            type: 'line',
+
+            data: {
+
+                labels: {{ activity_labels | tojson }},
+
+                datasets: [{
+                    label: 'Events',
+                    data: {{ activity_values | tojson }},
+                    borderColor: '#0d6efd',
+                    backgroundColor: fill,
+                    borderWidth: 2.5,
+                    fill: true,
+                    tension: .35,
+                    pointRadius: 3,
+                    pointHoverRadius: 6,
+                    pointBackgroundColor: '#fff',
+                    pointBorderColor: '#0d6efd',
+                    pointBorderWidth: 2
+                }]
+
+            },
+
+            options: {
+
+                responsive: true,
+                maintainAspectRatio: false,
+
+                interaction: { mode: 'index', intersect: false },
+
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#1b2537',
+                        padding: 10,
+                        cornerRadius: 8,
+                        displayColors: false
+                    }
+                },
+
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { precision: 0 },
+                        grid: { color: '#eef1f5' }
+                    },
+                    x: {
+                        grid: { display: false }
+                    }
+                }
+
+            }
+
+        });
+
+    }
+
+    const severityCanvas = document.getElementById('severityChart');
+
+    if (severityCanvas && window.Chart) {
+
+        const severities = {{ severity_breakdown | tojson }};
+
+        new Chart(severityCanvas.getContext('2d'), {
+
+            type: 'doughnut',
+
+            data: {
+
+                labels: severities.map(s => s.label),
+
+                datasets: [{
+                    data: severities.map(s => s.count),
+                    backgroundColor: severities.map(s => s.color),
+                    borderWidth: 2,
+                    borderColor: '#fff',
+                    hoverOffset: 8
+                }]
+
+            },
+
+            options: {
+
+                responsive: true,
+                cutout: '62%',
+
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#1b2537',
+                        padding: 10,
+                        cornerRadius: 8
+                    }
+                }
+
+            }
+
+        });
+
+    }
+
+})();
+
+</script>
 
 {% endblock %}
