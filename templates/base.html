@@ -13,6 +13,20 @@
 
 <style>
 
+:root{
+
+    --cx-critical:#dc3545;
+    --cx-high:#fd7e14;
+    --cx-medium:#ffc107;
+    --cx-low:#0dcaf0;
+    --cx-info:#6c757d;
+
+    --cx-radius:14px;
+    --cx-shadow:0 4px 15px rgba(16,32,64,.08);
+    --cx-shadow-lg:0 12px 30px rgba(16,32,64,.14);
+
+}
+
 body{
 
     background:#f4f7fb;
@@ -27,6 +41,9 @@ body{
 
     background:white;
     box-shadow:0 2px 10px rgba(0,0,0,.08);
+    position:sticky;
+    top:0;
+    z-index:1030;
 
 }
 
@@ -58,6 +75,14 @@ body{
 
 }
 
+.nav-link.active{
+
+    background:#e9f2ff;
+    color:#0d6efd !important;
+    font-weight:600;
+
+}
+
 .main-content{
 
     padding:35px;
@@ -69,8 +94,8 @@ body{
 .card{
 
     border:none;
-    border-radius:14px;
-    box-shadow:0 4px 15px rgba(0,0,0,.08);
+    border-radius:var(--cx-radius);
+    box-shadow:var(--cx-shadow);
 
 }
 
@@ -82,6 +107,21 @@ body{
 
 }
 
+/* Lift on hover - opt in via .card-hover */
+
+.card-hover{
+
+    transition:transform .22s ease, box-shadow .22s ease;
+
+}
+
+.card-hover:hover{
+
+    transform:translateY(-4px);
+    box-shadow:var(--cx-shadow-lg);
+
+}
+
 /* Buttons */
 
 .btn{
@@ -89,6 +129,28 @@ body{
     border-radius:8px;
 
 }
+
+/* Severity badges - shared across dashboard, events, timeline */
+
+.sev-badge{
+
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    padding:4px 10px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:600;
+    text-transform:capitalize;
+    border:1px solid transparent;
+
+}
+
+.sev-critical{ background:#fdeaec; color:#a71d2a; border-color:#f5c2c7; }
+.sev-high{     background:#fff0e2; color:#8a4b06; border-color:#fed8b1; }
+.sev-medium{   background:#fff8e1; color:#8a6d00; border-color:#ffe69c; }
+.sev-low{      background:#e3f8fd; color:#08697c; border-color:#b6ecf7; }
+.sev-informational{ background:#eef0f2; color:#4d5459; border-color:#dfe3e6; }
 
 /* Table */
 
@@ -112,6 +174,20 @@ footer{
     padding:25px;
     color:#888;
     font-size:14px;
+
+}
+
+/* Respect reduced-motion preferences */
+
+@media (prefers-reduced-motion:reduce){
+
+    *,*::before,*::after{
+
+        animation-duration:.001ms !important;
+        animation-iteration-count:1 !important;
+        transition-duration:.001ms !important;
+
+    }
 
 }
 
@@ -145,7 +221,7 @@ data-bs-target="#menu">
 
 <li class="nav-item">
 
-<a class="nav-link" href="/dashboard">
+<a class="nav-link {% if request.path.startswith('/dashboard') %}active{% endif %}" href="/dashboard">
 
 <i class="bi bi-speedometer2"></i>
 
@@ -157,7 +233,7 @@ Dashboard
 
 <li class="nav-item">
 
-<a class="nav-link" href="/cases">
+<a class="nav-link {% if request.path.startswith('/cases') %}active{% endif %}" href="/cases">
 
 <i class="bi bi-folder2-open"></i>
 
