@@ -73,21 +73,23 @@ value="{{ end }}">
 
 
 
-<div class="col-md-2 d-grid">
+<div class="col-md-2">
 
-<label class="form-label">&nbsp;</label>
+    <label class="form-label">&nbsp;</label>
 
-<button class="btn btn-primary">
+    <div class="d-flex gap-2">
 
-<i class="bi bi-funnel"></i>
+        <button type="submit" class="btn btn-primary flex-fill">
+            <i class="bi bi-funnel"></i>
+            Apply
+        </button>
 
-Apply
+        <a href="/timeline/{{ case_id }}"
+           class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-counterclockwise"></i>
+        </a>
 
-</button>
-
-
-</div>
-
+    </div>
 
 </div>
 
