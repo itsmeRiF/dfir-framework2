@@ -72,7 +72,7 @@ def timeline(case_id):
 
     return render_template(
 
-        "timeline.html",
+        "analysis/timeline.html",
 
         events=events,
 

@@ -1,0 +1,319 @@
+{% extends "analysis_base.html" %}
+
+{% block analysis_content %}
+
+<div class="container-fluid">
+
+```
+<!-- ================= HEADER ================= -->
+<div class="d-flex justify-content-between align-items-start mb-4">
+
+    <div>
+        <h2 class="fw-bold mb-1">
+            <i class="bi bi-folder2-open text-primary"></i>
+            {{ case.case_name }}
+        </h2>
+
+        <div class="text-muted">
+            Case Number:
+            <strong>{{ case.case_number }}</strong>
+        </div>
+    </div>
+
+    <div class="d-flex gap-2">
+
+        <a href="/cases"
+           class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i>
+            Back
+        </a>
+
+        <a href="/analysis/{{ case.id }}"
+           class="btn btn-primary">
+            <i class="bi bi-speedometer2"></i>
+            Open Analysis
+        </a>
+
+    </div>
+</div>
+
+<!-- ================= BADGES ================= -->
+<div class="d-flex flex-wrap gap-2 mb-4">
+
+    {% if case.status|lower == 'open' %}
+        <span class="badge bg-success px-3 py-2">OPEN</span>
+    {% elif case.status|lower == 'closed' %}
+        <span class="badge bg-secondary px-3 py-2">CLOSED</span>
+    {% else %}
+        <span class="badge bg-warning text-dark px-3 py-2">{{ case.status|upper }}</span>
+    {% endif %}
+
+    {% if case.severity == 'critical' %}
+        <span class="badge bg-danger px-3 py-2">CRITICAL</span>
+    {% elif case.severity == 'high' %}
+        <span class="badge bg-warning text-dark px-3 py-2">HIGH</span>
+    {% else %}
+        <span class="badge bg-info px-3 py-2">{{ case.severity|upper }}</span>
+    {% endif %}
+
+    <span class="badge bg-primary px-3 py-2">
+        PRIORITY: {{ case.priority|upper }}
+    </span>
+
+    {% if case.incident_type %}
+    <span class="badge bg-dark px-3 py-2">
+        {{ case.incident_type }}
+    </span>
+    {% endif %}
+
+</div>
+
+<!-- ================= CASE INFO ================= -->
+<div class="card shadow-sm mb-4">
+
+    <div class="card-header fw-bold">
+        <i class="bi bi-info-circle"></i>
+        Case Information
+    </div>
+
+    <div class="card-body">
+
+        <div class="row g-4">
+
+            <div class="col-md-6">
+
+                <table class="table table-sm table-borderless mb-0">
+
+                    <tr>
+                        <td class="text-muted">Organization</td>
+                        <td class="fw-semibold">{{ case.organization or '-' }}</td>
+                    </tr>
+
+                    <tr>
+                        <td class="text-muted">Department</td>
+                        <td class="fw-semibold">{{ case.department or '-' }}</td>
+                    </tr>
+
+                    <tr>
+                        <td class="text-muted">Lead Investigator</td>
+                        <td class="fw-semibold">{{ case.lead_investigator or '-' }}</td>
+                    </tr>
+
+                </table>
+
+            </div>
+
+            <div class="col-md-6">
+
+                <table class="table table-sm table-borderless mb-0">
+
+                    <tr>
+                        <td class="text-muted">Created</td>
+                        <td class="fw-semibold">
+                            {{ case.created_at.strftime('%d-%b-%Y %H:%M') if case.created_at }}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td class="text-muted">Updated</td>
+                        <td class="fw-semibold">
+                            {{ case.updated_at.strftime('%d-%b-%Y %H:%M') if case.updated_at }}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td class="text-muted">Incident Date</td>
+                        <td class="fw-semibold">
+                            {{ case.incident_date.strftime('%d-%b-%Y %H:%M') if case.incident_date else '-' }}
+                        </td>
+                    </tr>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ================= DESCRIPTION ================= -->
+<div class="card shadow-sm mb-4">
+
+    <div class="card-header fw-bold">
+        <i class="bi bi-card-text"></i>
+        Description
+    </div>
+
+    <div class="card-body">
+
+        {% if case.description %}
+            <p class="mb-0">{{ case.description }}</p>
+        {% else %}
+            <p class="text-muted mb-0">No description provided.</p>
+        {% endif %}
+
+    </div>
+
+</div>
+
+<!-- ================= STATISTICS ================= -->
+<div class="row g-4 mb-4">
+
+    <div class="col-md-3">
+        <div class="card shadow-sm border-start border-4 border-primary h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-hdd-fill fs-1 text-primary"></i>
+                <h3 class="mt-2">{{ evidence_count }}</h3>
+                <p class="text-muted mb-0">Evidence</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card shadow-sm border-start border-4 border-warning h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-journal-text fs-1 text-warning"></i>
+                <h3 class="mt-2">{{ event_count }}</h3>
+                <p class="text-muted mb-0">Events</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card shadow-sm border-start border-4 border-danger h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-exclamation-octagon-fill fs-1 text-danger"></i>
+                <h3 class="mt-2">{{ incident_count }}</h3>
+                <p class="text-muted mb-0">Incidents</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card shadow-sm border-start border-4 border-info h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-memory fs-1 text-info"></i>
+                <h3 class="mt-2">
+                    {% if memory_available %}Yes{% else %}No{% endif %}
+                </h3>
+                <p class="text-muted mb-0">Memory Analysis</p>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ================= QUICK ACTIONS ================= -->
+<div class="card shadow-sm mb-4">
+
+    <div class="card-header fw-bold">
+        <i class="bi bi-lightning-charge"></i>
+        Quick Actions
+    </div>
+
+    <div class="card-body">
+
+        <div class="row g-3">
+
+            <div class="col-md-4 col-lg-2">
+                <a href="/evidence/{{ case.id }}"
+                   class="btn btn-outline-primary w-100 py-3">
+                    <i class="bi bi-hdd-fill d-block fs-4 mb-2"></i>
+                    Evidence
+                </a>
+            </div>
+
+            <div class="col-md-4 col-lg-2">
+                <a href="/events/{{ case.id }}"
+                   class="btn btn-outline-warning w-100 py-3">
+                    <i class="bi bi-list-ul d-block fs-4 mb-2"></i>
+                    Events
+                </a>
+            </div>
+
+            <div class="col-md-4 col-lg-2">
+                <a href="/timeline/{{ case.id }}"
+                   class="btn btn-outline-success w-100 py-3">
+                    <i class="bi bi-clock-history d-block fs-4 mb-2"></i>
+                    Timeline
+                </a>
+            </div>
+
+            <div class="col-md-4 col-lg-2">
+                <a href="/incidents/{{ case.id }}"
+                   class="btn btn-outline-danger w-100 py-3">
+                    <i class="bi bi-shield-exclamation d-block fs-4 mb-2"></i>
+                    Incidents
+                </a>
+            </div>
+
+            <div class="col-md-4 col-lg-2">
+                <a href="/analysis/memory/{{ case.id }}"
+                   class="btn btn-outline-info w-100 py-3">
+                    <i class="bi bi-memory d-block fs-4 mb-2"></i>
+                    Memory
+                </a>
+            </div>
+
+            <div class="col-md-4 col-lg-2">
+                <a href="/reports/{{ case.id }}"
+                   class="btn btn-outline-secondary w-100 py-3">
+                    <i class="bi bi-file-earmark-text d-block fs-4 mb-2"></i>
+                    Reports
+                </a>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ================= TAGS ================= -->
+{% if case.tags %}
+<div class="card shadow-sm mb-4">
+
+    <div class="card-header fw-bold">
+        <i class="bi bi-tags"></i>
+        Tags
+    </div>
+
+    <div class="card-body">
+
+        {% for tag in case.tags.split(',') %}
+            <span class="badge bg-light text-dark border me-2 mb-2 px-3 py-2">
+                {{ tag.strip() }}
+            </span>
+        {% endfor %}
+
+    </div>
+
+</div>
+{% endif %}
+
+<!-- ================= REMARKS ================= -->
+<div class="card shadow-sm">
+
+    <div class="card-header fw-bold">
+        <i class="bi bi-journal-bookmark"></i>
+        Investigation Remarks
+    </div>
+
+    <div class="card-body">
+
+        {% if case.remarks %}
+            <p class="mb-0">{{ case.remarks }}</p>
+        {% else %}
+            <p class="text-muted mb-0">No remarks added.</p>
+        {% endif %}
+
+    </div>
+
+</div>
+```
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,503 @@
+{% extends "analysis_base.html" %}
+
+
+{% block analysis_content %}
+
+
+<div class="container-fluid">
+
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+
+<div>
+
+<h2 class="fw-bold">
+
+<i class="bi bi-folder-plus text-primary"></i>
+
+Create New Investigation Case
+
+</h2>
+
+
+<p class="text-muted">
+
+Register a new DFIR investigation
+
+</p>
+
+</div>
+
+
+
+<a href="/cases"
+class="btn btn-outline-secondary">
+
+<i class="bi bi-arrow-left"></i>
+
+Back to Cases
+
+</a>
+
+
+</div>
+
+
+
+
+
+<div class="card shadow-sm">
+
+
+<div class="card-body">
+
+
+<form method="POST"
+action="/cases/create">
+
+
+
+<div class="row g-3">
+
+
+
+<!-- Case Name -->
+
+<div class="col-md-6">
+
+
+<label class="form-label fw-semibold">
+
+Case Name *
+
+</label>
+
+
+<input type="text"
+name="case_name"
+class="form-control"
+placeholder="Example: Ransomware Investigation"
+required>
+
+
+</div>
+
+
+
+
+<!-- Incident Type -->
+
+<div class="col-md-6">
+
+
+<label class="form-label fw-semibold">
+
+Incident Type
+
+</label>
+
+
+<select name="incident_type"
+class="form-select">
+
+
+<option value="">
+
+Select Type
+
+</option>
+
+
+<option>
+Malware
+</option>
+
+
+<option>
+Ransomware
+</option>
+
+
+<option>
+Phishing
+</option>
+
+
+<option>
+Insider Threat
+</option>
+
+
+<option>
+Data Exfiltration
+</option>
+
+
+<option>
+Web Attack
+</option>
+
+
+<option>
+Mobile
+</option>
+
+
+<option>
+Cloud
+</option>
+
+
+<option>
+Other
+</option>
+
+
+</select>
+
+
+</div>
+
+
+
+
+
+
+<!-- Priority -->
+
+
+<div class="col-md-4">
+
+
+<label class="form-label fw-semibold">
+
+Priority
+
+</label>
+
+
+<select name="priority"
+class="form-select">
+
+
+<option value="low">
+Low
+</option>
+
+
+<option value="medium" selected>
+Medium
+</option>
+
+
+<option value="high">
+High
+</option>
+
+
+<option value="critical">
+Critical
+</option>
+
+
+</select>
+
+
+</div>
+
+
+
+
+
+
+<!-- Severity -->
+
+
+<div class="col-md-4">
+
+
+<label class="form-label fw-semibold">
+
+Severity
+
+</label>
+
+
+<select name="severity"
+class="form-select">
+
+
+<option value="low">
+Low
+</option>
+
+
+<option value="medium" selected>
+Medium
+</option>
+
+
+<option value="high">
+High
+</option>
+
+
+<option value="critical">
+Critical
+</option>
+
+
+</select>
+
+
+</div>
+
+
+
+
+
+<!-- Status -->
+
+
+<div class="col-md-4">
+
+
+<label class="form-label fw-semibold">
+
+Status
+
+</label>
+
+
+<select name="status"
+class="form-select">
+
+
+<option value="open" selected>
+Open
+</option>
+
+
+<option value="investigating">
+Investigating
+</option>
+
+
+<option value="closed">
+Closed
+</option>
+
+
+</select>
+
+
+</div>
+
+
+
+
+
+
+
+<!-- Organization -->
+
+
+<div class="col-md-6">
+
+
+<label class="form-label fw-semibold">
+
+Organization
+
+</label>
+
+
+<input type="text"
+name="organization"
+class="form-control"
+placeholder="Organization name">
+
+
+</div>
+
+
+
+
+
+<!-- Department -->
+
+
+<div class="col-md-6">
+
+
+<label class="form-label fw-semibold">
+
+Department
+
+</label>
+
+
+<input type="text"
+name="department"
+class="form-control"
+placeholder="Department / Unit">
+
+
+</div>
+
+
+
+
+
+
+
+<!-- Investigator -->
+
+
+<div class="col-md-6">
+
+
+<label class="form-label fw-semibold">
+
+Lead Investigator
+
+</label>
+
+
+<input type="text"
+name="lead_investigator"
+class="form-control"
+placeholder="Investigator name">
+
+
+</div>
+
+
+
+
+
+
+<!-- Tags -->
+
+
+<div class="col-md-6">
+
+
+<label class="form-label fw-semibold">
+
+Tags
+
+</label>
+
+
+<input type="text"
+name="tags"
+class="form-control"
+placeholder="malware,ransomware,apt">
+
+
+</div>
+
+
+
+
+
+
+
+
+<!-- Description -->
+
+
+<div class="col-12">
+
+
+<label class="form-label fw-semibold">
+
+Description
+
+</label>
+
+
+<textarea name="description"
+class="form-control"
+rows="4"
+placeholder="Case summary..."></textarea>
+
+
+</div>
+
+
+
+
+
+
+
+
+<!-- Remarks -->
+
+
+<div class="col-12">
+
+
+<label class="form-label fw-semibold">
+
+Remarks
+
+</label>
+
+
+<textarea name="remarks"
+class="form-control"
+rows="3"
+placeholder="Investigation notes..."></textarea>
+
+
+</div>
+
+
+
+
+
+
+</div>
+
+
+
+
+<hr class="my-4">
+
+
+
+<div class="text-end">
+
+
+<button class="btn btn-primary px-4">
+
+
+<i class="bi bi-save"></i>
+
+Create Case
+
+
+</button>
+
+
+</div>
+
+
+
+</form>
+
+
+</div>
+
+
+</div>
+
+
+
+</div>
+
+
+{% endblock %}

@@ -1,0 +1,58 @@
+.sidebar {
+
+    width:260px;
+
+    min-height:100vh;
+
+    background:#ffffff;
+
+    border-right:1px solid #ddd;
+
+}
+
+
+.menu-item {
+
+    display:block;
+
+    padding:14px 15px;
+
+    margin-bottom:8px;
+
+    border-radius:8px;
+
+    color:#333;
+
+    text-decoration:none;
+
+    font-size:16px;
+
+}
+
+
+
+.menu-item:hover {
+
+    background:#f1f5f9;
+
+    color:#2563eb;
+
+}
+
+
+
+.menu-item i {
+
+    width:25px;
+
+}
+
+
+
+.content {
+
+    background:#f8fafc;
+
+    min-height:100vh;
+
+}

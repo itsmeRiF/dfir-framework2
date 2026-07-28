@@ -1,0 +1,916 @@
+{% extends "analysis/base.html" %}
+
+
+{% block analysis_content %}
+
+
+<div class="container-fluid">
+
+
+<!-- ================================================= -->
+<!-- HEADER -->
+<!-- ================================================= -->
+
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+
+<div>
+
+<h2 class="fw-bold">
+
+<i class="bi bi-memory text-primary"></i>
+
+Memory Analysis
+
+</h2>
+
+
+<p class="text-muted mb-0">
+
+Case:
+<strong>
+{{case.case_name}}
+</strong>
+
+|
+
+{{case.case_number or "#" ~ case.id}}
+
+</p>
+
+
+</div>
+
+
+
+
+<div>
+
+
+<a href="{{url_for('analysis.dashboard',case_id=case.id)}}"
+class="btn btn-outline-secondary">
+
+
+<i class="bi bi-arrow-left"></i>
+
+Back
+
+
+</a>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+<!-- ================================================= -->
+<!-- SUMMARY CARDS -->
+<!-- ================================================= -->
+
+
+<div class="row g-4 mb-4">
+
+
+
+<div class="col-md-3">
+
+<div class="card shadow-sm border-0">
+
+<div class="card-body">
+
+
+<small class="text-muted">
+Processes
+</small>
+
+
+<h2 class="fw-bold text-primary">
+
+{{memory.processes}}
+
+</h2>
+
+
+<i class="bi bi-cpu fs-2 text-primary"></i>
+
+
+</div>
+
+</div>
+
+</div>
+
+
+
+
+
+
+<div class="col-md-3">
+
+<div class="card shadow-sm border-0">
+
+<div class="card-body">
+
+
+<small class="text-muted">
+Network Connections
+</small>
+
+
+<h2 class="fw-bold text-info">
+
+{{memory.network}}
+
+</h2>
+
+
+<i class="bi bi-diagram-3 fs-2 text-info"></i>
+
+
+</div>
+
+</div>
+
+</div>
+
+
+
+
+
+
+
+<div class="col-md-3">
+
+<div class="card shadow-sm border-0">
+
+<div class="card-body">
+
+
+<small class="text-muted">
+Malfind
+</small>
+
+
+<h2 class="fw-bold text-danger">
+
+{{memory.malfind}}
+
+</h2>
+
+
+<i class="bi bi-bug fs-2 text-danger"></i>
+
+
+</div>
+
+</div>
+
+</div>
+
+
+
+
+
+
+
+
+<div class="col-md-3">
+
+<div class="card shadow-sm border-0">
+
+<div class="card-body">
+
+
+<small class="text-muted">
+Risk Score
+</small>
+
+
+<h2 class="fw-bold">
+
+
+{{risk_score}}
+
+
+</h2>
+
+
+{% if risk_score >= 70 %}
+
+<span class="badge bg-danger">
+HIGH RISK
+</span>
+
+
+{% elif risk_score >=30 %}
+
+
+<span class="badge bg-warning text-dark">
+MEDIUM
+</span>
+
+
+{% else %}
+
+
+<span class="badge bg-success">
+LOW
+</span>
+
+
+{% endif %}
+
+
+</div>
+
+</div>
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+<!-- ================================================= -->
+<!-- TABS -->
+<!-- ================================================= -->
+
+
+<div class="card shadow-sm">
+
+
+<div class="card-header">
+
+
+<ul class="nav nav-tabs card-header-tabs">
+
+
+<li class="nav-item">
+
+<button class="nav-link active"
+data-bs-toggle="tab"
+data-bs-target="#processes">
+
+
+<i class="bi bi-cpu"></i>
+
+Processes
+
+
+</button>
+
+</li>
+
+
+
+
+
+<li class="nav-item">
+
+
+<button class="nav-link"
+data-bs-toggle="tab"
+data-bs-target="#network">
+
+
+<i class="bi bi-globe"></i>
+
+Network Connections
+
+
+</button>
+
+
+</li>
+
+
+
+
+
+<li class="nav-item">
+
+
+<button class="nav-link"
+data-bs-toggle="tab"
+data-bs-target="#ioc">
+
+
+<i class="bi bi-shield-exclamation"></i>
+
+IoC
+
+
+</button>
+
+
+</li>
+
+
+
+</ul>
+
+
+</div>
+
+
+
+
+
+<div class="card-body">
+
+
+<div class="tab-content">
+
+
+
+
+
+<!-- ================================================= -->
+<!-- PROCESSES -->
+<!-- ================================================= -->
+
+
+<div class="tab-pane fade show active"
+id="processes">
+
+
+
+<div class="table-responsive">
+
+
+<table class="table table-hover">
+
+
+<thead class="table-light">
+
+
+<tr>
+
+<th>PID</th>
+
+<th>PPID</th>
+
+<th>Process</th>
+
+<th>User</th>
+
+<th>Path</th>
+
+<th>Risk</th>
+
+
+</tr>
+
+
+</thead>
+
+
+
+<tbody>
+
+
+
+{% for p in processes %}
+
+
+<tr>
+
+
+<td>
+{{p.pid}}
+</td>
+
+
+
+<td>
+{{p.ppid}}
+</td>
+
+
+
+
+<td class="fw-semibold">
+
+{{p.process_name}}
+
+</td>
+
+
+
+
+<td>
+
+{{p.username or "-"}}
+
+</td>
+
+
+
+
+<td>
+
+<small>
+
+{{p.path or "-"}}
+
+</small>
+
+</td>
+
+
+
+
+
+<td>
+
+
+{% if p.risk|lower=="high" %}
+
+
+<span class="badge bg-danger">
+
+HIGH
+
+</span>
+
+
+{% elif p.risk|lower=="medium" %}
+
+
+<span class="badge bg-warning text-dark">
+
+MEDIUM
+
+</span>
+
+
+{% else %}
+
+
+<span class="badge bg-success">
+
+LOW
+
+</span>
+
+
+{% endif %}
+
+
+</td>
+
+
+</tr>
+
+
+
+{% else %}
+
+
+<tr>
+
+<td colspan="6"
+class="text-center text-muted p-4">
+
+
+No process information available
+
+
+</td>
+
+</tr>
+
+
+{% endfor %}
+
+
+
+</tbody>
+
+
+</table>
+
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+
+<!-- ================================================= -->
+<!-- NETWORK -->
+<!-- ================================================= -->
+
+
+<div class="tab-pane fade"
+id="network">
+
+
+
+
+
+<div class="table-responsive">
+
+
+<table class="table table-hover">
+
+
+<thead class="table-light">
+
+
+<tr>
+
+
+<th>Protocol</th>
+
+<th>Local Address</th>
+
+<th>Remote Address</th>
+
+<th>State</th>
+
+<th>PID</th>
+
+<th>Process</th>
+
+
+</tr>
+
+
+</thead>
+
+
+
+<tbody>
+
+
+
+{% for n in networks %}
+
+
+<tr>
+
+
+<td>
+
+<span class="badge bg-primary">
+
+{{n.protocol}}
+
+</span>
+
+
+</td>
+
+
+
+
+<td>
+
+{{n.local_address}}
+
+</td>
+
+
+
+
+<td>
+
+{{n.remote_address}}
+
+</td>
+
+
+
+
+<td>
+
+{{n.state}}
+
+</td>
+
+
+
+
+<td>
+
+{{n.pid}}
+
+</td>
+
+
+
+<td>
+
+{{n.process_name}}
+
+</td>
+
+
+
+</tr>
+
+
+{% else %}
+
+
+<tr>
+
+<td colspan="6"
+class="text-center text-muted p-4">
+
+
+No network connections found
+
+
+</td>
+
+
+</tr>
+
+
+{% endfor %}
+
+
+
+</tbody>
+
+
+</table>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+
+
+
+<!-- ================================================= -->
+<!-- IOC -->
+<!-- ================================================= -->
+
+
+<div class="tab-pane fade"
+id="ioc">
+
+
+
+<div class="table-responsive">
+
+
+<table class="table table-hover">
+
+
+<thead class="table-light">
+
+
+<tr>
+
+
+<th>Type</th>
+
+<th>Indicator</th>
+
+<th>Source</th>
+
+<th>Severity</th>
+
+<th>Description</th>
+
+
+</tr>
+
+
+</thead>
+
+
+
+<tbody>
+
+
+
+{% for i in iocs %}
+
+
+<tr>
+
+
+
+<td>
+
+<span class="badge bg-secondary">
+
+{{i.ioc_type}}
+
+</span>
+
+
+</td>
+
+
+
+<td class="fw-semibold">
+
+{{i.indicator}}
+
+</td>
+
+
+
+
+<td>
+
+{{i.source or "-"}}
+
+</td>
+
+
+
+
+<td>
+
+
+{% if i.severity|lower=="critical" %}
+
+
+<span class="badge bg-danger">
+
+CRITICAL
+
+</span>
+
+
+{% elif i.severity|lower=="high" %}
+
+
+<span class="badge bg-warning text-dark">
+
+HIGH
+
+</span>
+
+
+{% elif i.severity|lower=="medium" %}
+
+
+<span class="badge bg-info">
+
+MEDIUM
+
+</span>
+
+
+{% else %}
+
+
+<span class="badge bg-success">
+
+LOW
+
+</span>
+
+
+{% endif %}
+
+
+</td>
+
+
+
+
+<td>
+
+{{i.description or "-"}}
+
+</td>
+
+
+
+</tr>
+
+
+
+{% else %}
+
+
+
+<tr>
+
+
+<td colspan="5"
+class="text-center text-muted p-4">
+
+
+No IoC detected
+
+
+</td>
+
+
+</tr>
+
+
+{% endfor %}
+
+
+
+</tbody>
+
+
+</table>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+</div>
+
+</div>
+
+</div>
+
+
+
+
+
+
+</div>
+
+
+
+
+
+<style>
+
+
+.card{
+
+border-radius:14px;
+
+}
+
+
+
+.table td,
+.table th{
+
+vertical-align:middle;
+
+}
+
+
+
+.nav-link{
+
+font-weight:600;
+
+}
+
+
+
+.badge{
+
+padding:.55em .8em;
+
+}
+
+
+
+</style>
+
+
+
+{% endblock %}

@@ -1,0 +1,188 @@
+{% extends "analysis_base.html" %}
+
+{% block analysis_content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <div>
+        <h2 class="fw-bold">
+            <i class="bi bi-file-earmark-text text-primary"></i>
+            Event Detail
+        </h2>
+    </div>
+
+    <a href="/events/{{ event.case_id }}"
+       class="btn btn-outline-secondary">
+
+        <i class="bi bi-arrow-left"></i>
+        Back to Events
+
+    </a>
+
+</div>
+
+
+<div class="row g-4">
+
+
+    <!-- Basic Information -->
+
+    <div class="col-md-6">
+
+        <div class="card">
+
+            <div class="card-header">
+                <i class="bi bi-info-circle"></i>
+                Event Information
+            </div>
+
+
+            <div class="card-body">
+
+
+                <table class="table table-borderless">
+
+
+                    <tr>
+                        <th width="35%">Event ID</th>
+                        <td>
+                            <code>{{ event.event_id }}</code>
+                        </td>
+                    </tr>
+
+
+                    <tr>
+                        <th>Rule</th>
+                        <td>{{ event.rule_title }}</td>
+                    </tr>
+
+
+                    <tr>
+                        <th>Computer</th>
+                        <td>{{ event.computer }}</td>
+                    </tr>
+
+
+                    <tr>
+                        <th>Channel</th>
+                        <td>{{ event.channel }}</td>
+                    </tr>
+
+
+                    <tr>
+                        <th>Timestamp</th>
+                        <td>{{ event.timestamp }}</td>
+                    </tr>
+
+
+                    <tr>
+                        <th>Record ID</th>
+                        <td>{{ event.record_id }}</td>
+                    </tr>
+
+
+                    <tr>
+                        <th>Severity</th>
+                        <td>
+
+                            {% if event.severity == "critical" %}
+
+                            <span class="badge bg-danger">
+                                Critical
+                            </span>
+
+                            {% elif event.severity == "high" %}
+
+                            <span class="badge bg-warning text-dark">
+                                High
+                            </span>
+
+                            {% elif event.severity == "medium" %}
+
+                            <span class="badge bg-info">
+                                Medium
+                            </span>
+
+                            {% elif event.severity == "low" %}
+
+                            <span class="badge bg-success">
+                                Low
+                            </span>
+
+                            {% else %}
+
+                            <span class="badge bg-secondary">
+                                {{ event.severity }}
+                            </span>
+
+                            {% endif %}
+
+                        </td>
+                    </tr>
+
+
+                </table>
+
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- Details -->
+
+    <div class="col-md-6">
+
+
+        <div class="card mb-4">
+
+            <div class="card-header">
+
+                <i class="bi bi-list-check"></i>
+                Details
+
+            </div>
+
+
+            <div class="card-body">
+
+                <pre style="white-space:pre-wrap">{{ event.details }}</pre>
+
+            </div>
+
+
+        </div>
+
+
+
+        <div class="card">
+
+
+            <div class="card-header">
+
+                <i class="bi bi-journal-code"></i>
+                Extra Information
+
+            </div>
+
+
+            <div class="card-body">
+
+                <pre style="white-space:pre-wrap">{{ event.extra_info }}</pre>
+
+            </div>
+
+
+        </div>
+
+
+    </div>
+
+
+</div>
+
+
+{% endblock %}

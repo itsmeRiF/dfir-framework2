@@ -1,0 +1,736 @@
+<!-- ==========================================================
+     CyberX DFIR Investigation Sidebar
+=========================================================== -->
+
+
+<div class="cx-sidebar">
+
+
+<!-- ================= LOGO ================= -->
+
+
+<div class="cx-brand">
+
+    <div class="cx-brand-icon">
+
+        <i class="bi bi-shield-lock-fill"></i>
+
+    </div>
+
+
+    <div>
+
+        <h4 class="mb-0">
+            CyberX
+        </h4>
+
+        <small>
+            DFIR Investigation Platform
+        </small>
+
+    </div>
+
+
+</div>
+
+
+
+
+<!-- ================= CASE HEADER ================= -->
+
+
+<div class="cx-case-header">
+
+
+<div class="d-flex align-items-center">
+
+
+<div class="cx-case-icon">
+
+<i class="bi bi-folder2-open"></i>
+
+</div>
+
+
+
+<div>
+
+<span>
+CASE
+</span>
+
+<h6>
+{{case.case_number or ("#" ~ case.id)}}
+</h6>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="mt-3">
+
+
+<div class="cx-status">
+
+
+{% if case.status|lower=="open" %}
+
+<i class="bi bi-circle-fill text-success"></i>
+
+OPEN
+
+
+{% elif case.status|lower=="closed" %}
+
+<i class="bi bi-circle-fill text-secondary"></i>
+
+CLOSED
+
+
+{% else %}
+
+<i class="bi bi-circle-fill text-warning"></i>
+
+{{case.status|upper}}
+
+{% endif %}
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+<!-- ================= SECTION ================= -->
+
+
+<div class="cx-title">
+
+INVESTIGATION
+
+</div>
+
+
+
+
+
+
+<a href="{{url_for('analysis.dashboard',case_id=case.id)}}"
+class="cx-link {% if request.endpoint=='analysis.dashboard' %}active{% endif %}">
+
+
+<i class="bi bi-speedometer2"></i>
+
+<span>
+Overview
+</span>
+
+
+</a>
+
+
+
+
+
+<a href="{{url_for('analysis.evidence',case_id=case.id)}}"
+class="cx-link {% if request.endpoint=='analysis.evidence' %}active{% endif %}">
+
+
+<i class="bi bi-hdd-stack"></i>
+
+<span>
+Evidence
+</span>
+
+
+<span class="cx-count">
+
+{{evidence_count|default(0)}}
+
+</span>
+
+
+</a>
+
+
+
+
+
+<a href="{{url_for('analysis.events',case_id=case.id)}}"
+class="cx-link {% if request.endpoint=='analysis.events' %}active{% endif %}">
+
+
+<i class="bi bi-journal-text"></i>
+
+<span>
+Event Logs
+</span>
+
+
+<span class="cx-count">
+
+{{event_count|default(0)}}
+
+</span>
+
+
+</a>
+
+
+
+
+
+<a href="{{url_for('analysis.timeline',case_id=case.id)}}"
+class="cx-link {% if request.endpoint=='analysis.timeline' %}active{% endif %}">
+
+
+<i class="bi bi-clock-history"></i>
+
+<span>
+Timeline
+</span>
+
+
+</a>
+
+
+
+
+
+<a href="{{url_for('analysis.incidents',case_id=case.id)}}"
+class="cx-link {% if request.endpoint=='analysis.incidents' %}active{% endif %}">
+
+
+<i class="bi bi-exclamation-triangle"></i>
+
+<span>
+Incidents
+</span>
+
+
+<span class="cx-count danger">
+
+{{incident_count|default(0)}}
+
+</span>
+
+
+</a>
+
+
+
+
+
+
+<a href="{{url_for('analysis.memory',case_id=case.id)}}"
+class="cx-link {% if request.endpoint=='analysis.memory' %}active{% endif %}">
+
+
+<i class="bi bi-memory"></i>
+
+<span>
+Memory Analysis
+</span>
+
+
+</a>
+
+
+
+
+
+
+<a href="{{url_for('analysis.validation',case_id=case.id)}}"
+class="cx-link {% if request.endpoint=='analysis.validation' %}active{% endif %}">
+
+
+<i class="bi bi-check-circle"></i>
+
+<span>
+Validation
+</span>
+
+
+</a>
+
+
+
+
+
+
+
+<!-- ================= RISK CARD ================= -->
+
+
+<div class="cx-title mt-4">
+
+CASE HEALTH
+
+</div>
+
+
+
+
+<div class="cx-risk-card">
+
+
+<div>
+
+<small>
+Risk Score
+</small>
+
+
+<h2>
+
+{{risk_score|default(0)}}
+
+</h2>
+
+
+</div>
+
+
+
+<div>
+
+
+{% set risk=risk_score|default(0)|int %}
+
+
+{% if risk >=70 %}
+
+<span class="risk-high">
+HIGH
+</span>
+
+
+{% elif risk >=30 %}
+
+
+<span class="risk-medium">
+MEDIUM
+</span>
+
+
+{% else %}
+
+
+<span class="risk-low">
+LOW
+</span>
+
+
+{% endif %}
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+
+
+<!-- ================= UPCOMING ================= -->
+
+
+<div class="cx-title mt-4">
+
+UPCOMING
+
+</div>
+
+
+
+
+<div class="cx-disabled">
+
+<i class="bi bi-bar-chart"></i>
+
+Reports
+
+</div>
+
+
+
+
+<div class="cx-disabled">
+
+<i class="bi bi-globe"></i>
+
+Threat Intelligence
+
+</div>
+
+
+
+
+<div class="cx-disabled">
+
+<i class="bi bi-diagram-3"></i>
+
+MITRE ATT&CK
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+
+<style>
+
+
+.cx-sidebar{
+
+padding:20px;
+
+height:100%;
+
+background:#ffffff;
+
+border-right:1px solid #e5e7eb;
+
+}
+
+
+
+.cx-brand{
+
+display:flex;
+
+align-items:center;
+
+gap:12px;
+
+margin-bottom:25px;
+
+}
+
+
+
+.cx-brand-icon{
+
+width:45px;
+
+height:45px;
+
+border-radius:12px;
+
+display:flex;
+
+align-items:center;
+
+justify-content:center;
+
+background:#e8f0ff;
+
+color:#2563eb;
+
+font-size:22px;
+
+}
+
+
+
+.cx-brand small{
+
+color:#6b7280;
+
+}
+
+
+
+
+.cx-case-header{
+
+background:#f8fafc;
+
+border-radius:16px;
+
+padding:15px;
+
+margin-bottom:25px;
+
+}
+
+
+
+.cx-case-icon{
+
+width:38px;
+
+height:38px;
+
+border-radius:10px;
+
+background:#eef2ff;
+
+display:flex;
+
+align-items:center;
+
+justify-content:center;
+
+margin-right:12px;
+
+color:#4f46e5;
+
+}
+
+
+
+.cx-case-header span{
+
+font-size:11px;
+
+color:#6b7280;
+
+}
+
+
+
+.cx-case-header h6{
+
+margin:0;
+
+font-weight:700;
+
+}
+
+
+
+.cx-status{
+
+font-size:13px;
+
+font-weight:600;
+
+}
+
+
+
+
+
+.cx-title{
+
+font-size:12px;
+
+font-weight:700;
+
+color:#94a3b8;
+
+letter-spacing:.8px;
+
+margin-bottom:10px;
+
+}
+
+
+
+
+
+.cx-link{
+
+display:flex;
+
+align-items:center;
+
+gap:12px;
+
+padding:12px 14px;
+
+margin-bottom:6px;
+
+border-radius:12px;
+
+text-decoration:none;
+
+color:#334155;
+
+transition:.2s;
+
+}
+
+
+
+.cx-link:hover{
+
+background:#f1f5f9;
+
+}
+
+
+
+.cx-link.active{
+
+background:#2563eb;
+
+color:white;
+
+}
+
+
+
+.cx-link i{
+
+font-size:18px;
+
+}
+
+
+
+.cx-count{
+
+margin-left:auto;
+
+background:#e2e8f0;
+
+padding:3px 8px;
+
+border-radius:20px;
+
+font-size:12px;
+
+}
+
+
+
+.cx-link.active .cx-count{
+
+background:white;
+
+color:#2563eb;
+
+}
+
+
+
+.cx-count.danger{
+
+background:#fee2e2;
+
+color:#dc2626;
+
+}
+
+
+
+
+
+.cx-risk-card{
+
+display:flex;
+
+justify-content:space-between;
+
+align-items:center;
+
+padding:15px;
+
+border-radius:15px;
+
+background:#f8fafc;
+
+}
+
+
+
+.cx-risk-card h2{
+
+margin:0;
+
+font-weight:700;
+
+}
+
+
+
+.risk-high{
+
+background:#fee2e2;
+
+color:#dc2626;
+
+padding:6px 12px;
+
+border-radius:20px;
+
+font-size:12px;
+
+}
+
+
+
+.risk-medium{
+
+background:#fef3c7;
+
+color:#d97706;
+
+padding:6px 12px;
+
+border-radius:20px;
+
+font-size:12px;
+
+}
+
+
+
+.risk-low{
+
+background:#dcfce7;
+
+color:#16a34a;
+
+padding:6px 12px;
+
+border-radius:20px;
+
+font-size:12px;
+
+}
+
+
+
+
+.cx-disabled{
+
+padding:12px;
+
+color:#94a3b8;
+
+display:flex;
+
+gap:12px;
+
+cursor:not-allowed;
+
+}
+
+
+
+</style>

@@ -14,7 +14,7 @@ def incidents(case_id):
     )
 
     return render_template(
-        "incidents.html",
+        "analysis/incidents.html",
         incidents=data,
         case_id=case_id
     )

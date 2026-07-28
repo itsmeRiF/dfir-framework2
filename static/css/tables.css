@@ -1,0 +1,45 @@
+/* ==========================================
+   Pagination
+========================================== */
+
+.cx-pagination{
+
+    background:#fff;
+
+    border:1px solid var(--cx-border);
+
+    border-radius:14px;
+
+    padding:18px 20px;
+
+    box-shadow:var(--shadow);
+
+}
+
+.pagination .page-link{
+
+    border:none;
+
+    margin:0 2px;
+
+    border-radius:8px;
+
+    color:#374151;
+
+}
+
+.pagination .page-item.active .page-link{
+
+    background:var(--cx-primary);
+
+    color:#fff;
+
+}
+
+.pagination .page-link:hover{
+
+    background:#eef4ff;
+
+    color:var(--cx-primary);
+
+}

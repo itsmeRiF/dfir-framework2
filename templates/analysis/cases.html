@@ -1,0 +1,334 @@
+{% extends "analysis_base.html" %}
+
+
+{% block analysis_content %}
+
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+
+<div>
+
+<h2 class="fw-bold">
+
+<i class="bi bi-folder2-open text-primary"></i>
+
+Investigation Cases
+
+</h2>
+
+<p class="text-muted mb-0">
+
+Case Management Dashboard
+
+</p>
+
+</div>
+
+
+<a href="/cases/new"
+class="btn btn-primary">
+
+<i class="bi bi-plus-circle"></i>
+
+New Case
+
+</a>
+
+
+</div>
+
+
+
+
+<div class="row g-4">
+
+
+{% for item in cases %}
+
+
+{% set case = item.case %}
+
+
+<div class="col-lg-4">
+
+
+<div class="card shadow-sm border-0 h-100">
+
+
+<div class="card-body">
+
+
+<div class="d-flex justify-content-between align-items-start">
+
+
+<div>
+
+<h5 class="fw-bold">
+
+<i class="bi bi-folder-fill text-warning"></i>
+
+{{ case.case_name }}
+
+</h5>
+
+
+<small class="text-muted">
+
+{{ case.case_number }}
+
+</small>
+
+
+</div>
+
+
+
+{% if case.status|lower == "open" %}
+
+<span class="badge bg-success">
+
+OPEN
+
+</span>
+
+{% elif case.status|lower == "closed" %}
+
+<span class="badge bg-secondary">
+
+CLOSED
+
+</span>
+
+{% else %}
+
+<span class="badge bg-warning text-dark">
+
+{{case.status}}
+
+</span>
+
+{% endif %}
+
+
+</div>
+
+
+
+<hr>
+
+
+
+<div class="row text-center mb-3">
+
+
+<div class="col">
+
+<h5 class="text-primary">
+
+{{ item.evidence_count }}
+
+</h5>
+
+<small>
+
+Evidence
+
+</small>
+
+</div>
+
+
+
+<div class="col">
+
+<h5 class="text-warning">
+
+{{ item.event_count }}
+
+</h5>
+
+<small>
+
+Events
+
+</small>
+
+</div>
+
+
+
+<div class="col">
+
+<h5 class="text-danger">
+
+{{ item.incident_count }}
+
+</h5>
+
+<small>
+
+Incidents
+
+</small>
+
+</div>
+
+
+</div>
+
+
+
+
+<table class="table table-sm">
+
+
+<tr>
+
+<td>
+
+Severity
+
+</td>
+
+
+<td>
+
+
+{% if case.severity == "critical" %}
+
+<span class="badge bg-danger">
+
+Critical
+
+</span>
+
+{% elif case.severity == "high" %}
+
+<span class="badge bg-warning text-dark">
+
+High
+
+</span>
+
+{% else %}
+
+<span class="badge bg-info">
+
+{{case.severity}}
+
+</span>
+
+{% endif %}
+
+
+</td>
+
+
+</tr>
+
+
+
+<tr>
+
+<td>
+
+Priority
+
+</td>
+
+<td>
+
+{{case.priority}}
+
+</td>
+
+
+</tr>
+
+
+
+<tr>
+
+<td>
+
+Type
+
+</td>
+
+<td>
+
+{{case.incident_type or "-"}}
+
+</td>
+
+
+</tr>
+
+
+
+<tr>
+
+<td>
+
+Investigator
+
+</td>
+
+<td>
+
+{{case.lead_investigator or "-"}}
+
+</td>
+
+
+</tr>
+
+
+
+</table>
+
+
+
+
+<a href="/analysis/{{case.id}}"
+class="btn btn-outline-primary w-100">
+
+
+<i class="bi bi-search"></i>
+
+Open Analysis
+
+
+</a>
+
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+{% else %}
+
+
+<div class="alert alert-warning">
+
+No cases available.
+
+</div>
+
+
+{% endfor %}
+
+
+</div>
+
+
+
+{% endblock %}

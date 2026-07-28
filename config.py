@@ -16,3 +16,9 @@ class Config:
     OUTPUT_FOLDER = os.path.join(BASE_DIR, "output")
 
     TOOL_FOLDER = os.path.join(BASE_DIR, "tools")
+    
+    HAYABUSA_PATH = os.path.join(
+    BASE_DIR,
+    "tools",
+    "hayabusa.exe"
+    )

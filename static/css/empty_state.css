@@ -1,0 +1,65 @@
+/* ==========================================
+   Empty State
+========================================== */
+
+.cx-empty{
+
+    background:#fff;
+
+    border:1px dashed var(--cx-border);
+
+    border-radius:16px;
+
+    padding:70px 40px;
+
+    text-align:center;
+
+    box-shadow:var(--shadow);
+
+}
+
+.cx-empty-icon{
+
+    width:90px;
+
+    height:90px;
+
+    margin:auto;
+
+    margin-bottom:20px;
+
+    border-radius:50%;
+
+    background:#eef4ff;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+}
+
+.cx-empty-icon i{
+
+    font-size:42px;
+
+    color:var(--cx-primary);
+
+}
+
+.cx-empty h4{
+
+    margin-bottom:15px;
+
+    font-weight:700;
+
+}
+
+.cx-empty p{
+
+    color:var(--cx-muted);
+
+    margin-bottom:30px;
+
+}

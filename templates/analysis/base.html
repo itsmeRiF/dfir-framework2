@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="d-flex">
+
+    <!-- ==========================================
+         SIDEBAR
+    =========================================== -->
+
+    <aside class="cx-sidebar">
+
+        {% include "components/sidebar.html" %}
+
+    </aside>
+
+
+    <!-- ==========================================
+         MAIN CONTENT
+    =========================================== -->
+
+    <main class="flex-grow-1">
+
+        <div class="container-fluid py-4 px-4 fade-in">
+
+            {% block analysis_content %}
+
+            {% endblock %}
+
+        </div>
+
+    </main>
+
+</div>
+
+{% endblock %}

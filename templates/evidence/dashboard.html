@@ -1,0 +1,640 @@
+{% extends "analysis/base.html" %}
+
+
+{% block analysis_content %}
+
+
+<div class="container-fluid">
+
+
+<!-- ================================================= -->
+<!-- HEADER -->
+<!-- ================================================= -->
+
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+
+<div>
+
+<h2 class="fw-bold">
+
+<i class="bi bi-hdd-stack text-primary"></i>
+
+Evidence Management
+
+</h2>
+
+
+<p class="text-muted mb-0">
+
+Case:
+
+<strong>
+{{ case.case_name }}
+</strong>
+
+|
+
+{{ case.case_number or "#" ~ case.id }}
+
+</p>
+
+
+</div>
+
+
+
+<div>
+
+<a href="{{ url_for('analysis.dashboard', case_id=case.id) }}"
+class="btn btn-outline-secondary">
+
+<i class="bi bi-arrow-left"></i>
+
+Back
+
+</a>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+<!-- ================================================= -->
+<!-- UPLOAD -->
+<!-- ================================================= -->
+
+
+<div class="card shadow-sm mb-4">
+
+
+<div class="card-header fw-bold">
+
+<i class="bi bi-cloud-upload"></i>
+
+Add Evidence
+
+</div>
+
+
+
+<div class="card-body">
+
+
+<form method="POST"
+action="{{ url_for('evidence.upload_evidence', case_id=case.id) }}"
+enctype="multipart/form-data">
+
+
+<div class="row g-3">
+
+
+<div class="col-md-9">
+
+<input type="file"
+name="file"
+class="form-control"
+required>
+
+</div>
+
+
+
+<div class="col-md-3">
+
+
+<button class="btn btn-primary w-100">
+
+<i class="bi bi-upload"></i>
+
+Upload Evidence
+
+</button>
+
+
+</div>
+
+
+</div>
+
+
+</form>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+
+<!-- ================================================= -->
+<!-- STATISTICS -->
+<!-- ================================================= -->
+
+
+<div class="row g-4 mb-4">
+
+
+<div class="col-md-3">
+
+<div class="card shadow-sm border-0">
+
+<div class="card-body">
+
+
+<small class="text-muted">
+Total Evidence
+</small>
+
+
+<h2 class="fw-bold text-primary">
+
+{{ evidences|length }}
+
+</h2>
+
+
+<i class="bi bi-files fs-2 text-primary"></i>
+
+
+</div>
+
+</div>
+
+</div>
+
+
+
+
+
+<div class="col-md-3">
+
+<div class="card shadow-sm border-0">
+
+<div class="card-body">
+
+
+<small class="text-muted">
+Queued
+</small>
+
+
+<h2 class="fw-bold text-warning">
+
+{{ evidences|selectattr("status","equalto","Queued")|list|length }}
+
+</h2>
+
+
+<i class="bi bi-hourglass-split fs-2 text-warning"></i>
+
+
+</div>
+
+</div>
+
+</div>
+
+
+
+
+
+<div class="col-md-3">
+
+<div class="card shadow-sm border-0">
+
+<div class="card-body">
+
+
+<small class="text-muted">
+Completed
+</small>
+
+
+<h2 class="fw-bold text-success">
+
+{{ evidences|selectattr("status","equalto","Completed")|list|length }}
+
+</h2>
+
+
+<i class="bi bi-check-circle fs-2 text-success"></i>
+
+
+</div>
+
+</div>
+
+</div>
+
+
+
+
+
+<div class="col-md-3">
+
+<div class="card shadow-sm border-0">
+
+<div class="card-body">
+
+
+<small class="text-muted">
+Failed
+</small>
+
+
+<h2 class="fw-bold text-danger">
+
+{{ evidences|selectattr("status","equalto","Failed")|list|length }}
+
+</h2>
+
+
+<i class="bi bi-x-circle fs-2 text-danger"></i>
+
+
+</div>
+
+</div>
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+
+<!-- ================================================= -->
+<!-- EVIDENCE TABLE -->
+<!-- ================================================= -->
+
+
+<div class="card shadow-sm">
+
+
+<div class="card-header d-flex justify-content-between">
+
+
+<span>
+
+<i class="bi bi-folder2-open"></i>
+
+Evidence Repository
+
+</span>
+
+
+<span class="badge bg-primary">
+
+{{ evidences|length }}
+
+Files
+
+</span>
+
+
+</div>
+
+
+
+
+
+<div class="table-responsive">
+
+
+<table class="table table-hover mb-0">
+
+
+<thead class="table-light">
+
+
+<tr>
+
+<th>
+File
+</th>
+
+<th>
+Artifact
+</th>
+
+<th>
+Parser
+</th>
+
+<th>
+Size
+</th>
+
+<th>
+SHA256
+</th>
+
+<th>
+Status
+</th>
+
+<th>
+Uploaded
+</th>
+
+</tr>
+
+
+</thead>
+
+
+
+
+<tbody>
+
+
+{% for e in evidences %}
+
+
+<tr>
+
+
+<td>
+
+
+<div class="fw-semibold">
+
+{{ e.filename }}
+
+</div>
+
+
+<small class="text-muted">
+
+{{ e.original_filename or "-" }}
+
+</small>
+
+
+</td>
+
+
+
+
+
+
+<td>
+
+
+{% if e.artifact_type %}
+
+
+<span class="badge bg-info">
+
+{{ e.artifact_type }}
+
+</span>
+
+
+{% else %}
+
+-
+
+{% endif %}
+
+
+</td>
+
+
+
+
+
+
+<td>
+
+{{ e.parser or "Pending" }}
+
+
+</td>
+
+
+
+
+
+
+<td>
+
+
+{{ e.size_mb }} MB
+
+
+</td>
+
+
+
+
+
+
+<td>
+
+
+{% if e.sha256 %}
+
+
+<code>
+
+{{ e.sha256[:20] }}...
+
+</code>
+
+
+{% else %}
+
+<span class="text-muted">
+
+Not calculated
+
+</span>
+
+
+{% endif %}
+
+
+
+</td>
+
+
+
+
+
+
+
+<td>
+
+
+{% if e.status|lower=="completed" %}
+
+
+<span class="badge bg-success">
+
+Completed
+
+</span>
+
+
+{% elif e.status|lower=="failed" %}
+
+
+<span class="badge bg-danger">
+
+Failed
+
+</span>
+
+
+{% else %}
+
+
+<span class="badge bg-warning text-dark">
+
+{{ e.status }}
+
+</span>
+
+
+{% endif %}
+
+
+
+</td>
+
+
+
+
+
+
+
+<td>
+
+
+{% if e.uploaded_at %}
+
+
+{{ e.uploaded_at.strftime("%d-%b-%Y %H:%M") }}
+
+
+{% else %}
+
+-
+
+{% endif %}
+
+
+</td>
+
+
+
+</tr>
+
+
+
+{% else %}
+
+
+
+<tr>
+
+<td colspan="7"
+class="text-center text-muted p-5">
+
+
+<i class="bi bi-inbox fs-1 d-block mb-3"></i>
+
+
+No evidence available
+
+
+</td>
+
+
+</tr>
+
+
+
+{% endfor %}
+
+
+
+</tbody>
+
+
+</table>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+</div>
+
+
+
+
+
+
+<style>
+
+
+.card{
+
+border-radius:14px;
+
+}
+
+
+.table td,
+.table th{
+
+vertical-align:middle;
+
+}
+
+
+.badge{
+
+padding:.5em .8em;
+
+}
+
+
+code{
+
+font-size:.85rem;
+
+}
+
+
+
+</style>
+
+
+
+{% endblock %}

@@ -1,0 +1,309 @@
+/* ==========================================================
+   CyberX DFIR v2
+   Utilities.css
+   Global Utility Classes
+========================================================== */
+
+:root{
+
+    --cx-primary:#2563eb;
+    --cx-success:#16a34a;
+    --cx-warning:#f59e0b;
+    --cx-danger:#dc2626;
+
+    --cx-bg:#f5f7fb;
+    --cx-card:#ffffff;
+
+    --cx-border:#e5e7eb;
+
+    --cx-text:#111827;
+    --cx-muted:#6b7280;
+
+    --radius:14px;
+
+    --shadow:
+        0 6px 18px rgba(0,0,0,.05);
+
+    --transition:.25s;
+}
+
+body{
+
+    background:var(--cx-bg);
+
+    color:var(--cx-text);
+
+    font-family:
+        "Segoe UI",
+        Roboto,
+        Arial,
+        sans-serif;
+
+}
+
+
+/* ==========================================================
+   Links
+========================================================== */
+
+a{
+
+    text-decoration:none;
+
+}
+
+a:hover{
+
+    text-decoration:none;
+
+}
+
+
+/* ==========================================================
+   Margin Helpers
+========================================================== */
+
+.mt-30{
+
+    margin-top:30px;
+
+}
+
+.mb-30{
+
+    margin-bottom:30px;
+
+}
+
+.my-30{
+
+    margin-top:30px;
+    margin-bottom:30px;
+
+}
+
+.mx-30{
+
+    margin-left:30px;
+    margin-right:30px;
+
+}
+
+
+/* ==========================================================
+   Padding Helpers
+========================================================== */
+
+.p-30{
+
+    padding:30px;
+
+}
+
+.py-30{
+
+    padding-top:30px;
+    padding-bottom:30px;
+
+}
+
+.px-30{
+
+    padding-left:30px;
+    padding-right:30px;
+
+}
+
+
+/* ==========================================================
+   Radius
+========================================================== */
+
+.rounded-xl{
+
+    border-radius:var(--radius);
+
+}
+
+
+/* ==========================================================
+   Shadow
+========================================================== */
+
+.shadow-soft{
+
+    box-shadow:var(--shadow);
+
+}
+
+
+/* ==========================================================
+   Cards
+========================================================== */
+
+.cx-card{
+
+    background:var(--cx-card);
+
+    border-radius:var(--radius);
+
+    border:1px solid var(--cx-border);
+
+    box-shadow:var(--shadow);
+
+    transition:all var(--transition);
+
+}
+
+.cx-card:hover{
+
+    transform:translateY(-3px);
+
+}
+
+
+/* ==========================================================
+   Text
+========================================================== */
+
+.text-muted{
+
+    color:var(--cx-muted)!important;
+
+}
+
+.fw-600{
+
+    font-weight:600;
+
+}
+
+.fw-700{
+
+    font-weight:700;
+
+}
+
+
+/* ==========================================================
+   Cursor
+========================================================== */
+
+.pointer{
+
+    cursor:pointer;
+
+}
+
+
+/* ==========================================================
+   Badges
+========================================================== */
+
+.cx-badge{
+
+    padding:6px 12px;
+
+    border-radius:30px;
+
+    font-size:12px;
+
+    font-weight:600;
+
+}
+
+.badge-critical{
+
+    background:#ffe3e3;
+
+    color:#dc2626;
+
+}
+
+.badge-high{
+
+    background:#fff1d6;
+
+    color:#d97706;
+
+}
+
+.badge-medium{
+
+    background:#fff7d6;
+
+    color:#ca8a04;
+
+}
+
+.badge-low{
+
+    background:#e5f7ec;
+
+    color:#15803d;
+
+}
+
+.badge-info{
+
+    background:#e8f1ff;
+
+    color:#2563eb;
+
+}
+
+
+/* ==========================================================
+   Scrollbar
+========================================================== */
+
+::-webkit-scrollbar{
+
+    width:10px;
+
+}
+
+::-webkit-scrollbar-thumb{
+
+    background:#d1d5db;
+
+    border-radius:20px;
+
+}
+
+::-webkit-scrollbar-thumb:hover{
+
+    background:#9ca3af;
+
+}
+
+
+/* ==========================================================
+   Animation
+========================================================== */
+
+.fade-in{
+
+    animation:fade .3s ease;
+
+}
+
+@keyframes fade{
+
+    from{
+
+        opacity:0;
+
+        transform:translateY(10px);
+
+    }
+
+    to{
+
+        opacity:1;
+
+        transform:none;
+
+    }
+
+}

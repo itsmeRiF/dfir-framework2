@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container-fluid px-0">
+
+<div class="row g-0">
+
+    <!-- ===================================== -->
+    <!-- SIDEBAR -->
+    <!-- ===================================== -->
+
+    <div class="col-md-3 col-lg-2 border-end bg-white"
+         style="min-height:calc(100vh - 56px);">
+
+        <div class="p-3">
+
+            <h5 class="fw-bold text-primary mb-1">
+                <i class="bi bi-shield-lock-fill"></i>
+                CyberX DFIR
+            </h5>
+
+            {% if case %}
+            <small class="text-muted d-block mb-3">
+                {{ case.case_name }}
+                <br>
+                #{{ case.id }}
+            </small>
+            {% endif %}
+
+            <div class="list-group list-group-flush">
+
+                <a href="/cases"
+                   class="list-group-item list-group-item-action">
+                    <i class="bi bi-folder2-open me-2"></i>
+                    Cases
+                </a>
+
+                <a href="/analysis/dashboard/{{case_id}}"
+                   class="list-group-item list-group-item-action">
+                    <i class="bi bi-speedometer2 me-2"></i>
+                    Dashboard
+                </a>
+
+                <hr>
+
+                <small class="text-muted px-3 mb-2">
+                    FORENSIC ANALYSIS
+                </small>
+
+                <a href="/analysis/evidence/{{case_id}}"
+                   class="list-group-item list-group-item-action">
+                    <i class="bi bi-hdd-fill me-2"></i>
+                    Evidence
+                </a>
+
+                <a href="/analysis/events/{{case_id}}"
+                   class="list-group-item list-group-item-action">
+                    <i class="bi bi-list-ul me-2"></i>
+                    Event Logs
+                </a>
+
+                <a href="/analysis/timeline/{{case_id}}"
+                   class="list-group-item list-group-item-action">
+                    <i class="bi bi-clock-history me-2"></i>
+                    Timeline
+                </a>
+
+                <a href="/analysis/incidents/{{case_id}}"
+                   class="list-group-item list-group-item-action">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    Incidents
+                </a>
+
+                <a href="/analysis/memory/{{case_id}}"
+                   class="list-group-item list-group-item-action">
+                    <i class="bi bi-memory me-2"></i>
+                    Memory
+                </a>
+
+                <hr>
+
+                <small class="text-muted px-3 mb-2">
+                    WINDOWS ARTIFACTS
+                </small>
+
+                <a href="/registry/{{case_id}}"
+                   class="list-group-item list-group-item-action">
+                    <i class="bi bi-diagram-3 me-2"></i>
+                    Registry
+                </a>
+
+                <a href="/mft/{{case_id}}"
+                   class="list-group-item list-group-item-action">
+                    <i class="bi bi-file-earmark-binary me-2"></i>
+                    MFT
+                </a>
+
+                <a href="/usn/{{case_id}}"
+                   class="list-group-item list-group-item-action">
+                    <i class="bi bi-journal-code me-2"></i>
+                    USN Journal
+                </a>
+
+                <a href="/prefetch/{{case_id}}"
+                   class="list-group-item list-group-item-action">
+                    <i class="bi bi-lightning-charge me-2"></i>
+                    Prefetch
+                </a>
+
+                <a href="/jumplist/{{case_id}}"
+                   class="list-group-item list-group-item-action">
+                    <i class="bi bi-list-task me-2"></i>
+                    Jump Lists
+                </a>
+
+                <a href="/browser/{{case_id}}"
+                   class="list-group-item list-group-item-action">
+                    <i class="bi bi-globe me-2"></i>
+                    Browser
+                </a>
+
+                <hr>
+
+                <a href="/reports/{{case_id}}"
+                   class="list-group-item list-group-item-action">
+                    <i class="bi bi-file-earmark-pdf me-2"></i>
+                    Reports
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- ===================================== -->
+    <!-- CONTENT -->
+    <!-- ===================================== -->
+
+    <div class="col-md-9 col-lg-10">
+
+        <div class="p-4">
+
+            {% block analysis_content %}
+            {% endblock %}
+
+        </div>
+
+    </div>
+
+</div>
+
+</div>
+
+{% endblock %}

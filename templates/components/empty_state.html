@@ -1,0 +1,34 @@
+<div class="cx-empty">
+
+    <div class="cx-empty-icon">
+
+        <i class="bi {{ icon|default('bi-folder2-open') }}"></i>
+
+    </div>
+
+    <h4>
+
+        {{ title|default("No Data Available") }}
+
+    </h4>
+
+    <p>
+
+        {{ message|default("No records were found for this investigation.") }}
+
+    </p>
+
+    {% if button_url %}
+
+    <a href="{{ button_url }}"
+       class="btn btn-primary">
+
+        <i class="bi bi-upload"></i>
+
+        {{ button_text|default("Upload Evidence") }}
+
+    </a>
+
+    {% endif %}
+
+</div>

@@ -1,6 +1,7 @@
-{% extends "base.html" %}
+{% extends "analysis_base.html" %}
 
-{% block content %}
+
+{% block analysis_content %}
 
 <div class="d-flex justify-content-between align-items-center mb-4">
 
@@ -10,15 +11,9 @@
 
             <i class="bi bi-list-ul text-primary"></i>
 
-            Incidents Explorer
+            Event Logs | Case #{{ case_id }}
 
         </h2>
-
-        <p class="text-muted mb-0">
-
-            Investigation Case #{{ case_id }}
-
-        </p>
 
     </div>
 
@@ -33,7 +28,7 @@
 
 </div>
 
-<!-- Statistics -->
+
 
 <div class="row mb-4">
 
@@ -313,7 +308,11 @@
 
                     </td>
 
-                    <td>{{ e.rule_title }}</td>
+                    <td>
+						<a href="/event/{{ e.id }}">
+						{{ e.rule_title }}
+						</a>
+					</td>
 
                     <td>{{ e.computer }}</td>
 

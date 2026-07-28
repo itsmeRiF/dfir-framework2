@@ -114,7 +114,7 @@ def view_events(case_id):
     pagination = query.paginate(page=page, per_page=25, error_out=False)
 
     return render_template(
-        "events.html",
+        "analysis/events.html",
         events=pagination.items,
         pagination=pagination,
         case_id=case_id,

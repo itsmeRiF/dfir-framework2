@@ -1,0 +1,298 @@
+/* ==========================================================
+   CyberX DFIR v2
+   Sidebar
+========================================================== */
+
+.cx-sidebar{
+
+    width:260px;
+
+    min-height:100vh;
+
+    background:#ffffff;
+
+    border-right:1px solid var(--cx-border);
+
+    position:sticky;
+
+    top:0;
+
+    padding:25px 18px;
+
+    overflow-y:auto;
+
+}
+
+/* ==========================================================
+   Logo
+========================================================== */
+
+.cx-logo{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:12px;
+
+    margin-bottom:30px;
+
+}
+
+.cx-logo i{
+
+    font-size:28px;
+
+    color:var(--cx-primary);
+
+}
+
+.cx-logo h4{
+
+    margin:0;
+
+    font-weight:700;
+
+}
+
+/* ==========================================================
+   Section Title
+========================================================== */
+
+.cx-section{
+
+    font-size:11px;
+
+    color:var(--cx-muted);
+
+    font-weight:700;
+
+    text-transform:uppercase;
+
+    letter-spacing:1px;
+
+    margin-top:25px;
+
+    margin-bottom:12px;
+
+}
+
+/* ==========================================================
+   Menu
+========================================================== */
+
+.cx-menu{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:12px;
+
+    color:#374151;
+
+    padding:12px 15px;
+
+    border-radius:12px;
+
+    margin-bottom:6px;
+
+    transition:.25s;
+
+    font-weight:500;
+
+}
+
+.cx-menu i{
+
+    width:22px;
+
+    text-align:center;
+
+    font-size:18px;
+
+}
+
+/* ==========================================================
+   Hover
+========================================================== */
+
+.cx-menu:hover{
+
+    background:#eef4ff;
+
+    color:var(--cx-primary);
+
+    transform:translateX(4px);
+
+}
+
+/* ==========================================================
+   Active
+========================================================== */
+
+.cx-menu.active{
+
+    background:var(--cx-primary);
+
+    color:#fff;
+
+    font-weight:600;
+
+    box-shadow:0 5px 15px rgba(37,99,235,.25);
+
+}
+
+.cx-menu.active i{
+
+    color:#fff;
+
+}
+
+/* ==========================================================
+   Disabled
+========================================================== */
+
+.cx-menu.disabled{
+
+    opacity:.45;
+
+    cursor:not-allowed;
+
+}
+
+.cx-menu.disabled:hover{
+
+    background:none;
+
+    transform:none;
+
+    color:#374151;
+
+}
+
+/* ==========================================================
+   Divider
+========================================================== */
+
+.cx-divider{
+
+    border-top:1px solid var(--cx-border);
+
+    margin:25px 0;
+
+}
+
+/* ==========================================================
+   Case Card
+========================================================== */
+
+.cx-case-card{
+
+    background:#f8fafc;
+
+    border:1px solid var(--cx-border);
+
+    border-radius:14px;
+
+    padding:18px;
+
+}
+
+.cx-case-card h6{
+
+    margin-bottom:15px;
+
+    font-weight:700;
+
+}
+
+.cx-case-item{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    margin-bottom:10px;
+
+    font-size:14px;
+
+}
+
+.cx-case-item span:last-child{
+
+    font-weight:600;
+
+}
+
+/* ==========================================================
+   Risk Colors
+========================================================== */
+
+.cx-risk-high{
+
+    color:#dc2626;
+
+}
+
+.cx-risk-medium{
+
+    color:#ca8a04;
+
+}
+
+.cx-risk-low{
+
+    color:#16a34a;
+
+}
+
+/* ==========================================================
+   Mobile
+========================================================== */
+
+@media(max-width:991px){
+
+.cx-sidebar{
+
+    width:100%;
+
+    min-height:auto;
+
+    position:relative;
+
+}
+
+}
+
+/* ==========================================================
+   Toolbar
+========================================================== */
+
+.cx-toolbar{
+
+    background:#ffffff;
+
+    border:1px solid var(--cx-border);
+
+    border-radius:14px;
+
+    padding:22px 25px;
+
+    box-shadow:var(--shadow);
+
+}
+
+.cx-toolbar h3{
+
+    margin:0;
+
+    font-weight:700;
+
+}
+
+.cx-toolbar small{
+
+    color:var(--cx-muted);
+
+}

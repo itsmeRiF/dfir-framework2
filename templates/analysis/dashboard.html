@@ -1,0 +1,1685 @@
+{% extends "analysis/base.html" %}
+
+{% block analysis_content %}
+
+<div class="container-fluid">
+
+
+<!-- ================= HEADER ================= -->
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+<div>
+
+<h2 class="fw-bold mb-1">
+
+<i class="bi bi-folder2-open text-primary"></i>
+
+{{case.case_name}}
+
+</h2>
+
+
+<div class="text-muted">
+
+Case Number :
+
+<strong>
+{{case.case_number or "Pending"}}
+</strong>
+
+<br>
+
+Case ID :
+
+<strong>
+#{{case.id}}
+</strong>
+
+
+{% if case.status|lower=="open" %}
+
+<span class="badge bg-success ms-2">
+OPEN
+</span>
+
+{% elif case.status|lower=="closed" %}
+
+<span class="badge bg-secondary ms-2">
+CLOSED
+</span>
+
+{% else %}
+
+<span class="badge bg-warning text-dark ms-2">
+{{case.status|upper}}
+</span>
+
+{% endif %}
+
+</div>
+
+
+</div>
+
+
+<div>
+
+<a href="{{url_for('cases.list_cases')}}"
+class="btn btn-outline-secondary">
+
+<i class="bi bi-arrow-left"></i>
+
+Back
+
+</a>
+
+</div>
+
+
+</div>
+
+
+
+
+<!-- ================= CASE INFO ================= -->
+
+
+<div class="card shadow-sm mb-4">
+
+<div class="card-header fw-bold">
+
+<i class="bi bi-info-circle"></i>
+
+Case Information
+
+</div>
+
+
+<div class="card-body">
+
+
+<div class="row">
+
+
+<div class="col-md-3">
+
+<small class="text-muted">
+Incident Type
+</small>
+
+<h6>
+{{case.incident_type or "N/A"}}
+</h6>
+
+</div>
+
+
+
+<div class="col-md-3">
+
+<small class="text-muted">
+Priority
+</small>
+
+<h6>
+
+{% if case.priority=="high" %}
+
+<span class="badge bg-danger">
+HIGH
+</span>
+
+{% elif case.priority=="medium" %}
+
+<span class="badge bg-warning text-dark">
+MEDIUM
+</span>
+
+{% else %}
+
+<span class="badge bg-success">
+LOW
+</span>
+
+{% endif %}
+
+</h6>
+
+</div>
+
+
+
+
+<div class="col-md-3">
+
+<small class="text-muted">
+Severity
+</small>
+
+<h6>
+{{case.severity|upper}}
+</h6>
+
+</div>
+
+
+
+
+<div class="col-md-3">
+
+<small class="text-muted">
+Investigator
+</small>
+
+<h6>
+{{case.lead_investigator or "Unassigned"}}
+</h6>
+
+</div>
+
+
+</div>
+
+
+</div>
+
+</div>
+
+
+
+
+<!-- ================= KPI ================= -->
+
+
+<div class="row g-4 mb-4">
+
+
+<div class="col-lg-3">
+
+<div class="card shadow-sm border-0">
+
+
+<div class="card-body">
+
+
+<div class="d-flex justify-content-between">
+
+
+<div>
+
+<small class="text-muted">
+Evidence
+</small>
+
+<h2 class="text-primary fw-bold">
+{{evidence_count}}
+</h2>
+
+
+</div>
+
+
+<i class="bi bi-hdd-fill fs-1 text-primary"></i>
+
+
+</div>
+
+
+<a href="{{url_for('analysis.evidence',case_id=case.id)}}"
+class="btn btn-outline-primary btn-sm w-100">
+
+Open Evidence
+
+</a>
+
+
+</div>
+
+</div>
+
+</div>
+
+
+
+
+<div class="col-lg-3">
+
+
+<div class="card shadow-sm border-0">
+
+
+<div class="card-body">
+
+
+<div class="d-flex justify-content-between">
+
+
+<div>
+
+<small class="text-muted">
+Events
+</small>
+
+<h2 class="text-warning fw-bold">
+{{event_count}}
+</h2>
+
+</div>
+
+
+<i class="bi bi-journal-text fs-1 text-warning"></i>
+
+
+</div>
+
+
+<a href="{{url_for('analysis.events',case_id=case.id)}}"
+class="btn btn-outline-warning btn-sm w-100">
+
+Open Events
+
+</a>
+
+
+</div>
+
+</div>
+
+
+</div>
+
+
+
+
+<div class="col-lg-3">
+
+
+<div class="card shadow-sm border-0">
+
+
+<div class="card-body">
+
+
+<div class="d-flex justify-content-between">
+
+
+<div>
+
+<small class="text-muted">
+Incidents
+</small>
+
+<h2 class="text-danger fw-bold">
+{{incident_count}}
+</h2>
+
+</div>
+
+
+<i class="bi bi-exclamation-triangle-fill fs-1 text-danger"></i>
+
+
+</div>
+
+
+<a href="{{url_for('analysis.incidents',case_id=case.id)}}"
+class="btn btn-outline-danger btn-sm w-100">
+
+Open Incidents
+
+</a>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+<div class="col-lg-3">
+
+
+<div class="card shadow-sm border-danger">
+
+
+<div class="card-body">
+
+
+<div class="d-flex justify-content-between">
+
+
+<div>
+
+<small class="text-muted">
+Risk Score
+</small>
+
+
+<h2 class="text-danger fw-bold">
+
+{{risk_score or 0}}
+
+</h2>
+
+
+</div>
+
+
+<i class="bi bi-shield-fill-exclamation fs-1 text-danger"></i>
+
+
+</div>
+
+
+
+<a href="{{url_for('analysis.memory',case_id=case.id)}}"
+class="btn btn-danger btn-sm w-100">
+
+Memory Analysis
+
+</a>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+<!-- ================= SEVERITY ================= -->
+
+
+<div class="card shadow-sm mb-4">
+
+
+<div class="card-header fw-bold">
+
+<i class="bi bi-bar-chart-fill"></i>
+
+Event Severity
+
+</div>
+
+
+
+<div class="card-body">
+
+
+<div class="row text-center g-3">
+
+
+<div class="col">
+
+<div class="p-3 rounded bg-danger-subtle">
+
+
+<h2 class="text-danger">
+
+{{severity.critical or 0}}
+
+</h2>
+
+
+Critical
+
+
+</div>
+
+</div>
+
+
+
+<div class="col">
+
+
+<div class="p-3 rounded bg-warning-subtle">
+
+
+<h2 class="text-warning">
+
+{{severity.high or 0}}
+
+</h2>
+
+
+High
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="col">
+
+
+<div class="p-3 rounded bg-info-subtle">
+
+
+<h2 class="text-info">
+
+{{severity.medium or 0}}
+
+</h2>
+
+
+Medium
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="col">
+
+
+<div class="p-3 rounded bg-success-subtle">
+
+
+<h2 class="text-success">
+
+{{severity.low or 0}}
+
+</h2>
+
+
+Low
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+<!-- ================= MEMORY ================= -->
+
+
+{% if memory %}
+
+
+<div class="card shadow-sm mb-4">
+
+
+<div class="card-header fw-bold">
+
+
+<i class="bi bi-memory"></i>
+
+
+Memory Analysis Summary
+
+
+</div>
+
+
+
+<div class="card-body">
+
+
+<div class="row text-center g-3">
+
+
+<div class="col">
+
+<h3 class="text-primary">
+
+{{memory.processes or 0}}
+
+</h3>
+
+Processes
+
+</div>
+
+
+
+<div class="col">
+
+<h3 class="text-info">
+
+{{memory.network or 0}}
+
+</h3>
+
+Connections
+
+</div>
+
+
+
+<div class="col">
+
+<h3 class="text-danger">
+
+{{memory.malfind or 0}}
+
+</h3>
+
+Malfind
+
+</div>
+
+
+
+<div class="col">
+
+<h3>
+
+{{memory.dlls or 0}}
+
+</h3>
+
+DLLs
+
+</div>
+
+
+
+<div class="col">
+
+<h3>
+
+{{memory.drivers or 0}}
+
+</h3>
+
+Drivers
+
+</div>
+
+
+
+<div class="col">
+
+<h3>
+
+{{memory.services or 0}}
+
+</h3>
+
+Services
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+{% endif %}
+
+
+
+
+
+
+<!-- ================= ROW ================= -->
+
+
+<div class="row">
+
+
+
+<!-- RECENT EVENTS -->
+
+
+<div class="col-lg-8 mb-4">
+
+
+<div class="card shadow-sm h-100">
+
+
+<div class="card-header d-flex justify-content-between">
+
+
+<span>
+
+<i class="bi bi-clock-history"></i>
+
+Recent Events
+
+</span>
+
+
+
+<a href="{{url_for('analysis.events',case_id=case.id)}}"
+class="btn btn-sm btn-outline-primary">
+
+View All
+
+</a>
+
+
+</div>
+
+
+
+
+
+<div class="table-responsive">
+
+
+<table class="table table-hover mb-0">
+
+
+<thead class="table-light">
+
+
+<tr>
+
+<th>
+Time
+</th>
+
+
+<th>
+Severity
+</th>
+
+
+<th>
+Computer
+</th>
+
+
+<th>
+Rule
+</th>
+
+
+</tr>
+
+
+</thead>
+
+
+
+<tbody>
+
+
+{% for event in latest_events %}
+
+
+<tr>
+
+
+<td>
+
+
+{% if event.timestamp %}
+
+{{event.timestamp.strftime("%d-%b %H:%M")}}
+
+
+{% else %}
+
+-
+
+{% endif %}
+
+
+</td>
+
+
+
+
+<td>
+
+
+{% if event.severity|lower=="critical" %}
+
+
+<span class="badge bg-danger">
+Critical
+</span>
+
+
+{% elif event.severity|lower=="high" %}
+
+
+<span class="badge bg-warning text-dark">
+High
+</span>
+
+
+
+{% elif event.severity|lower=="medium" %}
+
+
+<span class="badge bg-info">
+Medium
+</span>
+
+
+
+{% else %}
+
+
+<span class="badge bg-success">
+Low
+</span>
+
+
+{% endif %}
+
+
+
+</td>
+
+
+
+
+<td>
+
+{{event.computer or "-"}}
+
+</td>
+
+
+
+
+<td>
+
+{{event.rule_title or "Unknown"}}
+
+</td>
+
+
+</tr>
+
+
+{% else %}
+
+
+<tr>
+
+<td colspan="4"
+class="text-center text-muted p-4">
+
+
+No events found
+
+
+</td>
+
+</tr>
+
+
+{% endfor %}
+
+
+</tbody>
+
+
+</table>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+<!-- LATEST EVIDENCE -->
+
+
+<div class="col-lg-4 mb-4">
+
+
+<div class="card shadow-sm h-100">
+
+
+<div class="card-header">
+
+
+<i class="bi bi-hdd-fill"></i>
+
+
+Latest Evidence
+
+
+</div>
+
+
+
+
+<div class="list-group list-group-flush">
+
+
+{% for file in latest_evidence %}
+
+
+<div class="list-group-item">
+
+
+<div class="fw-semibold">
+
+{{file.filename}}
+
+</div>
+
+
+
+<small class="text-muted">
+
+{{file.artifact_type or "Unknown"}}
+
+</small>
+
+
+</div>
+
+
+
+{% else %}
+
+
+<div class="list-group-item text-center text-muted">
+
+
+No evidence uploaded
+
+
+</div>
+
+
+
+{% endfor %}
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+<!-- ================= ROW 2 ================= -->
+
+
+<div class="row">
+
+
+<!-- TOP DETECTION RULES -->
+
+
+<div class="col-lg-6 mb-4">
+
+
+<div class="card shadow-sm">
+
+
+<div class="card-header">
+
+
+<i class="bi bi-shield-fill-check"></i>
+
+
+Top Detection Rules
+
+
+</div>
+
+
+
+<div class="table-responsive">
+
+
+<table class="table mb-0">
+
+
+<thead class="table-light">
+
+
+<tr>
+
+<th>
+Rule
+</th>
+
+<th width="120">
+Hits
+</th>
+
+
+</tr>
+
+
+</thead>
+
+
+
+<tbody>
+
+
+{% for rule,count in top_rules %}
+
+
+<tr>
+
+
+<td>
+
+{{rule or "Unknown"}}
+
+</td>
+
+
+
+<td>
+
+
+<span class="badge bg-primary">
+
+{{count}}
+
+</span>
+
+
+</td>
+
+
+</tr>
+
+
+
+{% else %}
+
+
+<tr>
+
+<td colspan="2"
+class="text-center text-muted">
+
+No detection data
+
+</td>
+
+
+</tr>
+
+
+{% endfor %}
+
+
+</tbody>
+
+
+</table>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+<!-- TOP HOSTS -->
+
+
+<div class="col-lg-6 mb-4">
+
+
+<div class="card shadow-sm">
+
+
+<div class="card-header">
+
+
+<i class="bi bi-pc-display-horizontal"></i>
+
+
+Top Hosts
+
+
+</div>
+
+
+
+<div class="table-responsive">
+
+
+<table class="table mb-0">
+
+
+<thead class="table-light">
+
+
+<tr>
+
+
+<th>
+Computer
+</th>
+
+
+<th width="120">
+Events
+</th>
+
+
+</tr>
+
+
+</thead>
+
+
+
+<tbody>
+
+
+{% for host,count in top_hosts %}
+
+
+<tr>
+
+
+<td>
+
+{{host or "Unknown"}}
+
+</td>
+
+
+
+<td>
+
+
+<span class="badge bg-success">
+
+{{count}}
+
+</span>
+
+
+</td>
+
+
+</tr>
+
+
+{% else %}
+
+
+<tr>
+
+
+<td colspan="2"
+class="text-center text-muted">
+
+No host data
+
+</td>
+
+
+</tr>
+
+
+{% endfor %}
+
+
+</tbody>
+
+
+</table>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+<!-- ================= QUICK ACTIONS ================= -->
+
+
+<div class="row">
+
+
+
+<div class="col-lg-8 mb-4">
+
+
+<div class="card shadow-sm">
+
+
+<div class="card-header fw-bold">
+
+
+<i class="bi bi-lightning-charge-fill"></i>
+
+
+Quick Actions
+
+
+</div>
+
+
+
+<div class="card-body">
+
+
+<div class="row g-3">
+
+
+
+<div class="col-md-4">
+
+
+<a href="{{url_for('analysis.evidence',case_id=case.id)}}"
+class="btn btn-outline-primary w-100 p-3">
+
+
+<i class="bi bi-hdd-fill fs-3 d-block mb-2"></i>
+
+
+Evidence
+
+
+</a>
+
+
+</div>
+
+
+
+
+
+<div class="col-md-4">
+
+
+<a href="{{url_for('analysis.events',case_id=case.id)}}"
+class="btn btn-outline-warning w-100 p-3">
+
+
+<i class="bi bi-journal-text fs-3 d-block mb-2"></i>
+
+
+Event Logs
+
+
+</a>
+
+
+</div>
+
+
+
+
+
+<div class="col-md-4">
+
+
+<a href="{{url_for('analysis.memory',case_id=case.id)}}"
+class="btn btn-outline-danger w-100 p-3">
+
+
+<i class="bi bi-memory fs-3 d-block mb-2"></i>
+
+
+Memory
+
+
+</a>
+
+
+</div>
+
+
+
+
+
+<div class="col-md-4">
+
+
+<a href="{{url_for('analysis.timeline',case_id=case.id)}}"
+class="btn btn-outline-success w-100 p-3">
+
+
+<i class="bi bi-clock-history fs-3 d-block mb-2"></i>
+
+
+Timeline
+
+
+</a>
+
+
+</div>
+
+
+
+
+
+<div class="col-md-4">
+
+
+<a href="{{url_for('analysis.incidents',case_id=case.id)}}"
+class="btn btn-outline-dark w-100 p-3">
+
+
+<i class="bi bi-exclamation-triangle-fill fs-3 d-block mb-2"></i>
+
+
+Incidents
+
+
+</a>
+
+
+</div>
+
+
+
+
+
+<div class="col-md-4">
+
+
+<a href="{{url_for('analysis.validation',case_id=case.id)}}"
+class="btn btn-outline-secondary w-100 p-3">
+
+
+<i class="bi bi-check-circle-fill fs-3 d-block mb-2"></i>
+
+
+Validation
+
+
+</a>
+
+
+</div>
+
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+
+
+<!-- CASE SUMMARY -->
+
+
+<div class="col-lg-4 mb-4">
+
+
+<div class="card shadow-sm h-100">
+
+
+<div class="card-header fw-bold">
+
+
+<i class="bi bi-info-circle-fill"></i>
+
+
+Case Summary
+
+
+</div>
+
+
+
+<div class="card-body">
+
+
+<table class="table table-borderless mb-0">
+
+
+<tr>
+
+<td>
+Case Number
+</td>
+
+<td class="fw-bold">
+
+{{case.case_number or "-"}}
+
+</td>
+
+
+</tr>
+
+
+
+<tr>
+
+<td>
+Organization
+</td>
+
+<td>
+
+{{case.organization or "-"}}
+
+</td>
+
+
+</tr>
+
+
+
+<tr>
+
+<td>
+Status
+</td>
+
+<td>
+
+
+{% if case.status=="open" %}
+
+
+<span class="badge bg-success">
+OPEN
+</span>
+
+
+{% else %}
+
+
+<span class="badge bg-secondary">
+
+{{case.status|upper}}
+
+</span>
+
+
+{% endif %}
+
+
+</td>
+
+
+</tr>
+
+
+
+<tr>
+
+<td>
+Evidence
+</td>
+
+<td>
+
+{{evidence_count}}
+
+</td>
+
+
+</tr>
+
+
+
+<tr>
+
+<td>
+Events
+</td>
+
+<td>
+
+{{event_count}}
+
+</td>
+
+
+</tr>
+
+
+
+<tr>
+
+<td>
+Incidents
+</td>
+
+<td>
+
+{{incident_count}}
+
+</td>
+
+
+</tr>
+
+
+
+<tr>
+
+<td>
+Risk
+</td>
+
+<td>
+
+
+{% if risk_score >= 80 %}
+
+
+<span class="badge bg-danger">
+
+CRITICAL {{risk_score}}
+
+</span>
+
+
+{% elif risk_score >= 40 %}
+
+
+<span class="badge bg-warning text-dark">
+
+HIGH {{risk_score}}
+
+</span>
+
+
+{% else %}
+
+
+<span class="badge bg-success">
+
+LOW {{risk_score}}
+
+</span>
+
+
+{% endif %}
+
+
+
+</td>
+
+
+</tr>
+
+
+
+</table>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+<!-- FOOTER -->
+
+
+<div class="text-center text-muted mt-4 mb-3">
+
+
+<hr>
+
+
+<small>
+
+CyberX DFIR Framework v2 • Investigation Dashboard
+
+</small>
+
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+<style>
+
+
+.card{
+
+border-radius:14px;
+
+transition:.25s;
+
+}
+
+
+
+.card:hover{
+
+transform:translateY(-3px);
+
+box-shadow:
+0 .75rem 1.5rem rgba(0,0,0,.12)!important;
+
+}
+
+
+
+.card-header{
+
+background:#f8f9fa;
+
+font-weight:600;
+
+}
+
+
+
+.table td,
+.table th{
+
+vertical-align:middle;
+
+}
+
+
+
+.btn{
+
+border-radius:10px;
+
+}
+
+
+
+.badge{
+
+font-size:.8rem;
+
+padding:.5em .8em;
+
+}
+
+
+
+</style>
+
+
+{% endblock %}
