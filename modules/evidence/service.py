@@ -146,10 +146,17 @@ class EvidenceService:
             # ----------------------------------------
             # Queue
             # ----------------------------------------
-
+            
             cls._queue_parser(
                 evidence
             )
+
+            from modules.evidence.worker import EvidenceWorker
+
+            EvidenceWorker.process(
+            evidence
+            )
+            
 
             logger.info(
                 "Evidence queued."

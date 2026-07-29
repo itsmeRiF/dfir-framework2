@@ -22,3 +22,10 @@ class Config:
     "tools",
     "hayabusa.exe"
     )
+     
+    VOLATILITY_PATH = os.path.join(
+    BASE_DIR,
+    "tools",
+    "volatility3",
+    "vol.py"
+    )

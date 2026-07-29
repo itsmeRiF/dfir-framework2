@@ -3,26 +3,72 @@ from datetime import datetime
 
 
 class Event(db.Model):
+
     __tablename__ = "events"
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(
+        db.Integer,
+        primary_key=True
+    )
 
-    case_id = db.Column(db.Integer, db.ForeignKey("cases.id"), index=True)
+    case_id = db.Column(
+        db.Integer,
+        db.ForeignKey("cases.id"),
+        index=True
+    )
 
-    timestamp = db.Column(db.DateTime, index=True)
+    evidence_id = db.Column(
+        db.Integer,
+        db.ForeignKey("evidence.id"),
+        index=True
+    )
 
-    computer = db.Column(db.String(255), index=True)
-    channel = db.Column(db.String(100))
+    timestamp = db.Column(
+        db.DateTime,
+        index=True
+    )
 
-    event_id = db.Column(db.String(50), index=True)
-    record_id = db.Column(db.String(50))
+    computer = db.Column(
+        db.String(255),
+        index=True
+    )
 
-    rule_title = db.Column(db.String(255), index=True)
-    rule_id = db.Column(db.String(255))
+    channel = db.Column(
+        db.String(100)
+    )
 
-    severity = db.Column(db.String(50), index=True)
+    event_id = db.Column(
+        db.String(50),
+        index=True
+    )
 
-    details = db.Column(db.Text)
-    extra_info = db.Column(db.Text)
+    record_id = db.Column(
+        db.String(50)
+    )
 
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    rule_title = db.Column(
+        db.String(255),
+        index=True
+    )
+
+    rule_id = db.Column(
+        db.String(255)
+    )
+
+    severity = db.Column(
+        db.String(50),
+        index=True
+    )
+
+    details = db.Column(
+        db.Text
+    )
+
+    extra_info = db.Column(
+        db.Text
+    )
+
+    created_at = db.Column(
+        db.DateTime,
+        default=datetime.utcnow
+    )

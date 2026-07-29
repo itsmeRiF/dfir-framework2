@@ -2,183 +2,513 @@
 
 import os
 import re
-import subprocess
 import sys
+import subprocess
 from datetime import datetime
+
+from flask import current_app
 
 from modules.analysis.artifact_ioc import MEMORY_IOC_PATTERNS
 from modules.parser.event_helpers import make_event
 
+
 MAX_STRING_SCAN_BYTES = 64 * 1024 * 1024
+
+
 PROCESS_HINTS = (
-    b"powershell.exe", b"cmd.exe", b"rundll32.exe", b"mshta.exe",
-    b"wscript.exe", b"mimikatz", b"lsass.exe", b"svchost.exe",
+    b"powershell.exe",
+    b"cmd.exe",
+    b"rundll32.exe",
+    b"mshta.exe",
+    b"wscript.exe",
+    b"mimikatz",
+    b"lsass.exe",
+    b"svchost.exe",
 )
 
 
-def _extract_strings(data: bytes, min_len: int = 6) -> set[str]:
-    ascii_strings = re.findall(rb"[\x20-\x7e]{%d,}" % min_len, data)
-    wide_strings = re.findall(
-        (rb"(?:[\x20-\x7e]\x00){%d,}" % min_len),
-        data,
+
+def _extract_strings(data: bytes, min_len: int = 6):
+
+    ascii_strings = re.findall(
+        rb"[\x20-\x7e]{%d,}" % min_len,
+        data
     )
+
+    wide_strings = re.findall(
+        rb"(?:[\x20-\x7e]\x00){%d,}" % min_len,
+        data
+    )
+
+
     results = set()
+
+
     for s in ascii_strings:
-        results.add(s.decode("ascii", errors="ignore"))
+        results.add(
+            s.decode(
+                "ascii",
+                errors="ignore"
+            )
+        )
+
+
     for s in wide_strings:
-        try:
-            results.add(s.decode("utf-16-le", errors="ignore"))
-        except UnicodeDecodeError:
-            continue
+        results.add(
+            s.decode(
+                "utf-16-le",
+                errors="ignore"
+            )
+        )
+
+
     return results
 
 
-def _detect_dump_type(filepath: str) -> str:
-    with open(filepath, "rb") as f:
-        header = f.read(16)
+
+
+def _detect_dump_type(filepath):
+
+    with open(filepath,"rb") as f:
+
+        header=f.read(16)
+
+
     if header[:4] == b"PAGE":
         return "Windows Crash Dump"
+
+
     if header[:4] == b"\x4d\x5a":
         return "Hibernation / Hybrid Dump"
+
+
     if header[:8] == b"MDMPMDMP":
         return "Minidump"
+
+
     return "Raw Memory Dump"
 
 
-def _run_volatility(filepath: str, output_dir: str) -> list[dict]:
-    events = []
-    vol_cmd = None
-    for candidate in ("vol", "volatility3", "python"):
-        try:
-            if candidate == "python":
-                probe = subprocess.run(
-                    [sys.executable, "-m", "volatility3.cli", "-h"],
-                    capture_output=True,
-                    text=True,
-                    timeout=15,
-                )
-                if probe.returncode == 0:
-                    vol_cmd = [sys.executable, "-m", "volatility3.cli"]
-                    break
-            else:
-                probe = subprocess.run(
-                    [candidate, "-h"],
-                    capture_output=True,
-                    text=True,
-                    timeout=15,
-                )
-                if probe.returncode == 0:
-                    vol_cmd = [candidate]
-                    break
-        except (FileNotFoundError, subprocess.TimeoutExpired):
-            continue
+    
 
-    if not vol_cmd:
-        return events
-## Lets add other plugins while we perform better with this as we grow! --itsmeRiF
-    plugins = (
-        ("windows.pslist.PsList", "Process List"),
-        ("windows.netscan.NetScan", "Network Connections"),
-        ("windows.malfind.Malfind", "Suspicious Memory Regions"),
+def _get_volatility_command():
+    """
+    Return Volatility3 execution command
+    """
+
+    vol_path = current_app.config.get(
+        "VOLATILITY_PATH"
     )
 
+    if not vol_path:
+        return None
+
+
+    if vol_path.endswith(".py"):
+
+        return [
+            sys.executable,
+            vol_path
+        ]
+
+
+    return [
+        vol_path
+    ]
+
+
+    
+def _run_volatility(filepath: str, output_dir: str) -> list[dict]:
+
+    events = []
+
+    vol_path = current_app.config.get(
+        "VOLATILITY_PATH"
+    )
+
+    if not vol_path:
+        print("VOLATILITY PATH NOT CONFIGURED")
+        return events
+
+
+    if not os.path.exists(vol_path):
+        print("VOLATILITY FILE NOT FOUND:", vol_path)
+        return events
+
+
+    vol_cmd = [
+        sys.executable,
+        vol_path
+    ]
+
+
+    print("=" * 50)
+    print("VOLATILITY COMMAND")
+    print(vol_cmd)
+    print("=" * 50)
+
+
+
+    plugins = (
+
+        (
+            "windows.pslist.PsList",
+            "Process List"
+        ),
+
+        (
+            "windows.netscan.NetScan",
+            "Network Connections"
+        ),
+
+        (
+            "windows.malfind.Malfind",
+            "Suspicious Memory Regions"
+        ),
+
+    )
+
+
+
     for plugin, label in plugins:
+
+
         try:
+
+
             result = subprocess.run(
-                [*vol_cmd, "-f", filepath, plugin],
+
+                [
+                    *vol_cmd,
+                    "-f",
+                    filepath,
+                    plugin
+                ],
+
                 capture_output=True,
+
                 text=True,
-                timeout=120,
-                errors="ignore",
+
+                timeout=300,
+
+                errors="ignore"
+
             )
-            output = (result.stdout or "") + (result.stderr or "")
+
+
+
+            print("==============================")
+            print("VOLATILITY CMD:")
+            print(
+                [
+                    *vol_cmd,
+                    "-f",
+                    filepath,
+                    plugin
+                ]
+            )
+            print("PLUGIN:", plugin)
+            print("RETURN:", result.returncode)
+
+            print("STDERR:")
+            print(
+                result.stderr[:500]
+            )
+
+            print("==============================")
+
+
+
+            output = (
+
+                (result.stdout or "")
+
+                +
+
+                "\n"
+
+                +
+
+                (result.stderr or "")
+
+            )
+
+
+
             if not output.strip():
+
                 continue
 
-            report_path = os.path.join(output_dir, f"{plugin.replace('.', '_')}.txt")
-            with open(report_path, "w", encoding="utf-8", errors="ignore") as fh:
+
+
+            filename = (
+                plugin
+                .replace(".", "_")
+                +
+                ".txt"
+            )
+
+
+            report_path = os.path.join(
+                output_dir,
+                filename
+            )
+
+
+
+            with open(
+                report_path,
+                "w",
+                encoding="utf-8",
+                errors="ignore"
+            ) as fh:
+
                 fh.write(output)
 
-            line_count = len([ln for ln in output.splitlines() if ln.strip()])
-            events.append(
-                make_event(
-                    timestamp=datetime.utcnow(),
-                    computer=os.path.basename(filepath),
-                    channel="Memory",
-                    event_id=f"MEM-{plugin.split('.')[-1].upper()}",
-                    rule_title=f"Volatility: {label}",
-                    rule_id=f"VOL_{plugin.split('.')[-1].upper()}",
-                    severity="medium" if "malfind" in plugin.lower() else "informational",
-                    details=f"{label} extracted ({line_count} lines). Report: {report_path}",
-                    extra_info=output[:2000],
-                )
+
+
+            line_count = len(
+                [
+                    x
+                    for x in output.splitlines()
+                    if x.strip()
+                ]
             )
-        except (subprocess.TimeoutExpired, OSError):
+
+
+
+            events.append(
+
+                make_event(
+
+                    timestamp=datetime.utcnow(),
+
+                    computer=os.path.basename(filepath),
+
+                    channel="Memory",
+
+                    event_id=(
+                        "MEM-"
+                        +
+                        plugin.split(".")[-1].upper()
+                    ),
+
+                    rule_title=(
+                        "Volatility: "
+                        +
+                        label
+                    ),
+
+                    rule_id=(
+                        "VOL_"
+                        +
+                        plugin.split(".")[-1].upper()
+                    ),
+
+                    severity=(
+                        "medium"
+                        if "malfind" in plugin.lower()
+                        else "informational"
+                    ),
+
+                    details=(
+                        f"{label} extracted "
+                        f"({line_count} lines). "
+                        f"Report: {report_path}"
+                    ),
+
+                    extra_info=output[:2000]
+
+                )
+
+            )
+
+
+        except subprocess.TimeoutExpired:
+
+
+            print(
+                "Volatility timeout:",
+                plugin
+            )
+
             continue
+
+
+
+        except Exception as ex:
+
+
+            print(
+                "Volatility error:",
+                plugin,
+                ex
+            )
+
+            continue
+
+
 
     return events
 
 
-def parse_memory_dump(filepath: str, output_dir: str | None = None) -> list[dict]:
+
+
+
+def parse_memory_dump(
+        filepath,
+        output_dir=None
+):
+
+
     output_dir = output_dir or os.path.dirname(filepath)
-    os.makedirs(output_dir, exist_ok=True)
 
-    dump_type = _detect_dump_type(filepath)
-    file_size = os.path.getsize(filepath)
-    events: list[dict] = [
+
+    os.makedirs(
+        output_dir,
+        exist_ok=True
+    )
+
+
+
+    events=[]
+
+
+
+    dump_type=_detect_dump_type(filepath)
+
+
+    size=os.path.getsize(filepath)
+
+
+
+    events.append(
+
         make_event(
+
             timestamp=datetime.utcnow(),
+
             computer=os.path.basename(filepath),
+
             channel="Memory",
+
             event_id="MEM-INFO",
+
             rule_title="Memory Dump Identified",
+
             rule_id="MEMORY_DUMP_INFO",
+
             severity="informational",
-            details=f"Type: {dump_type} | Size: {file_size:,} bytes",
+
+            details=
+            f"{dump_type} | Size {size:,} bytes"
+
         )
-    ]
 
-    with open(filepath, "rb") as f:
-        sample = f.read(min(file_size, MAX_STRING_SCAN_BYTES))
+    )
 
-    strings = _extract_strings(sample)
-    seen_rules = set()
+
+
+    with open(filepath,"rb") as f:
+
+        sample=f.read(
+            min(
+                size,
+                MAX_STRING_SCAN_BYTES
+            )
+        )
+
+
+
+    strings=_extract_strings(sample)
+
+
 
     for text in strings:
-        lower = text.lower()
-        for needle, severity, rule_id in MEMORY_IOC_PATTERNS:
-            if needle.lower() not in lower:
-                continue
-            if rule_id in seen_rules:
-                break
-            seen_rules.add(rule_id)
-            events.append(
-                make_event(
-                    timestamp=datetime.utcnow(),
-                    channel="Memory",
-                    event_id=f"IOC-{rule_id}",
-                    rule_title="Memory IOC Match",
-                    rule_id=rule_id,
-                    severity=severity,
-                    details=f"Pattern '{needle}' found in memory strings: {text[:300]}",
+
+
+        lower=text.lower()
+
+
+        for needle,severity,rule_id in MEMORY_IOC_PATTERNS:
+
+
+            if needle.lower() in lower:
+
+
+                events.append(
+
+                    make_event(
+
+                        timestamp=datetime.utcnow(),
+
+                        channel="Memory",
+
+                        event_id=
+                        f"IOC-{rule_id}",
+
+                        rule_title="Memory IOC Match",
+
+                        rule_id=rule_id,
+
+                        severity=severity,
+
+                        details=text[:500]
+
+                    )
+
                 )
-            )
-            break
+
+                break
+
+
+
 
     for hint in PROCESS_HINTS:
+
+
         if hint.lower() in sample.lower():
-            name = hint.decode("ascii", errors="ignore")
+
+
+            name=hint.decode()
+
+
             events.append(
+
                 make_event(
+
                     timestamp=datetime.utcnow(),
+
                     channel="Memory",
+
                     event_id=f"PROC-{name.upper()}",
-                    rule_title="Process Name String in Memory",
-                    rule_id="MEMORY_PROCESS_STRING",
-                    severity="medium" if name.lower() in ("mimikatz", "powershell.exe") else "informational",
-                    details=f"Process-related string '{name}' observed in memory sample.",
+
+                    rule_title="Process String Found",
+
+                    rule_id="MEM_PROCESS_STRING",
+
+                    severity="medium",
+
+                    details=name
+
                 )
+
             )
 
-    events.extend(_run_volatility(filepath, output_dir))
+
+
+
+    events.extend(
+
+        _run_volatility(
+
+            filepath,
+
+            output_dir
+
+        )
+
+    )
+
+
     return events

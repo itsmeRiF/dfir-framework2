@@ -1,13 +1,9 @@
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, request
+from flask_login import login_required
 
-from database.db import db
-
-from models.case import Case
-from models.memory import MemoryAnalysis
 from models.memory_process import MemoryProcess
 from models.memory_network import MemoryNetwork
 from models.memory_ioc import MemoryIOC
-
 
 
 memory_bp = Blueprint(
@@ -16,165 +12,89 @@ memory_bp = Blueprint(
 )
 
 
+@memory_bp.route("/memory/<int:case_id>")
+@login_required
+def memory_analysis(case_id):
 
-# =========================================================
-# MEMORY ANALYSIS DASHBOARD
-# =========================================================
-
-@memory_bp.route(
-    "/analysis/memory/<int:case_id>"
-)
-def memory_dashboard(case_id):
-
-
-    case = Case.query.get_or_404(
-        case_id
-    )
+    process_search = request.args.get(
+        "process",
+        ""
+    ).strip()
 
 
+    network_search = request.args.get(
+        "network",
+        ""
+    ).strip()
 
-    # -----------------------------------------
-    # Memory Summary
-    # -----------------------------------------
 
-    memory_summary = MemoryAnalysis.query.filter_by(
+    ioc_search = request.args.get(
+        "ioc",
+        ""
+    ).strip()
+
+
+
+    processes = MemoryProcess.query.filter_by(
         case_id=case_id
-    ).first()
-
-
-
-    if memory_summary:
-
-        summary = {
-
-            "processes":
-                memory_summary.process_count or 0,
-
-
-            "network":
-                memory_summary.network_count or 0,
-
-
-            "malfind":
-                memory_summary.malfind_count or 0,
-
-
-            "dlls":
-                memory_summary.dll_count or 0,
-
-
-            "drivers":
-                memory_summary.driver_count or 0,
-
-
-            "services":
-                memory_summary.service_count or 0
-
-        }
-
-
-    else:
-
-        summary = {
-
-            "processes":0,
-            "network":0,
-            "malfind":0,
-            "dlls":0,
-            "drivers":0,
-            "services":0
-
-        }
-
-
-
-
-    # -----------------------------------------
-    # Processes
-    # -----------------------------------------
-
-    processes = (
-
-        MemoryProcess.query
-        .filter_by(
-            case_id=case_id
-        )
-        .order_by(
-            MemoryProcess.pid
-        )
-        .all()
-
     )
 
 
+    if process_search:
 
-
-    # -----------------------------------------
-    # Network Connections
-    # -----------------------------------------
-
-    networks = (
-
-        MemoryNetwork.query
-        .filter_by(
-            case_id=case_id
+        processes = processes.filter(
+            MemoryProcess.process_name.ilike(
+                f"%{process_search}%"
+            )
         )
-        .all()
 
+
+    processes = processes.order_by(
+        MemoryProcess.pid
+    ).all()
+
+
+
+    networks = MemoryNetwork.query.filter_by(
+        case_id=case_id
     )
 
 
+    if network_search:
 
-
-    # -----------------------------------------
-    # IoC
-    # -----------------------------------------
-
-    iocs = (
-
-        MemoryIOC.query
-        .filter_by(
-            case_id=case_id
+        networks = networks.filter(
+            MemoryNetwork.remote_address.ilike(
+                f"%{network_search}%"
+            )
         )
-        .order_by(
-            MemoryIOC.severity
-        )
-        .all()
 
+
+    networks = networks.all()
+
+
+
+    iocs = MemoryIOC.query.filter_by(
+        case_id=case_id
     )
 
 
+    if ioc_search:
+
+        iocs = iocs.filter(
+            MemoryIOC.indicator.ilike(
+                f"%{ioc_search}%"
+            )
+        )
 
 
-    # -----------------------------------------
-    # Risk Calculation
-    # -----------------------------------------
-
-    risk_score = 0
-
-
-    if memory_summary:
-
-        risk_score += (
-            memory_summary.malfind_count or 0
-        ) * 10
-
-
-
-    risk_score += len(iocs) * 5
-
+    iocs = iocs.all()
 
 
 
     return render_template(
-
-        "memory/dashboard.html",
-
-        case=case,
+        "analysis/memory.html",
 
         case_id=case_id,
-
-        memory=summary,
 
         processes=processes,
 
@@ -182,6 +102,9 @@ def memory_dashboard(case_id):
 
         iocs=iocs,
 
-        risk_score=risk_score
+        process_count=len(processes),
 
+        network_count=len(networks),
+
+        ioc_count=len(iocs)
     )

@@ -1,654 +1,274 @@
-{% extends "analysis_base.html" %}
+{% extends "base.html" %}
 
-
-{% block analysis_content %}
-
+{% block content %}
 
 <div class="container-fluid">
 
-
-<!-- ================= HEADER ================= -->
-
-
-<div class="d-flex justify-content-between align-items-center mb-4">
-
-
-<div>
-
-<h2 class="fw-bold">
-
-<i class="bi bi-cpu-fill text-primary"></i>
-
-Memory Analysis
-
-</h2>
+<h3 class="mb-4">
+    <i class="bi bi-memory"></i>
+    Memory Analysis
+    <small class="text-muted">
+        Case #{{ case_id }}
+    </small>
+</h3>
 
 
-<p class="text-muted">
+<!-- SUMMARY -->
 
-Investigation Case #{{case_id}}
+<div class="row mb-4">
 
-</p>
+<div class="col-md-4">
+<div class="card shadow-sm p-3">
 
-
-</div>
-
-
-
-<div class="no-print">
-
-
-<button onclick="window.print()"
-class="btn btn-primary">
-
-
-<i class="bi bi-printer"></i>
-
-Print Report
-
-
-</button>
-
-
-</div>
-
-
-
-</div>
-
-
-
-
-
-{% if report %}
-
-
-
-<!-- ================= SUMMARY CARDS ================= -->
-
-
-<div class="row g-4 mb-4">
-
-
-<div class="col-md-2">
-
-<div class="card shadow-sm">
-
-<div class="card-body">
-
-
-<h6 class="text-muted">
+<h6>
+<i class="bi bi-cpu"></i>
 Processes
 </h6>
 
-
-<h2 class="text-primary">
-{{report.process_count}}
+<h2>
+{{ processes|length }}
 </h2>
 
-
 </div>
-
-</div>
-
 </div>
 
 
+<div class="col-md-4">
+<div class="card shadow-sm p-3">
 
-
-
-<div class="col-md-2">
-
-<div class="card shadow-sm">
-
-<div class="card-body">
-
-
-<h6 class="text-muted">
-Network
+<h6>
+<i class="bi bi-diagram-3"></i>
+Network Connections
 </h6>
-
-
-<h2 class="text-info">
-{{report.network_count}}
-</h2>
-
-
-</div>
-
-</div>
-
-</div>
-
-
-
-
-
-<div class="col-md-2">
-
-<div class="card shadow-sm">
-
-<div class="card-body">
-
-
-<h6 class="text-muted">
-Malfind
-</h6>
-
-
-<h2 class="text-danger">
-{{report.malfind_count}}
-</h2>
-
-
-</div>
-
-</div>
-
-</div>
-
-
-
-
-
-<div class="col-md-2">
-
-<div class="card shadow-sm">
-
-<div class="card-body">
-
-
-<h6 class="text-muted">
-DLLs
-</h6>
-
 
 <h2>
-{{report.dll_count}}
+{{ networks|length }}
 </h2>
 
-
 </div>
-
-</div>
-
 </div>
 
 
+<div class="col-md-4">
+<div class="card shadow-sm p-3">
 
-
-
-<div class="col-md-2">
-
-<div class="card shadow-sm">
-
-<div class="card-body">
-
-
-<h6 class="text-muted">
-Drivers
+<h6>
+<i class="bi bi-bug"></i>
+IOCs
 </h6>
-
 
 <h2>
-{{report.driver_count}}
+{{ iocs|length }}
 </h2>
 
-
 </div>
-
-</div>
-
-</div>
-
-
-
-
-
-<div class="col-md-2">
-
-<div class="card shadow-sm border-danger">
-
-<div class="card-body">
-
-
-<h6 class="text-muted">
-Risk Score
-</h6>
-
-
-<h2 class="text-danger">
-
-{{report.risk_score or 0}}
-
-</h2>
-
-
-</div>
-
 </div>
 
 </div>
 
 
+
+<!-- PROCESSES -->
+
+<div class="card shadow-sm mb-4">
+
+<div class="card-header">
+<h5>
+Process List
+</h5>
 </div>
-
-
-
-
-
-
-
-<!-- ================= ACCORDION ================= -->
-
-
-<div class="accordion" id="memoryAccordion">
-
-
-
-
-
-<!-- ================= PROCESS ================= -->
-
-
-<div class="accordion-item mb-3">
-
-
-<h2 class="accordion-header"
-id="headingProcess">
-
-
-<button class="accordion-button"
-type="button"
-data-bs-toggle="collapse"
-data-bs-target="#collapseProcess"
-aria-expanded="true"
-aria-controls="collapseProcess">
-
-
-<i class="bi bi-diagram-3 me-2"></i>
-
-
-Running Processes
-
-({{report.process_count}})
-
-
-</button>
-
-
-</h2>
-
-
-
-
-<div id="collapseProcess"
-class="accordion-collapse collapse show"
-aria-labelledby="headingProcess"
-data-bs-parent="#memoryAccordion">
-
-
-<div class="accordion-body">
-
 
 
 <div class="table-responsive">
 
+<table class="table table-striped">
 
-<table class="table table-hover">
-
-
-<thead class="table-light">
-
+<thead>
 <tr>
-
 <th>PID</th>
-
 <th>PPID</th>
-
-<th>Process</th>
-
+<th>Name</th>
+<th>User</th>
+<th>Path</th>
+<th>Risk</th>
 </tr>
-
 </thead>
 
 
 <tbody>
-
 
 {% for p in processes %}
 
-
 <tr>
 
+<td>{{ p.pid }}</td>
+
+<td>{{ p.ppid }}</td>
 
 <td>
-{{p.pid}}
+{{ p.process_name }}
 </td>
 
-
 <td>
-{{p.ppid}}
+{{ p.username }}
 </td>
 
+<td>
+{{ p.path }}
+</td>
 
 <td>
-
-
-{% if p.name|lower in [
-"powershell.exe",
-"cmd.exe",
-"rundll32.exe",
-"regsvr32.exe",
-"mshta.exe"
-]
-%}
-
-
-<span class="badge bg-danger">
-
-{{p.name}}
-
+<span class="badge bg-warning">
+{{ p.risk }}
 </span>
-
-
-{% else %}
-
-
-{{p.name}}
-
-
-{% endif %}
-
-
 </td>
 
 
 </tr>
 
-
 {% else %}
 
-
 <tr>
-
-<td colspan="3"
-class="text-center text-muted">
-
+<td colspan="6">
 No processes found
-
 </td>
-
 </tr>
-
 
 {% endfor %}
 
-
 </tbody>
-
 
 </table>
 
-
-</div>
-
-
-
 </div>
 
 </div>
 
 
-</div>
 
 
+<!-- NETWORK -->
 
 
+<div class="card shadow-sm mb-4">
 
-
-
-
-
-<!-- ================= NETWORK ================= -->
-
-
-
-<div class="accordion-item mb-3">
-
-
-<h2 class="accordion-header"
-id="headingNetwork">
-
-
-<button class="accordion-button collapsed"
-type="button"
-data-bs-toggle="collapse"
-data-bs-target="#collapseNetwork"
-aria-expanded="false"
-aria-controls="collapseNetwork">
-
-
-<i class="bi bi-globe me-2"></i>
-
-
+<div class="card-header">
+<h5>
 Network Connections
-
-({{report.network_count}})
-
-
-</button>
-
-
-</h2>
-
-
-
-
-<div id="collapseNetwork"
-class="accordion-collapse collapse"
-aria-labelledby="headingNetwork"
-data-bs-parent="#memoryAccordion">
-
-
-<div class="accordion-body">
-
+</h5>
+</div>
 
 
 <div class="table-responsive">
 
+<table class="table table-striped">
 
-<table class="table table-hover">
-
-
-<thead class="table-light">
-
+<thead>
 
 <tr>
-
 <th>Protocol</th>
-
 <th>Local</th>
-
 <th>Remote</th>
-
 <th>Status</th>
-
+<th>PID</th>
+<th>Process</th>
 </tr>
-
 
 </thead>
 
 
-
 <tbody>
 
-
-
-{% for n in network %}
-
+{% for n in networks %}
 
 <tr>
 
-
 <td>
-{{n.protocol}}
+{{ n.protocol }}
 </td>
 
 
 <td>
-{{n.local}}
+{{ n.local_address }}
 </td>
 
 
 <td>
-{{n.remote}}
+{{ n.remote_address }}
 </td>
 
 
 <td>
+{{ n.state }}
+</td>
 
 
-{% if n.state == "ESTABLISHED" %}
+<td>
+{{ n.pid }}
+</td>
 
 
-<span class="badge bg-success">
-
-{{n.state}}
-
-</span>
-
-
-{% else %}
-
-
-<span class="badge bg-secondary">
-
-{{n.state}}
-
-</span>
-
-
-{% endif %}
-
-
+<td>
+{{ n.process_name }}
 </td>
 
 
 </tr>
 
-
-
 {% else %}
 
-
 <tr>
-
-<td colspan="4"
-class="text-center text-muted">
-
-
-No network connections found
-
-
+<td colspan="6">
+No network connections
 </td>
-
 </tr>
-
 
 {% endfor %}
 
 
-
 </tbody>
-
 
 </table>
 
-
-</div>
-
-
 </div>
 
 </div>
 
 
+
+
+
+<!-- IOC -->
+
+
+<div class="card shadow-sm">
+
+
+<div class="card-header">
+
+<h5>
+Memory IOCs
+</h5>
+
 </div>
-
-
-
-
-
-
-
-
-
-
-<!-- ================= MALFIND ================= -->
-
-
-
-<div class="accordion-item mb-3">
-
-
-<h2 class="accordion-header"
-id="headingMalfind">
-
-
-<button class="accordion-button collapsed"
-type="button"
-data-bs-toggle="collapse"
-data-bs-target="#collapseMalfind"
-aria-expanded="false"
-aria-controls="collapseMalfind">
-
-
-<i class="bi bi-bug-fill me-2 text-danger"></i>
-
-
-Malfind Suspicious Regions
-
-({{report.malfind_count}})
-
-
-</button>
-
-
-</h2>
-
-
-
-
-<div id="collapseMalfind"
-class="accordion-collapse collapse"
-aria-labelledby="headingMalfind"
-data-bs-parent="#memoryAccordion">
-
-
-<div class="accordion-body">
-
 
 
 <div class="table-responsive">
 
 
-<table class="table table-hover">
+<table class="table table-striped">
 
 
-<thead class="table-light">
-
+<thead>
 
 <tr>
 
-<th>PID</th>
-
-<th>Process</th>
-
-<th>Protection</th>
+<th>Type</th>
+<th>Indicator</th>
+<th>Severity</th>
+<th>Description</th>
 
 </tr>
-
 
 </thead>
 
@@ -657,36 +277,32 @@ data-bs-parent="#memoryAccordion">
 <tbody>
 
 
-{% for m in malfind %}
-
+{% for i in iocs %}
 
 <tr>
 
 
 <td>
-
-{{m.pid}}
-
+{{ i.ioc_type }}
 </td>
 
 
 <td>
-
-{{m.process}}
-
+{{ i.indicator }}
 </td>
 
 
 <td>
-
 
 <span class="badge bg-danger">
-
-{{m.protection}}
-
+{{ i.severity }}
 </span>
 
+</td>
 
+
+<td>
+{{ i.description }}
 </td>
 
 
@@ -695,27 +311,16 @@ data-bs-parent="#memoryAccordion">
 
 {% else %}
 
-
 <tr>
-
-<td colspan="3"
-class="text-center text-muted">
-
-
-No suspicious memory regions found
-
-
+<td colspan="4">
+No IOC detected
 </td>
-
 </tr>
-
 
 {% endfor %}
 
 
-
 </tbody>
-
 
 </table>
 
@@ -727,114 +332,5 @@ No suspicious memory regions found
 
 
 </div>
-
-
-</div>
-
-
-
-
-
-</div>
-
-
-
-
-
-{% else %}
-
-
-
-<div class="alert alert-warning">
-
-
-<i class="bi bi-exclamation-triangle"></i>
-
-
-No memory analysis available for this case.
-
-
-</div>
-
-
-
-{% endif %}
-
-
-
-
-
-</div>
-
-
-
-
-
-<style>
-
-
-.card{
-
-border-radius:14px;
-
-}
-
-
-
-.accordion-button{
-
-font-weight:600;
-
-}
-
-
-
-.table{
-
-vertical-align:middle;
-
-}
-
-
-
-@media print{
-
-
-.no-print{
-
-display:none!important;
-
-}
-
-
-.accordion-collapse{
-
-display:block!important;
-
-height:auto!important;
-
-}
-
-
-.accordion-button::after{
-
-display:none;
-
-}
-
-
-.card{
-
-box-shadow:none!important;
-
-}
-
-
-}
-
-
-</style>
-
-
 
 {% endblock %}

@@ -23,7 +23,8 @@ class EventImporter:
     def import_events(
         cls,
         events,
-        case_id
+        case_id,
+        evidence_id=None
     ):
 
         if not events:
@@ -43,6 +44,7 @@ class EventImporter:
 
             records.append(
                 Event(
+                    evidence_id=evidence_id,
                     **mapped
                 )
             )
