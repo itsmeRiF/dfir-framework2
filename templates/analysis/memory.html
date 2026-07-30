@@ -4,188 +4,423 @@
 
 <div class="container-fluid">
 
-<h3 class="mb-4">
-    <i class="bi bi-memory"></i>
-    Memory Analysis
-    <small class="text-muted">
-        Case #{{ case_id }}
-    </small>
-</h3>
+
+<!-- HEADER -->
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <div>
+        <h3>
+            <i class="bi bi-memory"></i>
+            Memory Analysis
+        </h3>
+
+        <small class="text-muted">
+            Case #{{ case_id }}
+        </small>
+    </div>
+
+</div>
 
 
-<!-- SUMMARY -->
+
+<!-- SUMMARY CARDS -->
 
 <div class="row mb-4">
 
+
 <div class="col-md-4">
+
 <div class="card shadow-sm p-3">
 
-<h6>
-<i class="bi bi-cpu"></i>
+<div class="d-flex justify-content-between">
+
+<div>
+
+<h6 class="text-muted">
 Processes
 </h6>
 
 <h2>
-{{ processes|length }}
+{{ process_count }}
 </h2>
 
 </div>
+
+<i class="bi bi-cpu fs-1 text-primary"></i>
+
+</div>
+
+</div>
+
 </div>
 
 
+
+
 <div class="col-md-4">
+
 <div class="card shadow-sm p-3">
 
-<h6>
-<i class="bi bi-diagram-3"></i>
+<div class="d-flex justify-content-between">
+
+<div>
+
+<h6 class="text-muted">
 Network Connections
 </h6>
 
 <h2>
-{{ networks|length }}
+{{ network_count }}
 </h2>
 
 </div>
+
+<i class="bi bi-diagram-3 fs-1 text-success"></i>
+
 </div>
+
+</div>
+
+</div>
+
+
 
 
 <div class="col-md-4">
+
 <div class="card shadow-sm p-3">
 
-<h6>
-<i class="bi bi-bug"></i>
-IOCs
+<div class="d-flex justify-content-between">
+
+<div>
+
+<h6 class="text-muted">
+Memory IOC
 </h6>
 
 <h2>
-{{ iocs|length }}
+{{ ioc_count }}
 </h2>
 
 </div>
+
+<i class="bi bi-bug fs-1 text-danger"></i>
+
+</div>
+
 </div>
 
 </div>
 
 
+</div>
 
-<!-- PROCESSES -->
+
+
+
+
+<!-- ========================= -->
+<!-- PROCESS TABLE -->
+<!-- ========================= -->
+
 
 <div class="card shadow-sm mb-4">
 
+
 <div class="card-header">
+
 <h5>
-Process List
+<i class="bi bi-list-task"></i>
+Process Explorer
 </h5>
+
+
 </div>
+
+
+<div class="card-body">
+
+
+<form method="get"
+class="mb-3">
+
+
+<div class="input-group">
+
+
+<input
+type="text"
+name="process"
+class="form-control"
+placeholder="Search process..."
+value="{{ request.args.get('process','') }}">
+
+
+<button class="btn btn-primary">
+
+<i class="bi bi-search"></i>
+
+</button>
+
+
+</div>
+
+
+</form>
+
 
 
 <div class="table-responsive">
 
-<table class="table table-striped">
 
-<thead>
+<table class="table table-hover align-middle">
+
+
+<thead class="table-light">
+
 <tr>
+
 <th>PID</th>
+
 <th>PPID</th>
-<th>Name</th>
+
+<th>Process</th>
+
 <th>User</th>
+
 <th>Path</th>
+
 <th>Risk</th>
+
 </tr>
+
 </thead>
 
 
 <tbody>
+
 
 {% for p in processes %}
 
+
 <tr>
 
-<td>{{ p.pid }}</td>
-
-<td>{{ p.ppid }}</td>
 
 <td>
+{{ p.pid }}
+</td>
+
+
+<td>
+{{ p.ppid }}
+</td>
+
+
+<td>
+
+<strong>
 {{ p.process_name }}
+</strong>
+
 </td>
 
-<td>
-{{ p.username }}
-</td>
+
 
 <td>
-{{ p.path }}
+{{ p.username or "-" }}
 </td>
 
+
 <td>
-<span class="badge bg-warning">
-{{ p.risk }}
+
+<small>
+{{ p.path or "-" }}
+</small>
+
+</td>
+
+
+
+<td>
+
+
+{% if p.risk == "high" %}
+
+<span class="badge bg-danger">
+HIGH
 </span>
-</td>
 
 
-</tr>
+{% elif p.risk == "medium" %}
+
+<span class="badge bg-warning text-dark">
+MEDIUM
+</span>
+
 
 {% else %}
 
-<tr>
-<td colspan="6">
-No processes found
+<span class="badge bg-success">
+LOW
+</span>
+
+
+{% endif %}
+
+
+
 </td>
+
+
+
 </tr>
+
+
+{% else %}
+
+
+<tr>
+
+<td colspan="6"
+class="text-center">
+
+No processes found
+
+</td>
+
+</tr>
+
 
 {% endfor %}
 
+
+
 </tbody>
+
 
 </table>
 
-</div>
 
 </div>
 
 
+</div>
 
 
+</div>
+
+
+
+
+
+
+<!-- ========================= -->
 <!-- NETWORK -->
+<!-- ========================= -->
 
 
 <div class="card shadow-sm mb-4">
 
+
 <div class="card-header">
+
 <h5>
+
+<i class="bi bi-globe"></i>
+
 Network Connections
+
 </h5>
+
+
 </div>
+
+
+<div class="card-body">
+
+
+<form method="get"
+class="mb-3">
+
+
+<div class="input-group">
+
+
+<input
+type="text"
+name="network"
+class="form-control"
+placeholder="Search IP / process..."
+value="{{ request.args.get('network','') }}">
+
+
+<button class="btn btn-success">
+
+<i class="bi bi-search"></i>
+
+</button>
+
+
+</div>
+
+
+</form>
+
+
 
 
 <div class="table-responsive">
 
-<table class="table table-striped">
 
-<thead>
+<table class="table table-hover">
+
+
+<thead class="table-light">
+
 
 <tr>
+
 <th>Protocol</th>
+
 <th>Local</th>
+
 <th>Remote</th>
+
 <th>Status</th>
+
 <th>PID</th>
+
 <th>Process</th>
+
 </tr>
+
 
 </thead>
 
 
+
 <tbody>
+
+
 
 {% for n in networks %}
 
+
+
 <tr>
 
+
 <td>
+
+<span class="badge bg-secondary">
+
 {{ n.protocol }}
+
+</span>
+
 </td>
+
 
 
 <td>
@@ -199,131 +434,193 @@ Network Connections
 
 
 <td>
+
+
+{% if n.state == "LISTENING" %}
+
+<span class="badge bg-warning text-dark">
+
 {{ n.state }}
-</td>
 
+</span>
 
-<td>
-{{ n.pid }}
-</td>
-
-
-<td>
-{{ n.process_name }}
-</td>
-
-
-</tr>
 
 {% else %}
 
-<tr>
-<td colspan="6">
-No network connections
+{{ n.state or "-" }}
+
+
+{% endif %}
+
+
 </td>
+
+
+<td>
+{{ n.pid or "-" }}
+</td>
+
+
+<td>
+{{ n.process_name or "-" }}
+</td>
+
+
+
 </tr>
+
+
+
+{% else %}
+
+
+<tr>
+
+<td colspan="6"
+class="text-center">
+
+No network connections found
+
+</td>
+
+</tr>
+
 
 {% endfor %}
 
 
+
 </tbody>
+
 
 </table>
 
-</div>
 
 </div>
 
 
+</div>
+
+
+</div>
 
 
 
+
+
+
+
+
+<!-- ========================= -->
 <!-- IOC -->
+<!-- ========================= -->
 
 
 <div class="card shadow-sm">
 
 
-<div class="card-header">
+<div class="card-header bg-danger text-white">
 
 <h5>
-Memory IOCs
+
+<i class="bi bi-exclamation-triangle"></i>
+
+Memory IOC Findings
+
 </h5>
+
 
 </div>
 
 
-<div class="table-responsive">
 
+<div class="card-body">
 
-<table class="table table-striped">
-
-
-<thead>
-
-<tr>
-
-<th>Type</th>
-<th>Indicator</th>
-<th>Severity</th>
-<th>Description</th>
-
-</tr>
-
-</thead>
-
-
-
-<tbody>
 
 
 {% for i in iocs %}
 
-<tr>
 
 
-<td>
-{{ i.ioc_type }}
-</td>
+<div class="alert alert-danger">
 
 
-<td>
+<div class="d-flex justify-content-between">
+
+
+<strong>
+
 {{ i.indicator }}
-</td>
+
+</strong>
 
 
-<td>
+<span class="badge bg-dark">
 
-<span class="badge bg-danger">
 {{ i.severity }}
+
 </span>
 
-</td>
+
+</div>
 
 
-<td>
+<hr>
+
+
+<p>
+
+<strong>Type:</strong>
+
+{{ i.ioc_type }}
+
+</p>
+
+
+
+<p>
+
+<strong>Source:</strong>
+
+{{ i.source }}
+
+</p>
+
+
+<p>
+
+<strong>Details:</strong>
+
+</p>
+
+
+<pre class="small">
+
 {{ i.description }}
-</td>
+
+</pre>
 
 
-</tr>
+
+</div>
+
 
 
 {% else %}
 
-<tr>
-<td colspan="4">
-No IOC detected
-</td>
-</tr>
+
+
+<div class="text-muted">
+
+No IOC detected.
+
+</div>
+
+
 
 {% endfor %}
 
 
-</tbody>
-
-</table>
-
 
 </div>
 
@@ -331,6 +628,9 @@ No IOC detected
 </div>
 
 
+
+
 </div>
+
 
 {% endblock %}

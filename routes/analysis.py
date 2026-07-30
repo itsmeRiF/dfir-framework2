@@ -8,9 +8,7 @@ from models.evidence import Evidence
 from models.event import Event
 from models.incident import Incident
 from models.memory import MemoryAnalysis
-from models.memory_process import MemoryProcess
-from models.memory_network import MemoryNetwork
-from models.memory_ioc import MemoryIOC
+
 
 analysis_bp = Blueprint(
     "analysis",
@@ -229,58 +227,15 @@ def incidents(case_id):
     )
 
 
-# =========================================================
-# MEMORY ANALYSIS
-# =========================================================
-
-# =========================================================
-# MEMORY ANALYSIS
-# =========================================================
 
 @analysis_bp.route("/analysis/memory/<int:case_id>")
 def memory(case_id):
 
-    memory = MemoryAnalysis.query.filter_by(
-        case_id=case_id
-    ).first()
-
-
-    processes = (
-        MemoryProcess.query
-        .filter_by(case_id=case_id)
-        .order_by(MemoryProcess.id.desc())
-        .all()
-    )
-
-
-    networks = (
-        MemoryNetwork.query
-        .filter_by(case_id=case_id)
-        .order_by(MemoryNetwork.id.desc())
-        .all()
-    )
-
-
-    iocs = (
-        MemoryIOC.query
-        .filter_by(case_id=case_id)
-        .order_by(MemoryIOC.id.desc())
-        .all()
-    )
-
-
-    return render_template(
-        "analysis/memory.html",
-
-        case_id=case_id,
-
-        memory=memory,
-
-        processes=processes,
-
-        networks=networks,
-
-        iocs=iocs
+    return redirect(
+        url_for(
+            "memory.memory_analysis",
+            case_id=case_id
+        )
     )
 @analysis_bp.route("/analysis/validation/<int:case_id>")
 def validation(case_id):

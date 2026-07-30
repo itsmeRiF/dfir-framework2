@@ -128,6 +128,7 @@ Upload Evidence
 </form>
 
 
+
 </div>
 
 
@@ -354,6 +355,10 @@ Status
 Uploaded
 </th>
 
+<th>
+Actions
+</th>
+
 </tr>
 
 
@@ -486,31 +491,40 @@ Not calculated
 
 {% if e.status|lower=="completed" %}
 
-
 <span class="badge bg-success">
-
+<i class="bi bi-check-circle"></i>
 Completed
-
 </span>
 
 
 {% elif e.status|lower=="failed" %}
 
-
 <span class="badge bg-danger">
-
+<i class="bi bi-x-circle"></i>
 Failed
+</span>
 
+
+{% elif e.status|lower=="processing" %}
+
+<span class="badge bg-primary">
+<i class="bi bi-arrow-repeat"></i>
+Processing
+</span>
+
+
+{% elif e.status|lower=="queued" %}
+
+<span class="badge bg-warning text-dark">
+<i class="bi bi-hourglass-split"></i>
+Queued
 </span>
 
 
 {% else %}
 
-
-<span class="badge bg-warning text-dark">
-
+<span class="badge bg-secondary">
 {{ e.status }}
-
 </span>
 
 
@@ -544,6 +558,36 @@ Failed
 
 </td>
 
+<td>
+
+{% if e.status|lower == "completed" %}
+
+<form method="POST"
+      action="{{ url_for('evidence.reanalyze', evidence_id=e.id) }}"
+      style="display:inline;">
+
+<button 
+class="btn btn-sm btn-warning"
+onclick="
+this.disabled=true;
+this.innerHTML='<i class=\'bi bi-hourglass-split\'></i> Processing...';
+return confirm('Re-analyze this evidence?');
+">
+
+<i class="bi bi-arrow-repeat"></i>
+
+Re-analyze
+
+</button>
+
+</form>
+
+
+{% endif %}
+
+
+</td>
+
 
 
 </tr>
@@ -556,7 +600,7 @@ Failed
 
 <tr>
 
-<td colspan="7"
+<td colspan="8"
 class="text-center text-muted p-5">
 
 

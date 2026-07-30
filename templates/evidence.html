@@ -23,6 +23,22 @@
 
 </form>
 
+<form method="POST"
+      action="{{ url_for('evidence.reanalyze', evidence_id=e.id) }}"
+      style="display:inline;">
+
+<button class="btn btn-warning btn-sm"
+        onclick="return confirm(
+        'Re-analyze this evidence? Existing analysis will be replaced.'
+        )">
+
+<i class="bi bi-arrow-repeat"></i>
+Re-analyze
+
+</button>
+
+</form>
+
   <div id="status" style="margin-top:16px;"></div>
 </div>
 

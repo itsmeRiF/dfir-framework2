@@ -2,14 +2,18 @@
 Memory Artifact Importer
 """
 
+import os
+
 from database.db import db
+
+from models.memory_process import MemoryProcess
+from models.memory_network import MemoryNetwork
+from models.memory_ioc import MemoryIOC
 
 from modules.memory.volatility import VolatilityParser
 
 
-
 class MemoryImporter:
-
 
     @classmethod
     def import_memory(
@@ -18,99 +22,94 @@ class MemoryImporter:
         output_dir
     ):
 
+        # --------------------------------------------------
+        # Remove previous memory analysis for this case
+        # --------------------------------------------------
 
-        processes=[]
-        networks=[]
-        iocs=[]
+        MemoryProcess.query.filter_by(
+            case_id=case_id
+        ).delete()
 
+        MemoryNetwork.query.filter_by(
+            case_id=case_id
+        ).delete()
 
+        MemoryIOC.query.filter_by(
+            case_id=case_id
+        ).delete()
 
-        pslist = (
+        db.session.commit()
+
+        # --------------------------------------------------
+        # Build file paths
+        # --------------------------------------------------
+
+        pslist = os.path.join(
             output_dir,
             "windows_pslist_PsList.txt"
         )
 
-
-        netscan = (
+        netscan = os.path.join(
             output_dir,
             "windows_netscan_NetScan.txt"
         )
 
-
-        malfind = (
+        malfind = os.path.join(
             output_dir,
             "windows_malfind_Malfind.txt"
         )
 
+        # --------------------------------------------------
+        # Parse artifacts
+        # --------------------------------------------------
 
-
-        processes.extend(
-
-            VolatilityParser.parse_pslist(
-
-                "/".join(pslist),
-
-                case_id
-            )
-
+        processes = VolatilityParser.parse_pslist(
+            pslist,
+            case_id
         )
 
-
-
-        networks.extend(
-
-            VolatilityParser.parse_netscan(
-
-                "/".join(netscan),
-
-                case_id
-            )
-
+        networks = VolatilityParser.parse_netscan(
+            netscan,
+            case_id
         )
 
-
-
-        iocs.extend(
-
-            VolatilityParser.parse_malfind(
-
-                "/".join(malfind),
-
-                case_id
-            )
-
+        iocs = VolatilityParser.parse_malfind(
+            malfind,
+            case_id
         )
 
+        # --------------------------------------------------
+        # Save to database
+        # --------------------------------------------------
 
+        try:
 
-        if processes:
-            db.session.bulk_save_objects(
-                processes
-            )
+            if processes:
+                db.session.add_all(processes)
 
+            if networks:
+                db.session.add_all(networks)
 
-        if networks:
-            db.session.bulk_save_objects(
-                networks
-            )
+            if iocs:
+                db.session.add_all(iocs)
 
+            db.session.commit()
 
-        if iocs:
-            db.session.bulk_save_objects(
-                iocs
-            )
+        except Exception:
 
+            db.session.rollback()
+            raise
 
-        db.session.commit()
-
-
+        # --------------------------------------------------
+        # Return summary
+        # --------------------------------------------------
 
         return {
 
-            "processes":len(processes),
+            "processes": len(processes),
 
-            "network":len(networks),
+            "network": len(networks),
 
-            "ioc":len(iocs)
+            "ioc": len(iocs)
 
         }
