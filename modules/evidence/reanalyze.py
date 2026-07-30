@@ -24,14 +24,12 @@ class EvidenceReanalyzer:
     @classmethod
     def run(cls, evidence_id):
 
-
         evidence = Evidence.query.get_or_404(
             evidence_id
         )
 
 
         case_id = evidence.case_id
-
 
 
         try:
@@ -45,7 +43,6 @@ class EvidenceReanalyzer:
             # ======================================
             # Remove previous parsed database data
             # ======================================
-
 
             if evidence.artifact_type == "Memory":
 
@@ -67,9 +64,8 @@ class EvidenceReanalyzer:
 
 
             # ======================================
-            # Remove previous output
+            # Remove previous parser output
             # ======================================
-
 
             output_dir = os.path.join(
 
@@ -99,10 +95,9 @@ class EvidenceReanalyzer:
 
 
             # ======================================
-            # Reset status
+            # Update status
             # ======================================
-            
-            
+
             evidence.status = "Processing"
 
             evidence.error_message = None
@@ -120,7 +115,6 @@ class EvidenceReanalyzer:
             # Run parser again
             # ======================================
 
-
             from modules.evidence.worker import EvidenceWorker
 
 
@@ -129,14 +123,15 @@ class EvidenceReanalyzer:
             )
 
 
+
             logger.info(
                 "Re-analysis completed: %s",
                 result
             )
 
 
-            return {
 
+            return {
 
                 "success": True,
 

@@ -546,7 +546,7 @@ Queued
 {% if e.uploaded_at %}
 
 
-{{ e.uploaded_at.strftime("%d-%b-%Y %H:%M") }}
+{{ format_ist(e.uploaded_at) }} IST
 
 
 {% else %}
@@ -562,20 +562,14 @@ Queued
 
 {% if e.status|lower == "completed" %}
 
-<form method="POST"
-      action="{{ url_for('evidence.reanalyze', evidence_id=e.id) }}"
-      style="display:inline;">
+<form 
+method="POST"
+action="{{ url_for('evidence.reanalyze', evidence_id=e.id) }}"
+onsubmit="return confirm('Re-analyze this evidence? Existing analysis will be refreshed.')">
 
-<button 
-class="btn btn-sm btn-warning"
-onclick="
-this.disabled=true;
-this.innerHTML='<i class=\'bi bi-hourglass-split\'></i> Processing...';
-return confirm('Re-analyze this evidence?');
-">
+<button class="btn btn-warning btn-sm">
 
 <i class="bi bi-arrow-repeat"></i>
-
 Re-analyze
 
 </button>

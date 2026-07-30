@@ -78,55 +78,56 @@
                     Memory
                 </a>
 
-                <hr>
+<hr>
 
-                <small class="text-muted px-3 mb-2">
-                    WINDOWS ARTIFACTS
-                </small>
+<div class="px-3 mb-2">
+    <small class="fw-bold text-uppercase text-secondary">
+        Other Artifacts
+    </small>
+    <span class="badge bg-secondary ms-2">
+        Coming Soon - Phase 2
+    </span>
+</div>
 
-                <a href="/registry/{{case_id}}"
-                   class="list-group-item list-group-item-action">
-                    <i class="bi bi-diagram-3 me-2"></i>
-                    Registry
-                </a>
+<a class="list-group-item list-group-item-action disabled text-muted">
+    <i class="bi bi-diagram-3 me-2"></i>
+    Registry
+</a>
 
-                <a href="/mft/{{case_id}}"
-                   class="list-group-item list-group-item-action">
-                    <i class="bi bi-file-earmark-binary me-2"></i>
-                    MFT
-                </a>
+<a class="list-group-item list-group-item-action disabled text-muted">
+    <i class="bi bi-file-earmark-binary me-2"></i>
+    MFT
+</a>
 
-                <a href="/usn/{{case_id}}"
-                   class="list-group-item list-group-item-action">
-                    <i class="bi bi-journal-code me-2"></i>
-                    USN Journal
-                </a>
+<a class="list-group-item list-group-item-action disabled text-muted">
+    <i class="bi bi-journal-code me-2"></i>
+    USN Journal
+</a>
 
-                <a href="/prefetch/{{case_id}}"
-                   class="list-group-item list-group-item-action">
-                    <i class="bi bi-lightning-charge me-2"></i>
-                    Prefetch
-                </a>
+<a class="list-group-item list-group-item-action disabled text-muted">
+    <i class="bi bi-lightning-charge me-2"></i>
+    Prefetch
+</a>
 
-                <a href="/jumplist/{{case_id}}"
-                   class="list-group-item list-group-item-action">
-                    <i class="bi bi-list-task me-2"></i>
-                    Jump Lists
-                </a>
+<a class="list-group-item list-group-item-action disabled text-muted">
+    <i class="bi bi-list-task me-2"></i>
+    Jump Lists
+</a>
 
-                <a href="/browser/{{case_id}}"
-                   class="list-group-item list-group-item-action">
-                    <i class="bi bi-globe me-2"></i>
-                    Browser
-                </a>
+<a class="list-group-item list-group-item-action disabled text-muted">
+    <i class="bi bi-globe me-2"></i>
+    Browser
+</a>
 
-                <hr>
+<hr>
 
-                <a href="/reports/{{case_id}}"
-                   class="list-group-item list-group-item-action">
-                    <i class="bi bi-file-earmark-pdf me-2"></i>
-                    Reports
-                </a>
+<a class="list-group-item list-group-item-action disabled text-muted">
+    <i class="bi bi-file-earmark-pdf me-2"></i>
+    Reports
+    <span class="badge bg-secondary float-end">
+        Coming Soon - Phase 3
+    </span>
+</a>
 
             </div>
 
@@ -152,5 +153,64 @@
 </div>
 
 </div>
+
+
+<style>
+
+.list-group-item{
+
+    border:none;
+    border-radius:10px;
+    margin-bottom:4px;
+    transition:.18s;
+
+}
+
+.list-group-item:hover{
+
+    background:#e9f2ff;
+    color:#0d6efd;
+    padding-left:20px;
+
+}
+
+.list-group-item.active{
+
+    background:#0d6efd;
+    color:#fff;
+    font-weight:600;
+
+}
+
+.list-group-item.disabled{
+
+    background:#f8f9fa !important;
+    color:#adb5bd !important;
+    cursor:not-allowed;
+    opacity:.75;
+
+}
+
+.list-group-item.disabled:hover{
+
+    background:#f8f9fa !important;
+    color:#adb5bd !important;
+    padding-left:16px;
+
+}
+
+.border-end{
+
+    background:#fcfcfd;
+
+}
+
+hr{
+
+    opacity:.15;
+
+}
+
+</style>
 
 {% endblock %}

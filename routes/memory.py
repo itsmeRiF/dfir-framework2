@@ -105,6 +105,7 @@ def memory_analysis(case_id):
 
     for n in networks.all():
 
+
         key = (
             n.protocol,
             n.local_address,
@@ -113,7 +114,7 @@ def memory_analysis(case_id):
             n.pid,
             n.process_name
         )
-
+        
         if key in seen:
             continue
 
@@ -154,12 +155,14 @@ def memory_analysis(case_id):
     unique_iocs = []
 
     for i in iocs.all():
-
+        
         key = (
             i.ioc_type,
             i.indicator,
-            i.severity
+            i.severity,
+            i.description[:100]
         )
+        
 
         if key in seen:
             continue
@@ -177,6 +180,9 @@ def memory_analysis(case_id):
         len(iocs)
     )
     
+    import logging
+
+
     print(
     "CASE:",
     case_id

@@ -6,110 +6,154 @@
 
 
 <!-- HEADER -->
-
 <div class="d-flex justify-content-between align-items-center mb-4">
 
-    <div>
-        <h3>
-            <i class="bi bi-memory"></i>
-            Memory Analysis
-        </h3>
+<div>
 
-        <small class="text-muted">
-            Case #{{ case_id }}
-        </small>
-    </div>
+<h3 class="fw-bold">
+
+<i class="bi bi-memory text-primary"></i>
+
+Memory Analysis
+
+</h3>
+
+<small class="text-muted">
+Case #{{ case_id }}
+</small>
+
+</div>
+
+
+<button onclick="window.print()"
+class="btn btn-outline-secondary">
+
+<i class="bi bi-printer"></i>
+Print Report
+
+</button>
+
 
 </div>
 
 
 
-<!-- SUMMARY CARDS -->
+<!-- SUMMARY -->
 
-<div class="row mb-4">
+<div class="row g-4 mb-4">
 
 
 <div class="col-md-4">
 
-<div class="card shadow-sm p-3">
+<div class="card shadow-sm border-0 summary-card">
+
+<div class="card-body">
+
 
 <div class="d-flex justify-content-between">
 
+
 <div>
 
-<h6 class="text-muted">
+<small class="text-muted">
 Processes
-</h6>
+</small>
 
-<h2>
+<h2 class="fw-bold">
 {{ process_count }}
 </h2>
 
+
 </div>
+
 
 <i class="bi bi-cpu fs-1 text-primary"></i>
 
+
 </div>
+
 
 </div>
 
 </div>
+
+</div>
+
 
 
 
 
 <div class="col-md-4">
 
-<div class="card shadow-sm p-3">
+
+<div class="card shadow-sm border-0 summary-card">
+
+<div class="card-body">
+
 
 <div class="d-flex justify-content-between">
 
+
 <div>
 
-<h6 class="text-muted">
+<small class="text-muted">
 Network Connections
-</h6>
+</small>
 
-<h2>
+<h2 class="fw-bold">
 {{ network_count }}
 </h2>
 
+
 </div>
+
 
 <i class="bi bi-diagram-3 fs-1 text-success"></i>
 
+
 </div>
+
 
 </div>
 
 </div>
+
+
+</div>
+
+
 
 
 
 
 <div class="col-md-4">
 
-<div class="card shadow-sm p-3">
+
+<div class="card shadow-sm border-0 summary-card">
+
+
+<div class="card-body">
+
 
 <div class="d-flex justify-content-between">
 
+
 <div>
 
-<h6 class="text-muted">
+<small class="text-muted">
 Memory IOC
-</h6>
+</small>
 
-<h2>
+<h2 class="fw-bold text-danger">
 {{ ioc_count }}
 </h2>
 
+
 </div>
+
 
 <i class="bi bi-bug fs-1 text-danger"></i>
 
-</div>
-
-</div>
 
 </div>
 
@@ -117,23 +161,109 @@ Memory IOC
 </div>
 
 
+</div>
+
+
+</div>
 
 
 
-<!-- ========================= -->
-<!-- PROCESS TABLE -->
-<!-- ========================= -->
+</div>
 
 
-<div class="card shadow-sm mb-4">
 
 
-<div class="card-header">
 
-<h5>
+
+
+<!-- TABS -->
+
+
+<ul class="nav nav-tabs mb-3">
+
+
+<li class="nav-item">
+
+<button class="nav-link active"
+data-bs-toggle="tab"
+data-bs-target="#process">
+
+<i class="bi bi-cpu"></i>
+Processes
+
+</button>
+
+</li>
+
+
+<li class="nav-item">
+
+<button class="nav-link"
+data-bs-toggle="tab"
+data-bs-target="#network">
+
+
+<i class="bi bi-globe"></i>
+
+Network
+
+
+</button>
+
+</li>
+
+
+
+<li class="nav-item">
+
+<button class="nav-link"
+data-bs-toggle="tab"
+data-bs-target="#ioc">
+
+
+<i class="bi bi-exclamation-triangle"></i>
+
+IOC
+
+
+</button>
+
+</li>
+
+
+</ul>
+
+
+
+
+
+
+
+<div class="tab-content">
+
+
+
+
+
+<!-- ============================= -->
+<!-- PROCESS -->
+<!-- ============================= -->
+
+
+<div class="tab-pane fade show active"
+id="process">
+
+
+
+<div class="card shadow-sm">
+
+
+<div class="card-header fw-bold">
+
+
 <i class="bi bi-list-task"></i>
+
 Process Explorer
-</h5>
 
 
 </div>
@@ -142,19 +272,20 @@ Process Explorer
 <div class="card-body">
 
 
+
 <form method="get"
-class="mb-3">
+class="mb-3 print-hide">
 
 
 <div class="input-group">
 
 
-<input
-type="text"
+<input type="text"
 name="process"
 class="form-control"
 placeholder="Search process..."
-value="{{ request.args.get('process','') }}">
+value="{{request.args.get('process','')}}">
+
 
 
 <button class="btn btn-primary">
@@ -168,6 +299,8 @@ value="{{ request.args.get('process','') }}">
 
 
 </form>
+
+
 
 
 
@@ -195,7 +328,9 @@ value="{{ request.args.get('process','') }}">
 
 </tr>
 
+
 </thead>
+
 
 
 <tbody>
@@ -204,55 +339,57 @@ value="{{ request.args.get('process','') }}">
 {% for p in processes %}
 
 
-<tr>
+<tr class="
+{% if p.risk=='high' %}
+table-danger
+{% endif %}
+">
 
 
 <td>
-{{ p.pid }}
+<strong>{{p.pid}}</strong>
 </td>
 
 
 <td>
-{{ p.ppid }}
+{{p.ppid}}
 </td>
 
 
 <td>
 
-<strong>
-{{ p.process_name }}
-</strong>
+<i class="bi bi-terminal"></i>
+
+{{p.process_name}}
 
 </td>
 
 
-
 <td>
-{{ p.username or "-" }}
+{{p.username or "-"}}
 </td>
 
 
 <td>
 
 <small>
-{{ p.path or "-" }}
+{{p.path or "-"}}
 </small>
 
 </td>
 
 
-
 <td>
 
 
-{% if p.risk == "high" %}
+{% if p.risk=="high" %}
 
 <span class="badge bg-danger">
 HIGH
 </span>
 
 
-{% elif p.risk == "medium" %}
+{% elif p.risk=="medium" %}
 
 <span class="badge bg-warning text-dark">
 MEDIUM
@@ -269,7 +406,6 @@ LOW
 {% endif %}
 
 
-
 </td>
 
 
@@ -279,11 +415,10 @@ LOW
 
 {% else %}
 
-
 <tr>
 
 <td colspan="6"
-class="text-center">
+class="text-center text-muted">
 
 No processes found
 
@@ -291,9 +426,7 @@ No processes found
 
 </tr>
 
-
 {% endfor %}
-
 
 
 </tbody>
@@ -311,27 +444,34 @@ No processes found
 </div>
 
 
+</div>
 
 
 
 
-<!-- ========================= -->
+
+
+
+
+<!-- ============================= -->
 <!-- NETWORK -->
-<!-- ========================= -->
+<!-- ============================= -->
 
 
-<div class="card shadow-sm mb-4">
+<div class="tab-pane fade"
+id="network">
 
 
-<div class="card-header">
 
-<h5>
+<div class="card shadow-sm">
 
-<i class="bi bi-globe"></i>
+
+<div class="card-header fw-bold">
+
+
+<i class="bi bi-diagram-3"></i>
 
 Network Connections
-
-</h5>
 
 
 </div>
@@ -340,19 +480,20 @@ Network Connections
 <div class="card-body">
 
 
+
 <form method="get"
-class="mb-3">
+class="mb-3 print-hide">
 
 
 <div class="input-group">
 
 
-<input
-type="text"
+<input type="text"
 name="network"
 class="form-control"
 placeholder="Search IP / process..."
-value="{{ request.args.get('network','') }}">
+value="{{request.args.get('network','')}}">
+
 
 
 <button class="btn btn-success">
@@ -369,8 +510,6 @@ value="{{ request.args.get('network','') }}">
 
 
 
-
-<div class="table-responsive">
 
 
 <table class="table table-hover">
@@ -392,6 +531,7 @@ value="{{ request.args.get('network','') }}">
 <th>PID</th>
 
 <th>Process</th>
+
 
 </tr>
 
@@ -415,40 +555,39 @@ value="{{ request.args.get('network','') }}">
 
 <span class="badge bg-secondary">
 
-{{ n.protocol }}
+{{n.protocol}}
 
 </span>
 
 </td>
 
 
-
 <td>
-{{ n.local_address }}
+{{n.local_address}}
 </td>
 
 
 <td>
-{{ n.remote_address }}
+{{n.remote_address}}
 </td>
 
 
 <td>
 
 
-{% if n.state == "LISTENING" %}
+{% if n.state=="LISTENING" %}
+
 
 <span class="badge bg-warning text-dark">
 
-{{ n.state }}
+{{n.state}}
 
 </span>
 
 
 {% else %}
 
-{{ n.state or "-" }}
-
+{{n.state or "-"}}
 
 {% endif %}
 
@@ -457,33 +596,17 @@ value="{{ request.args.get('network','') }}">
 
 
 <td>
-{{ n.pid or "-" }}
+{{n.pid or "-"}}
 </td>
 
 
 <td>
-{{ n.process_name or "-" }}
+{{n.process_name or "-"}}
 </td>
-
 
 
 </tr>
 
-
-
-{% else %}
-
-
-<tr>
-
-<td colspan="6"
-class="text-center">
-
-No network connections found
-
-</td>
-
-</tr>
 
 
 {% endfor %}
@@ -510,28 +633,28 @@ No network connections found
 
 
 
-
-<!-- ========================= -->
+<!-- ============================= -->
 <!-- IOC -->
-<!-- ========================= -->
+<!-- ============================= -->
+
+
+<div class="tab-pane fade"
+id="ioc">
+
 
 
 <div class="card shadow-sm">
 
 
-<div class="card-header bg-danger text-white">
+<div class="card-header bg-danger text-white fw-bold">
 
-<h5>
 
-<i class="bi bi-exclamation-triangle"></i>
+<i class="bi bi-bug"></i>
 
 Memory IOC Findings
 
-</h5>
-
 
 </div>
-
 
 
 <div class="card-body">
@@ -542,27 +665,28 @@ Memory IOC Findings
 
 
 
-<div class="alert alert-danger">
+<div class="border rounded p-3 mb-3">
 
 
 <div class="d-flex justify-content-between">
 
 
-<strong>
+<h5>
 
-{{ i.indicator }}
+{{i.indicator}}
 
-</strong>
+</h5>
 
 
-<span class="badge bg-dark">
+<span class="badge bg-danger">
 
-{{ i.severity }}
+{{i.severity}}
 
 </span>
 
 
 </div>
+
 
 
 <hr>
@@ -572,34 +696,40 @@ Memory IOC Findings
 
 <strong>Type:</strong>
 
-{{ i.ioc_type }}
+{{i.ioc_type}}
 
 </p>
-
 
 
 <p>
 
 <strong>Source:</strong>
 
-{{ i.source }}
+{{i.source}}
 
 </p>
 
 
 <p>
 
-<strong>Details:</strong>
+<strong>Description:</strong>
 
 </p>
 
 
-<pre class="small">
+<div class="bg-light p-3 rounded">
 
-{{ i.description }}
 
-</pre>
+{{i.description[:500]}}
 
+{% if i.description|length > 500 %}
+
+...
+
+{% endif %}
+
+
+</div>
 
 
 </div>
@@ -609,7 +739,6 @@ Memory IOC Findings
 {% else %}
 
 
-
 <div class="text-muted">
 
 No IOC detected.
@@ -617,20 +746,95 @@ No IOC detected.
 </div>
 
 
-
 {% endfor %}
 
 
-
 </div>
 
 
 </div>
 
 
+</div>
+
 
 
 </div>
+
+
+
+</div>
+
+
+
+
+
+
+
+<style>
+
+
+.summary-card{
+
+border-radius:15px;
+
+}
+
+
+
+.card{
+
+border-radius:14px;
+
+}
+
+
+
+.table td,
+.table th{
+
+vertical-align:middle;
+
+}
+
+
+
+@media print{
+
+
+.print-hide,
+button,
+.nav-tabs{
+
+display:none!important;
+
+}
+
+
+.card{
+
+box-shadow:none!important;
+
+border:1px solid #ddd;
+
+}
+
+
+.tab-pane{
+
+display:block!important;
+
+opacity:1!important;
+
+}
+
+
+}
+
+
+</style>
+
+
 
 
 {% endblock %}

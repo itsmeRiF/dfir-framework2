@@ -11,6 +11,7 @@ from models.case import Case
 from models.evidence import Evidence
 
 from modules.evidence.service import EvidenceService
+from utils.timezone import format_ist
 
 
 evidence_bp = Blueprint(
@@ -50,7 +51,8 @@ def evidence_page(case_id):
         "evidence/dashboard.html",
         case=case,
         case_id=case_id,
-        evidences=evidences
+        evidences=evidences,
+        format_ist=format_ist
     )
 
 
@@ -134,7 +136,6 @@ def upload_evidence(case_id):
 # =====================================================
 # Re-analyze Evidence
 # =====================================================
-
 @evidence_bp.route(
     "/evidence/reanalyze/<int:evidence_id>",
     methods=["POST"]
@@ -144,15 +145,10 @@ def reanalyze(evidence_id):
     from modules.evidence.reanalyze import EvidenceReanalyzer
 
 
-    evidence = Evidence.query.get_or_404(
-        evidence_id
-    )
-
-
     try:
 
         result = EvidenceReanalyzer.run(
-            evidence.id
+            evidence_id
         )
 
 
@@ -164,7 +160,6 @@ def reanalyze(evidence_id):
 
     except Exception as e:
 
-
         flash(
             f"Re-analysis failed: {e}",
             "danger"
@@ -172,12 +167,5 @@ def reanalyze(evidence_id):
 
 
     return redirect(
-
         request.referrer
-        or
-        url_for(
-            "evidence.evidence_page",
-            case_id=evidence.case_id
-        )
-
     )
