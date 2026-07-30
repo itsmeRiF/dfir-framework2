@@ -144,24 +144,21 @@ def reanalyze(evidence_id):
 
     from modules.evidence.reanalyze import EvidenceReanalyzer
 
-
     try:
 
         result = EvidenceReanalyzer.run(
             evidence_id
         )
 
-
         flash(
             "Evidence re-analyzed successfully.",
             "success"
         )
 
-
     except Exception as e:
 
         flash(
-            f"Re-analysis failed: {e}",
+            f"Re-analysis failed: {str(e)}",
             "danger"
         )
 

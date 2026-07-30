@@ -141,19 +141,17 @@ def _run_volatility(filepath: str, output_dir: str) -> list[dict]:
         vol_path
     ]
 
-
-    print("=" * 50)
-    print("VOLATILITY COMMAND")
-    print(vol_cmd)
-    print("=" * 50)
-
-
-
+    
     plugins = (
 
         (
             "windows.pslist.PsList",
             "Process List"
+        ),
+
+        (
+            "windows.pstree.PsTree",
+            "Process Tree"
         ),
 
         (

@@ -483,9 +483,6 @@ Not calculated
 
 
 
-
-
-
 <td>
 
 
@@ -560,24 +557,52 @@ Queued
 
 <td>
 
-{% if e.status|lower == "completed" %}
+{% if e.status|lower=="completed" %}
 
-<form 
-method="POST"
-action="{{ url_for('evidence.reanalyze', evidence_id=e.id) }}"
-onsubmit="return confirm('Re-analyze this evidence? Existing analysis will be refreshed.')">
+<span class="badge bg-success">
+Completed
+</span>
 
-<button class="btn btn-warning btn-sm">
+{% elif e.status|lower=="failed" %}
+
+<span class="badge bg-danger">
+Failed
+</span>
+
+{% elif e.status|lower=="processing" %}
+
+<span class="badge bg-primary">
+Processing
+</span>
+
+{% else %}
+
+<span class="badge bg-warning text-dark">
+{{ e.status }}
+</span>
+
+{% endif %}
+
+
+<form method="POST"
+action="{{ url_for('evidence.reanalyze',
+evidence_id=e.id) }}"
+class="mt-2">
+
+
+<button
+class="btn btn-sm btn-outline-primary"
+onclick="return confirm('Re-analyze this evidence?')">
+
 
 <i class="bi bi-arrow-repeat"></i>
+
 Re-analyze
 
 </button>
 
+
 </form>
-
-
-{% endif %}
 
 
 </td>

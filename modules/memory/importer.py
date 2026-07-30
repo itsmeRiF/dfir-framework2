@@ -58,6 +58,14 @@ class MemoryImporter:
             output_dir,
             "windows_malfind_Malfind.txt"
         )
+        
+
+
+        pstree = os.path.join(
+            output_dir,
+            "windows_pstree_PsTree.txt"
+        )
+
 
         # --------------------------------------------------
         # Parse artifacts
@@ -68,6 +76,17 @@ class MemoryImporter:
             case_id
         )
 
+
+        tree_processes = VolatilityParser.parse_pstree(
+            pstree,
+            case_id
+        )
+
+        processes.extend(
+            tree_processes
+        )
+
+
         networks = VolatilityParser.parse_netscan(
             netscan,
             case_id
@@ -77,6 +96,20 @@ class MemoryImporter:
             malfind,
             case_id
         )
+
+        unique = {}
+
+        for p in processes:
+
+            key = (
+                p.pid,
+                p.process_name
+            )
+
+            unique[key]=p
+
+
+        processes=list(unique.values())
 
         # --------------------------------------------------
         # Save to database
@@ -113,3 +146,7 @@ class MemoryImporter:
             "ioc": len(iocs)
 
         }
+        
+        
+        
+        
