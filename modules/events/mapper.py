@@ -4,6 +4,7 @@ to CyberX Event model.
 """
 
 from datetime import datetime
+from modules.events.event_names import EVENT_NAMES
 
 
 SEVERITY_MAP = {
@@ -24,6 +25,11 @@ SEVERITY_MAP = {
 
 }
 
+
+event_name = EVENT_NAMES.get(
+    str(event.get("event_id")),
+    f"Windows Event ID {event.get('event_id')}"
+)
 
 class EventMapper:
 
@@ -118,16 +124,13 @@ class EventMapper:
                 "RecordID"
             ),
 
-
-
-            "rule_title": event.get(
-                "message"
-            )
-            or event.get(
-                "RuleTitle"
-            )
-            or "Unknown",
-
+            
+            
+                
+            "rule_title": (
+                event.get("rule_title")
+                or event_name
+            ),   
 
 
             "rule_id": event.get(

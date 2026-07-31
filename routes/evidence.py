@@ -6,7 +6,7 @@ from flask import (
     url_for,
     flash
 )
-
+from database.db import db
 from models.case import Case
 from models.evidence import Evidence
 
@@ -166,3 +166,160 @@ def reanalyze(evidence_id):
     return redirect(
         request.referrer
     )
+    
+# =====================================================
+# Delete Evidence
+# =====================================================
+
+@evidence_bp.route(
+    "/evidence/delete/<int:evidence_id>",
+    methods=["POST"]
+)
+def delete_evidence(evidence_id):
+
+
+    from models.event import Event
+    from models.memory_process import MemoryProcess
+    from models.memory_network import MemoryNetwork
+    from models.memory_ioc import MemoryIOC
+
+    import os
+    import shutil
+
+
+    evidence = Evidence.query.get_or_404(
+        evidence_id
+    )
+
+
+    case_id = evidence.case_id
+
+
+    try:
+
+        # -----------------------------
+        # Delete Events
+        # -----------------------------
+
+        Event.query.filter_by(
+            evidence_id=evidence_id
+        ).delete()
+        
+        
+        Event.query.filter_by(
+            evidence_id=evidence_id
+        ).delete(
+            synchronize_session=False
+        )
+
+
+
+        # -----------------------------
+        # Delete Memory Data
+        # -----------------------------
+
+        if evidence.artifact_type == "Memory":
+
+            
+            MemoryProcess.query.filter_by(
+                case_id=case_id
+            ).delete(
+                synchronize_session=False
+            )
+            
+
+            MemoryNetwork.query.filter_by(
+                case_id=case_id
+            ).delete(
+                synchronize_session=False
+            )
+
+
+            MemoryIOC.query.filter_by(
+                case_id=case_id
+            ).delete(
+                synchronize_session=False
+            )
+
+
+
+        # -----------------------------
+        # Delete Physical File
+        # -----------------------------
+
+        if evidence.filepath:
+
+            if os.path.exists(
+                evidence.filepath
+            ):
+
+                os.remove(
+                    evidence.filepath
+                )
+
+
+
+        # -----------------------------
+        # Delete Output
+        # -----------------------------
+
+        output_dir = os.path.join(
+
+            "output",
+
+            "evidence",
+
+            str(case_id),
+
+            str(evidence_id)
+
+        )
+
+
+        if os.path.exists(output_dir):
+
+            shutil.rmtree(
+                output_dir
+            )
+
+
+
+        # -----------------------------
+        # Delete DB Record
+        # -----------------------------
+
+        db.session.delete(
+            evidence
+        )
+
+
+        db.session.commit()
+
+
+
+        flash(
+            "Evidence deleted successfully.",
+            "success"
+        )
+
+
+    except Exception as e:
+
+
+        db.session.rollback()
+
+
+        flash(
+            str(e),
+            "danger"
+        )
+
+
+    return redirect(
+
+        url_for(
+            "evidence.evidence_page",
+            case_id=case_id
+        )
+
+    )    

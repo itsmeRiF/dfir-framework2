@@ -607,7 +607,26 @@ Re-analyze
 
 </td>
 
+<td>
 
+<form method="POST"
+action="{{ url_for('evidence.delete_evidence',
+evidence_id=e.id) }}"
+onsubmit="return confirm('Delete this evidence permanently?');">
+
+
+<button class="btn btn-sm btn-outline-danger">
+
+<i class="bi bi-trash"></i>
+
+Delete
+
+</button>
+
+
+</form>
+
+</td>
 
 </tr>
 

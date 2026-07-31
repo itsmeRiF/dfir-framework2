@@ -6,7 +6,37 @@ from dateutil import parser as dateparser
 
 
 
-def run_hayabusa(evtx_path, output_dir, tool_path):
+def get_value(row, *keys):
+
+    """
+    Safely fetch value from Hayabusa CSV row
+    supporting multiple versions
+    """
+
+    for key in keys:
+
+        if key in row.index:
+
+            value = row.get(key)
+
+            if pd.notna(value):
+
+                value = str(value).strip()
+
+                if value:
+                    return value
+
+
+    return ""
+
+
+
+
+def run_hayabusa(
+        evtx_path,
+        output_dir,
+        tool_path
+):
 
 
     os.makedirs(
@@ -19,9 +49,11 @@ def run_hayabusa(evtx_path, output_dir, tool_path):
         evtx_path
     )
 
+
     tool_path = os.path.abspath(
         tool_path
     )
+
 
 
     output_file = os.path.join(
@@ -33,6 +65,7 @@ def run_hayabusa(evtx_path, output_dir, tool_path):
     evtx_dir = os.path.dirname(
         evtx_path
     )
+
 
 
     cmd = [
@@ -62,10 +95,16 @@ def run_hayabusa(evtx_path, output_dir, tool_path):
     ]
 
 
+
+    print(
+        "\n========== HAYABUSA =========="
+    )
+
     print(
         "Running:",
         " ".join(cmd)
     )
+
 
 
     result = subprocess.run(
@@ -85,12 +124,18 @@ def run_hayabusa(evtx_path, output_dir, tool_path):
     )
 
 
-    print(result.stdout)
+
+    print(
+        result.stdout
+    )
+
 
 
     if result.stderr:
 
-        print(result.stderr)
+        print(
+            result.stderr
+        )
 
 
 
@@ -99,90 +144,169 @@ def run_hayabusa(evtx_path, output_dir, tool_path):
         raise Exception(
 
             "Hayabusa did not generate CSV\n"
-
-            + result.stderr
+            +
+            result.stderr
 
         )
 
 
 
     df = pd.read_csv(
-        output_file
+        output_file,
+        dtype=str
     ).fillna("")
 
 
-    events=[]
+
+    print(
+        "\n========== HAYABUSA CSV COLUMNS =========="
+    )
+
+    print(
+        df.columns.tolist()
+    )
+
+    print(
+        "==========================================\n"
+    )
 
 
-    for _,row in df.iterrows():
+
+    events = []
+
+
+
+    for _, row in df.iterrows():
+
+
+        # ----------------------------
+        # Timestamp
+        # ----------------------------
+
+        timestamp_raw = get_value(
+            row,
+            "Timestamp",
+            "Time",
+            "datetime"
+        )
 
 
         try:
 
-            ts=dateparser.parse(
-                row["Timestamp"]
+            timestamp = dateparser.parse(
+                timestamp_raw
             )
 
         except:
 
-            ts=None
+            timestamp = None
 
 
 
-        events.append({
+        # ----------------------------
+        # Build normalized event
+        # ----------------------------
 
-            "timestamp":ts,
 
-            "computer":row.get(
+        event = {
+
+
+            "timestamp": timestamp,
+
+
+            "computer": get_value(
+                row,
                 "Computer",
-                ""
+                "ComputerName",
+                "Hostname"
             ),
 
-            "channel":row.get(
+
+
+            "channel": get_value(
+                row,
                 "Channel",
-                ""
+                "LogFile",
+                "Log"
             ),
 
-            "event_id":str(
-                row.get(
-                    "EventID",
-                    ""
-                )
+
+
+            "event_id": get_value(
+                row,
+                "EventID",
+                "Event ID"
             ),
 
-            "record_id":str(
-                row.get(
-                    "RecordID",
-                    ""
-                )
+
+
+            "record_id": get_value(
+                row,
+                "RecordID",
+                "Record ID"
             ),
 
-            "rule_title":row.get(
+
+
+            "rule_title": get_value(
+                row,
                 "RuleTitle",
-                ""
+                "Rule Title",
+                "Title",
+                "Rule",
+                "RuleName"
             ),
 
-            "rule_id":row.get(
+
+
+            "rule_id": get_value(
+                row,
                 "RuleID",
-                ""
+                "Rule ID"
             ),
 
-            "severity":row.get(
+
+
+            "severity": get_value(
+                row,
                 "Level",
-                ""
+                "Severity"
             ),
 
-            "details":row.get(
+
+
+            "details": get_value(
+                row,
                 "Details",
-                ""
+                "Message",
+                "Description"
             ),
 
-            "extra_info":row.get(
-                "ExtraFieldInfo",
-                ""
-            )
 
-        })
+
+            "extra_info": get_value(
+                row,
+                "ExtraFieldInfo",
+                "Extra Field Info"
+            ),
+
+
+
+            "raw": row.to_dict()
+
+        }
+
+
+
+        events.append(
+            event
+        )
+
+
+
+    print(
+        f"Hayabusa events parsed: {len(events)}"
+    )
 
 
     return events
