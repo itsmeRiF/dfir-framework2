@@ -171,21 +171,27 @@ class EvidenceWorker:
                     memory_summary
 
                 )
-
-
+                        
             # ----------------------------------
             # Import Events
+            # Only EVTX goes to Event Logs
             # ----------------------------------
 
-            imported = EventImporter.import_events(
+            imported = 0
 
-                results,
 
-                evidence.case_id,
+            if artifact_type == "evtx":
 
-                evidence.id
+                imported = EventImporter.import_events(
 
-            )
+                    results,
+
+                    evidence.case_id,
+
+                    evidence.id
+
+                )
+
 
 
             logger.info(

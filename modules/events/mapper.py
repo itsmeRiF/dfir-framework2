@@ -4,7 +4,6 @@ to CyberX Event model.
 """
 
 from datetime import datetime
-from modules.events.event_names import EVENT_NAMES
 
 
 SEVERITY_MAP = {
@@ -26,11 +25,6 @@ SEVERITY_MAP = {
 }
 
 
-event_name = EVENT_NAMES.get(
-    str(event.get("event_id")),
-    f"Windows Event ID {event.get('event_id')}"
-)
-
 class EventMapper:
 
 
@@ -46,8 +40,9 @@ class EventMapper:
 
         return SEVERITY_MAP.get(
             value,
-            value
+            "informational"
         )
+
 
 
     @staticmethod
@@ -68,12 +63,18 @@ class EventMapper:
 
             try:
 
-                parsed_time = datetime.fromisoformat(
-                    str(timestamp).replace(
-                        "Z",
-                        "+00:00"
+                if isinstance(timestamp, datetime):
+
+                    parsed_time = timestamp
+
+                else:
+
+                    parsed_time = datetime.fromisoformat(
+                        str(timestamp).replace(
+                            "Z",
+                            "+00:00"
+                        )
                     )
-                )
 
             except Exception:
 
@@ -86,7 +87,9 @@ class EventMapper:
             {}
         )
 
+
         if raw is None:
+
             raw = {}
 
 
@@ -105,17 +108,26 @@ class EventMapper:
             ),
 
 
-            "channel": event.get(
-                "source"
+
+            "channel": (
+
+                event.get("source")
+
+                or
+
+                event.get("channel")
+
             ),
 
 
 
             "event_id": str(
+
                 event.get(
                     "event_id",
                     ""
                 )
+
             ),
 
 
@@ -124,13 +136,26 @@ class EventMapper:
                 "RecordID"
             ),
 
-            
-            
-                
+
+
             "rule_title": (
+
                 event.get("rule_title")
-                or event_name
-            ),   
+
+                or
+
+                event.get("RuleTitle")
+
+                or
+
+                event.get("message")
+
+                or
+
+                "Unknown"
+
+            ),
+
 
 
             "rule_id": event.get(
@@ -140,15 +165,23 @@ class EventMapper:
 
 
             "severity": EventMapper.normalize_severity(
+
                 event.get(
                     "severity"
                 )
+
             ),
 
 
 
-            "details": event.get(
-                "details"
+            "details": (
+
+                event.get("details")
+
+                or
+
+                event.get("message")
+
             ),
 
 
