@@ -104,31 +104,6 @@ pip install -r requirements.txt
 python bootstrap.py
 ```
 
----
-
-## Start Application
-
-```bash
-python app.py
-```
-
-Access:
-
-```
-http://127.0.0.1:1338
-```
-
-Default Credentials:
-
-```
-Username: analyst
-Password: analyst123
-```
-
----
-
-# For Event Logs Analysis
-
 Download Hayabusa and place:
 
 ```
@@ -157,25 +132,47 @@ This downloads:
 
 ---
 
+## Start Application
+
+```bash
+python app.py
+```
+
+Access:
+
+```
+http://127.0.0.1:1338
+```
+
+Default Credentials:
+
+```
+Username: analyst
+Password: analyst123
+```
+
+---
+
 # 🗺️ Development Roadmap
 
 ## Phase 1 — Core Windows Artifacts ✅
 
 * [x] Windows Event Logs (EVTX)
-* [x] Registry Hives
-* [x] Prefetch Files
-* [x] Jump Lists
 * [x] Memory Dumps
 
 
 ## To-do:
-* [ ] Display summary of RAM Analysis
-* [ ] Running processes
-* [ ] Active network connections
+* [x] Display summary of RAM Analysis
+* [x] Running processes
+* [x] Active network connections
 
 ## Phase 2 — Advanced Artifact Support 🚧
 
 * [ ] Browser History
+* [ ] Registry Hives
+* [ ] Prefetch Files
+* [ ] Jump Lists
+
 
 
 ## Phase 3 — File System Forensics 🔮
@@ -204,8 +201,6 @@ This downloads:
 
 # 🔮 Future Integrations
 
-* Volatility3 Memory Framework
-* YARA Malware Detection
 * MITRE ATT&CK Mapping
 * Threat Intelligence Integration
 * IOC Extraction Engine
