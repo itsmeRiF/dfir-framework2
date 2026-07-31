@@ -6,6 +6,28 @@ Case Management • Evidence Processing • Artifact Parsing • Timeline Analys
 
 ---
 
+![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)
+![Flask](https://img.shields.io/badge/Flask-3.x-black.svg)
+![License](https://img.shields.io/github/license/itsmeRiF/dfir-framework2)
+
+![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux-green)
+![Database](https://img.shields.io/badge/Database-SQLite-blue)
+
+![Digital Forensics](https://img.shields.io/badge/DFIR-Digital%20Forensics-red)
+![Incident Response](https://img.shields.io/badge/IR-Incident%20Response-orange)
+![Cyber Security](https://img.shields.io/badge/Cyber-Security-purple)
+![Open Source](https://img.shields.io/badge/Open%20Source-❤-brightgreen)
+
+![Last Commit](https://img.shields.io/github/last-commit/itsmeRiF/dfir-framework2)
+![Issues](https://img.shields.io/github/issues/itsmeRiF/dfir-framework2)
+![Pull Requests](https://img.shields.io/github/issues-pr/itsmeRiF/dfir-framework2)
+![Maintenance](https://img.shields.io/badge/Maintained-Yes-success)
+![Status](https://img.shields.io/badge/Status-Active-success)
+
+![Contributions Welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg)
+![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
+
+
 ## 📌 Overview
 
 CyberX DFIR Framework is a modular **Digital Forensics and Incident Response (DFIR)** platform built using Flask.
