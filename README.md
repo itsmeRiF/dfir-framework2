@@ -32,9 +32,6 @@ All forensic artifacts are normalized into a common **Event Model**, allowing in
 | Artifact             | Extensions                                            | Parser / Engine              | Output                                          |
 | -------------------- | ----------------------------------------------------- | ---------------------------- | ----------------------------------------------- |
 | ✅ Windows Event Logs | `.evtx`                                               | Hayabusa + Sigma Rules       | Threat detections, suspicious activities        |
-| ✅ Registry Hives     | SYSTEM, SOFTWARE, SAM, NTUSER.DAT                     | Registry Parser              | Persistence mechanisms, configuration artifacts |
-| ✅ Prefetch Files     | `.pf`                                                 | Prefetch Parser              | Execution history, LOLBin detection             |
-| ✅ Jump Lists         | `.automaticDestinations-ms`, `.customDestinations-ms` | OLE + LNK Parser             | Recent applications, accessed files             |
 | ✅ Memory Dumps      | `.raw`, `.mem`, `.dmp`, `.vmem`                       | Volatility3 + IOC Extraction | Processes, network artifacts, memory analysis   |
 
 ---
