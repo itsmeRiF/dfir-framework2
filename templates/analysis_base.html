@@ -60,7 +60,7 @@
                 <a href="/cases"
                    class="list-group-item list-group-item-action cx-nav {% if active_tab == 'cases' %}active{% endif %}">
                     <i class="bi bi-folder2-open me-2"></i>
-                    Cases
+                    All Cases
                     <span class="badge rounded-pill cx-badge">
                         {{ stats.cases }}
                     </span>
@@ -69,7 +69,11 @@
                 <a href="{% if stats.scoped %}/analysis/dashboard/{{case_id}}{% else %}{{ url_for('analysis.global_dashboard') }}{% endif %}"
                    class="list-group-item list-group-item-action cx-nav {% if active_tab == 'dashboard' %}active{% endif %}">
                     <i class="bi bi-speedometer2 me-2"></i>
-                    Dashboard
+                    {% if stats.scoped %}
+                        Dashboard
+                    {% else %}
+                        Overall Cases Dashboard
+                    {% endif %}
                     {% if not stats.scoped %}
                     <span class="badge rounded-pill cx-badge"
                           title="Open cases">
