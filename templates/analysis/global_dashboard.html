@@ -111,10 +111,13 @@
                 <tr>
 
                     <td>
-                        <div class="fw-semibold">
+                        <div class="fw-semibold d-flex align-items-center gap-2">
+                            <!-- Same colour the case wears in every pie -->
+                            <span class="cx-swatch"
+                                  style="background:{{ row.color }};"></span>
                             {{ row.name }}
                         </div>
-                        <small class="text-muted">
+                        <small class="text-muted ps-3 ms-1">
                             {{ row.number }}
                         </small>
                     </td>
@@ -189,7 +192,7 @@
 
 <!-- ================= PER-CASE CHARTS ================= -->
 
-{#  One chart per sidebar tab: canvas id, heading, sub-heading,
+{#  One pie per sidebar tab: canvas id, heading, sub-heading,
     the total that decides whether there is anything to plot.  #}
 
 {% set per_case_charts = [
@@ -210,7 +213,7 @@
 
     {% for canvas_id, title, subtitle, total in per_case_charts %}
 
-    <div class="col-xl-6">
+    <div class="col-md-6 col-xl-3">
 
         <div class="cx-card h-100">
 
@@ -219,27 +222,27 @@
                 <div>
                     <h6>{{ title }}</h6>
                     <small>
-                        {{ subtitle }}{% if total %} · click a bar to open the case{% endif %}
+                        {{ subtitle }}{% if total %} · click a slice to open the case{% endif %}
                     </small>
                 </div>
-
-                <span class="cx-card-total">
-                    {{ "{:,}".format(total) }}
-                </span>
 
             </div>
 
             {% if cases and total %}
 
-            <div class="cx-canvas"
-                 style="height:{{ 70 + cases|length * 42 }}px;">
+            <div class="cx-canvas" style="height:230px;">
                 <canvas id="{{ canvas_id }}"></canvas>
+            </div>
+
+            <div class="cx-card-total">
+                {{ "{:,}".format(total) }}
+                <small>total</small>
             </div>
 
             {% else %}
 
             <div class="cx-empty">
-                <i class="bi bi-bar-chart"></i>
+                <i class="bi bi-pie-chart"></i>
                 {% if not cases %}
                     No cases yet
                 {% else %}
@@ -461,10 +464,32 @@
 
 .cx-card-total{
 
-    font-size:15px;
+    margin-top:12px;
+    text-align:center;
+    font-size:18px;
     font-weight:700;
-    color:var(--text-secondary);
+    color:var(--text-primary);
     white-space:nowrap;
+
+}
+
+.cx-card-total small{
+
+    font-size:11px;
+    font-weight:600;
+    letter-spacing:.4px;
+    text-transform:uppercase;
+    color:var(--text-muted);
+
+}
+
+.cx-swatch{
+
+    width:10px;
+    height:10px;
+    border-radius:3px;
+    flex:none;
+    display:inline-block;
 
 }
 
@@ -531,9 +556,10 @@
     if (typeof Chart === "undefined") { return; }
 
 
-    const INK   = "#52514e";
-    const MUTED = "#898781";
-    const GRID  = "#e1e0d9";
+    const INK     = "#52514e";
+    const MUTED   = "#898781";
+    const GRID    = "#e1e0d9";
+    const SURFACE = "#ffffff";
 
     const SLOT_1 = "#2a78d6";
 
@@ -541,6 +567,9 @@
     const cases    = {{ cases | tojson }};
     const topRules = {{ top_rules | tojson }};
     const topHosts = {{ top_hosts | tojson }};
+
+    const MAX_SLICES  = {{ max_slices | tojson }};
+    const OTHER_COLOR = {{ other_color | tojson }};
 
 
     const nf = new Intl.NumberFormat();
@@ -622,65 +651,166 @@
 
 
     // =====================================================
-    // Per-case charts
+    // Per-case pies
     //
-    // One series each, so one hue per chart. The hue matches
-    // that metric's stat tile, and follows the metric rather
-    // than the bar's rank.
+    // A case keeps the same colour in all four charts and in
+    // the breakdown table, so the colour identifies the case
+    // rather than its size. Past MAX_SLICES cases the tail is
+    // folded into one neutral "Other" slice.
     // =====================================================
 
-    const perCaseBar = (canvasId, key, unit, color, hoverColor) => {
+    const slicesFor = (key) => {
+
+        if (cases.length <= MAX_SLICES) {
+            return cases.map((row) => ({
+                id: row.id,
+                name: row.name,
+                color: row.color,
+                value: row[key]
+            }));
+        }
+
+        const head = cases.slice(0, MAX_SLICES - 1).map((row) => ({
+            id: row.id,
+            name: row.name,
+            color: row.color,
+            value: row[key]
+        }));
+
+        const tail = cases.slice(MAX_SLICES - 1);
+
+        head.push({
+            id: null,
+            name: "Other (" + tail.length + " cases)",
+            color: OTHER_COLOR,
+            value: tail.reduce((sum, row) => sum + row[key], 0)
+        });
+
+        return head;
+
+    };
+
+
+    // Shares of 10% or more are labelled on the slice itself;
+    // anything smaller would not fit, so it stays in the legend
+    // and the breakdown table.
+    const sliceLabel = {
+
+        id: "sliceLabel",
+
+        afterDatasetsDraw(chart) {
+
+            const meta = chart.getDatasetMeta(0);
+            const values = chart.data.datasets[0].data;
+            const total = values.reduce((sum, value) => sum + value, 0);
+
+            if (!total) { return; }
+
+            const ctx = chart.ctx;
+
+            ctx.save();
+            ctx.font = "700 12px " + Chart.defaults.font.family;
+            ctx.fillStyle = "#ffffff";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+
+            meta.data.forEach((arc, index) => {
+
+                const share = values[index] / total;
+
+                if (share < 0.1) { return; }
+
+                const point = arc.tooltipPosition();
+
+                ctx.fillText(Math.round(share * 100) + "%", point.x, point.y);
+
+            });
+
+            ctx.restore();
+
+        }
+
+    };
+
+
+    const perCasePie = (canvasId, key, unit) => {
 
         const canvas = document.getElementById(canvasId);
 
         if (!canvas) { return; }
 
+        const slices = slicesFor(key);
+
         new Chart(canvas.getContext("2d"), {
 
-            type: "bar",
+            type: "pie",
 
-            plugins: [barValueLabel],
+            plugins: [sliceLabel],
 
             data: {
-                labels: cases.map((row) => shorten(row.name, 26)),
+                labels: slices.map((slice) => slice.name),
                 datasets: [{
-                    label: unit,
-                    data: cases.map((row) => row[key]),
-                    backgroundColor: color,
-                    hoverBackgroundColor: hoverColor,
-                    borderRadius: 4,
-                    borderSkipped: false,
-                    barThickness: 18
+                    data: slices.map((slice) => slice.value),
+                    backgroundColor: slices.map((slice) => slice.color),
+                    // A surface-coloured gap, not a border, keeps
+                    // neighbouring slices apart.
+                    borderColor: SURFACE,
+                    borderWidth: 2,
+                    hoverOffset: 8
                 }]
             },
 
             options: {
-                indexAxis: "y",
                 responsive: true,
                 maintainAspectRatio: false,
-                layout: { padding: { right: 56 } },
                 onClick: (event, elements) => {
                     if (!elements.length) { return; }
+                    const slice = slices[elements[0].index];
+                    if (!slice.id) { return; }
                     window.location.href =
-                        "/analysis/dashboard/" + cases[elements[0].index].id;
+                        "/analysis/dashboard/" + slice.id;
                 },
                 onHover: (event, elements) => {
+                    const slice = elements.length
+                        ? slices[elements[0].index]
+                        : null;
                     event.native.target.style.cursor =
-                        elements.length ? "pointer" : "default";
+                        slice && slice.id ? "pointer" : "default";
                 },
                 plugins: {
-                    legend: { display: false },
+                    legend: {
+                        position: "bottom",
+                        labels: {
+                            boxWidth: 9,
+                            boxHeight: 9,
+                            padding: 10,
+                            usePointStyle: true,
+                            pointStyle: "circle",
+                            color: INK,
+                            font: { size: 11 },
+                            generateLabels: (chart) =>
+                                slices.map((slice, index) => ({
+                                    text: shorten(slice.name, 22),
+                                    fillStyle: slice.color,
+                                    strokeStyle: slice.color,
+                                    index: index
+                                }))
+                        }
+                    },
                     tooltip: Object.assign({}, tooltip, {
                         callbacks: {
-                            title: (items) => cases[items[0].dataIndex].name,
-                            label: (item) =>
-                                nf.format(item.parsed.x) + " " + unit
+                            title: (items) => slices[items[0].dataIndex].name,
+                            label: (item) => {
+                                const total = item.dataset.data
+                                    .reduce((sum, value) => sum + value, 0);
+                                const share = total
+                                    ? Math.round((item.parsed / total) * 100)
+                                    : 0;
+                                return nf.format(item.parsed) + " " + unit
+                                    + " (" + share + "%)";
+                            }
                         }
                     })
-                },
-                scales: {
-                    x: valueAxis,
-                    y: labelAxis
                 }
             }
 
@@ -689,17 +819,10 @@
     };
 
 
-    perCaseBar("eventsPerCaseChart",    "events",    "events",
-               SLOT_1,    "#1c5cab");
-
-    perCaseBar("evidencePerCaseChart",  "evidence",  "evidence items",
-               "#1baf7a", "#158a60");
-
-    perCaseBar("incidentsPerCaseChart", "incidents", "incidents",
-               "#d03b3b", "#a82f2f");
-
-    perCaseBar("memoryPerCaseChart",    "memory",    "memory captures",
-               "#eb6834", "#c14f24");
+    perCasePie("eventsPerCaseChart",    "events",    "events");
+    perCasePie("evidencePerCaseChart",  "evidence",  "evidence items");
+    perCasePie("incidentsPerCaseChart", "incidents", "incidents");
+    perCasePie("memoryPerCaseChart",    "memory",    "memory captures");
 
 
     // =====================================================

@@ -18,6 +18,27 @@ from models.memory import MemoryAnalysis
 # =========================================================
 
 
+# Categorical slots, in the fixed order that keeps neighbouring
+# hues apart for colour-blind readers. A case keeps its slot in
+# every chart, so the colour identifies the case and never its
+# rank. Past 8 cases the tail folds into a neutral "Other".
+CASE_PALETTE = [
+    "#2a78d6",   # blue
+    "#eb6834",   # orange
+    "#1baf7a",   # aqua
+    "#eda100",   # yellow
+    "#e87ba4",   # magenta
+    "#008300",   # green
+    "#4a3aa7",   # violet
+    "#e34948",   # red
+]
+
+OTHER_COLOR = "#898781"
+
+# Slices a pie can carry before the tail is folded together.
+MAX_SLICES = len(CASE_PALETTE)
+
+
 def _counts_by_case(model, *filters):
     """{case_id: row count} for one model, optionally filtered."""
 
@@ -88,13 +109,24 @@ def per_case():
     incidents = _counts_by_case(Incident)
     memory = _counts_by_case(MemoryAnalysis)
 
+    # Everything fits the palette, or the tail past slot 7 shares
+    # the neutral colour it will be folded into.
+    folded = len(cases) > MAX_SLICES
+
     rows = []
 
-    for case in cases:
+    for index, case in enumerate(cases):
+
+        if folded and index >= MAX_SLICES - 1:
+            colour = OTHER_COLOR
+        else:
+            colour = CASE_PALETTE[index]
 
         rows.append({
 
             "id": case.id,
+
+            "color": colour,
 
             "name": case.case_name or ("Case #%s" % case.id),
 
@@ -165,6 +197,8 @@ def overview():
     return {
         "totals": totals(),
         "cases": per_case(),
+        "max_slices": MAX_SLICES,
+        "other_color": OTHER_COLOR,
         "top_rules": top_rules(),
         "top_hosts": top_hosts()
     }
