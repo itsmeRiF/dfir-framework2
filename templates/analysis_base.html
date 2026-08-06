@@ -59,6 +59,9 @@
 
             <div class="list-group list-group-flush">
 
+                {# Only the global views list every case; inside a
+                   case the sidebar stays on that case. #}
+                {% if not stats.scoped %}
                 <a href="/cases"
                    class="list-group-item list-group-item-action cx-nav {% if active_tab == 'cases' %}active{% endif %}">
                     <i class="bi bi-folder2-open me-2"></i>
@@ -67,6 +70,7 @@
                         {{ stats.cases }}
                     </span>
                 </a>
+                {% endif %}
 
                 <a href="{% if stats.scoped %}/analysis/dashboard/{{case_id}}{% else %}{{ url_for('analysis.global_dashboard') }}{% endif %}"
                    class="list-group-item list-group-item-action cx-nav {% if active_tab == 'dashboard' %}active{% endif %}">
