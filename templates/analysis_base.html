@@ -2,6 +2,9 @@
 
 {% block content %}
 
+{# Overall statistics: totals summed across every case #}
+{% set stats = sidebar_stats() %}
+
 <div class="container-fluid px-0">
 
 <div class="row g-0">
@@ -31,51 +34,76 @@
             <div class="list-group list-group-flush">
 
                 <a href="/cases"
-                   class="list-group-item list-group-item-action">
+                   class="list-group-item list-group-item-action cx-nav">
                     <i class="bi bi-folder2-open me-2"></i>
                     Cases
+                    <span class="badge rounded-pill cx-badge">
+                        {{ stats.cases }}
+                    </span>
                 </a>
 
                 <a href="/analysis/dashboard/{{case_id}}"
-                   class="list-group-item list-group-item-action">
+                   class="list-group-item list-group-item-action cx-nav">
                     <i class="bi bi-speedometer2 me-2"></i>
                     Dashboard
+                    <span class="badge rounded-pill cx-badge"
+                          title="Open cases">
+                        {{ stats.open_cases }}
+                    </span>
                 </a>
 
                 <hr>
 
                 <small class="text-muted px-3 mb-2">
                     FORENSIC ANALYSIS
+                    <span class="text-uppercase">
+                        (all cases)
+                    </span>
                 </small>
 
                 <a href="/analysis/evidence/{{case_id}}"
-                   class="list-group-item list-group-item-action">
+                   class="list-group-item list-group-item-action cx-nav">
                     <i class="bi bi-hdd-fill me-2"></i>
                     Evidence
+                    <span class="badge rounded-pill cx-badge">
+                        {{ stats.evidence }}
+                    </span>
                 </a>
 
                 <a href="/analysis/events/{{case_id}}"
-                   class="list-group-item list-group-item-action">
+                   class="list-group-item list-group-item-action cx-nav">
                     <i class="bi bi-list-ul me-2"></i>
                     Event Logs
+                    <span class="badge rounded-pill cx-badge">
+                        {{ stats.events }}
+                    </span>
                 </a>
 
                 <a href="/analysis/timeline/{{case_id}}"
-                   class="list-group-item list-group-item-action">
+                   class="list-group-item list-group-item-action cx-nav">
                     <i class="bi bi-clock-history me-2"></i>
                     Timeline
+                    <span class="badge rounded-pill cx-badge">
+                        {{ stats.timeline }}
+                    </span>
                 </a>
 
                 <a href="/analysis/incidents/{{case_id}}"
-                   class="list-group-item list-group-item-action">
+                   class="list-group-item list-group-item-action cx-nav">
                     <i class="bi bi-exclamation-triangle-fill me-2"></i>
                     Incidents
+                    <span class="badge rounded-pill cx-badge danger">
+                        {{ stats.incidents }}
+                    </span>
                 </a>
 
                 <a href="/analysis/memory/{{case_id}}"
-                   class="list-group-item list-group-item-action">
+                   class="list-group-item list-group-item-action cx-nav">
                     <i class="bi bi-memory me-2"></i>
                     Memory
+                    <span class="badge rounded-pill cx-badge">
+                        {{ stats.memory }}
+                    </span>
                 </a>
 
 <hr>
@@ -171,6 +199,37 @@
     background:#e9f2ff;
     color:#0d6efd;
     padding-left:20px;
+
+}
+
+.cx-nav{
+
+    display:flex;
+    align-items:center;
+
+}
+
+.cx-badge{
+
+    margin-left:auto;
+    background:#e9edf3;
+    color:#475569;
+    font-size:11px;
+    font-weight:600;
+
+}
+
+.cx-badge.danger{
+
+    background:#fee2e2;
+    color:#dc2626;
+
+}
+
+.cx-nav:hover .cx-badge{
+
+    background:#dbe8ff;
+    color:#0d6efd;
 
 }
 

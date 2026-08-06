@@ -15,6 +15,7 @@ from routes.analysis import analysis_bp
 from routes.event_detail import event_detail_bp
 from routes.incidents import incident_bp
 from routes.memory import memory_bp
+from utils.sidebar_stats import sidebar_stats
 def create_app():
 
     app = Flask(__name__)
@@ -41,6 +42,12 @@ def create_app():
     app.register_blueprint(analysis_bp)
     app.register_blueprint(event_detail_bp)
     app.register_blueprint(memory_bp)
+    @app.context_processor
+    def inject_sidebar_stats():
+        # Exposed as a callable so the counts are only queried
+        # when a template actually renders the sidebar.
+        return {"sidebar_stats": sidebar_stats}
+
     with app.app_context():
         db.create_all()
 
