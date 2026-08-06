@@ -2,8 +2,32 @@
 
 {% block content %}
 
-{# Overall statistics: totals summed across every case #}
-{% set stats = sidebar_stats() %}
+{# Sidebar counters.
+   Inside a case  -> that case's own numbers.
+   On /cases      -> totals summed across every case. #}
+
+{% set sidebar_scope =
+       case_id if case_id is defined and case_id
+       else (case.id if case is defined and case else None) %}
+
+{% set stats = sidebar_stats(sidebar_scope) %}
+
+{# Which tab is the current page? The /analysis/<tool>/<id> links
+   redirect to the tool's own blueprint, so match on the endpoint
+   the request actually landed on. #}
+
+{% set active_tab = {
+       'cases.list_cases':          'cases',
+       'cases.new_case':            'cases',
+       'analysis.global_dashboard': 'dashboard',
+       'analysis.dashboard':        'dashboard',
+       'evidence.evidence_page':    'evidence',
+       'events.view_events':        'events',
+       'events.export_events':      'events',
+       'timeline.timeline':         'timeline',
+       'incident.incidents':        'incidents',
+       'memory.memory_analysis':    'memory'
+   }.get(request.endpoint) %}
 
 <div class="container-fluid px-0">
 
@@ -34,7 +58,7 @@
             <div class="list-group list-group-flush">
 
                 <a href="/cases"
-                   class="list-group-item list-group-item-action cx-nav">
+                   class="list-group-item list-group-item-action cx-nav {% if active_tab == 'cases' %}active{% endif %}">
                     <i class="bi bi-folder2-open me-2"></i>
                     Cases
                     <span class="badge rounded-pill cx-badge">
@@ -42,14 +66,16 @@
                     </span>
                 </a>
 
-                <a href="/analysis/dashboard/{{case_id}}"
-                   class="list-group-item list-group-item-action cx-nav">
+                <a href="{% if stats.scoped %}/analysis/dashboard/{{case_id}}{% else %}{{ url_for('analysis.global_dashboard') }}{% endif %}"
+                   class="list-group-item list-group-item-action cx-nav {% if active_tab == 'dashboard' %}active{% endif %}">
                     <i class="bi bi-speedometer2 me-2"></i>
                     Dashboard
+                    {% if not stats.scoped %}
                     <span class="badge rounded-pill cx-badge"
                           title="Open cases">
                         {{ stats.open_cases }}
                     </span>
+                    {% endif %}
                 </a>
 
                 <hr>
@@ -57,12 +83,16 @@
                 <small class="text-muted px-3 mb-2">
                     FORENSIC ANALYSIS
                     <span class="text-uppercase">
-                        (all cases)
+                        {% if stats.scoped %}
+                            (this case)
+                        {% else %}
+                            (all cases)
+                        {% endif %}
                     </span>
                 </small>
 
                 <a href="/analysis/evidence/{{case_id}}"
-                   class="list-group-item list-group-item-action cx-nav">
+                   class="list-group-item list-group-item-action cx-nav {% if active_tab == 'evidence' %}active{% endif %}">
                     <i class="bi bi-hdd-fill me-2"></i>
                     Evidence
                     <span class="badge rounded-pill cx-badge">
@@ -71,7 +101,7 @@
                 </a>
 
                 <a href="/analysis/events/{{case_id}}"
-                   class="list-group-item list-group-item-action cx-nav">
+                   class="list-group-item list-group-item-action cx-nav {% if active_tab == 'events' %}active{% endif %}">
                     <i class="bi bi-list-ul me-2"></i>
                     Event Logs
                     <span class="badge rounded-pill cx-badge">
@@ -80,7 +110,7 @@
                 </a>
 
                 <a href="/analysis/timeline/{{case_id}}"
-                   class="list-group-item list-group-item-action cx-nav">
+                   class="list-group-item list-group-item-action cx-nav {% if active_tab == 'timeline' %}active{% endif %}">
                     <i class="bi bi-clock-history me-2"></i>
                     Timeline
                     <span class="badge rounded-pill cx-badge">
@@ -89,7 +119,7 @@
                 </a>
 
                 <a href="/analysis/incidents/{{case_id}}"
-                   class="list-group-item list-group-item-action cx-nav">
+                   class="list-group-item list-group-item-action cx-nav {% if active_tab == 'incidents' %}active{% endif %}">
                     <i class="bi bi-exclamation-triangle-fill me-2"></i>
                     Incidents
                     <span class="badge rounded-pill cx-badge danger">
@@ -98,7 +128,7 @@
                 </a>
 
                 <a href="/analysis/memory/{{case_id}}"
-                   class="list-group-item list-group-item-action cx-nav">
+                   class="list-group-item list-group-item-action cx-nav {% if active_tab == 'memory' %}active{% endif %}">
                     <i class="bi bi-memory me-2"></i>
                     Memory
                     <span class="badge rounded-pill cx-badge">
@@ -230,6 +260,21 @@
 
     background:#dbe8ff;
     color:#0d6efd;
+
+}
+
+.list-group-item.active .cx-badge,
+.list-group-item.active:hover .cx-badge{
+
+    background:#fff;
+    color:#0d6efd;
+
+}
+
+.list-group-item.active:hover{
+
+    background:#0d6efd;
+    color:#fff;
 
 }
 

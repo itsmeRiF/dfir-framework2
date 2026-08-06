@@ -11,21 +11,50 @@ from models.memory import MemoryAnalysis
 # =========================================================
 # SIDEBAR STATISTICS
 #
-# Overall counters rolled up across *every* case, used by the
-# analysis sidebar. Computed lazily (only when a template asks
-# for them) and cached for the lifetime of the request.
+# Counters for the analysis sidebar.
+#
+#   case_id = None  ->  overall totals, summed across every case
+#                       (used on the global /cases page)
+#
+#   case_id = <id>  ->  the counts for that single case
+#                       (used on the in-case analysis pages)
+#
+# Computed lazily (only when a template asks for them) and
+# cached per scope for the lifetime of the request.
 # =========================================================
 
-def sidebar_stats():
+def sidebar_stats(case_id=None):
 
-    cached = getattr(g, "_sidebar_stats", None)
+    try:
+        case_id = int(case_id) if case_id not in (None, "") else None
 
-    if cached is not None:
-        return cached
+    except (TypeError, ValueError):
+        case_id = None
+
+
+    cache = getattr(g, "_sidebar_stats", None)
+
+    if cache is None:
+        cache = g._sidebar_stats = {}
+
+    if case_id in cache:
+        return cache[case_id]
+
+
+    def scoped(model):
+
+        query = model.query
+
+        if case_id is not None:
+            query = query.filter_by(case_id=case_id)
+
+        return query
 
 
     stats = {
 
+        # The Cases tab always links to the global list,
+        # so its badge stays a global total.
         "cases":
             Case.query.count(),
 
@@ -34,27 +63,30 @@ def sidebar_stats():
             .filter(func.lower(Case.status) == "open")
             .count(),
 
+        "scoped":
+            case_id is not None,
+
         "evidence":
-            Evidence.query.count(),
+            scoped(Evidence).count(),
 
         "events":
-            Event.query.count(),
+            scoped(Event).count(),
 
         # The timeline only plots events that carry a timestamp
         "timeline":
-            Event.query
+            scoped(Event)
             .filter(Event.timestamp.isnot(None))
             .count(),
 
         "incidents":
-            Incident.query.count(),
+            scoped(Incident).count(),
 
         "memory":
-            MemoryAnalysis.query.count()
+            scoped(MemoryAnalysis).count()
 
     }
 
 
-    g._sidebar_stats = stats
+    cache[case_id] = stats
 
     return stats

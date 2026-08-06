@@ -1,10 +1,11 @@
 {% extends "analysis_base.html" %}
 
-{% block content %}
+{% block analysis_content %}
 
 <h2>Upload Evidence - for (<b>Case</b> {{ case_id }})</h2>
 
 <form
+    id="uploadForm"
     action="{{ url_for('evidence.upload_evidence', case_id=case_id) }}"
     method="POST"
     enctype="multipart/form-data">
@@ -24,9 +25,7 @@
 </form>
 
   <div id="status" style="margin-top:16px;"></div>
-</div>
 
-<div style="max-width:640px;">
 <script>
 document.getElementById("uploadForm").addEventListener("submit", async function (e) {
   e.preventDefault();

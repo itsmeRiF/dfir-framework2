@@ -9,6 +9,8 @@ from models.event import Event
 from models.incident import Incident
 from models.memory import MemoryAnalysis
 
+from utils import case_stats
+
 
 analysis_bp = Blueprint(
     "analysis",
@@ -28,6 +30,23 @@ def analysis_home(case_id):
             "analysis.dashboard",
             case_id=case_id
         )
+    )
+
+
+# =========================================================
+# ALL-CASES DASHBOARD
+#
+# The sidebar's Dashboard tab has no case to point at while
+# you are on /cases, so it lands here: the same tab counters,
+# rolled up across every case and charted.
+# =========================================================
+
+@analysis_bp.route("/analysis/dashboard/")
+def global_dashboard():
+
+    return render_template(
+        "analysis/global_dashboard.html",
+        **case_stats.overview()
     )
 
 

@@ -1,0 +1,768 @@
+{% extends "analysis_base.html" %}
+
+{% block analysis_content %}
+
+<div class="viz-root">
+
+
+<!-- ================= HEADER ================= -->
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <div>
+
+        <h2 class="fw-bold mb-1">
+            <i class="bi bi-speedometer2 text-primary"></i>
+            All Cases Dashboard
+        </h2>
+
+        <p class="text-muted mb-0">
+            Every sidebar counter, rolled up across
+            {{ totals.cases }} case{{ '' if totals.cases == 1 else 's' }}
+        </p>
+
+    </div>
+
+    <a href="/cases" class="btn btn-outline-secondary">
+        <i class="bi bi-folder2-open"></i>
+        Browse Cases
+    </a>
+
+</div>
+
+
+<!-- ================= KPI ROW ================= -->
+
+<div class="row g-3 mb-4">
+
+    {% set tiles = [
+        ("Cases",     totals.cases,     "bi-folder2-open",       "slot-1"),
+        ("Open",      totals.open_cases,"bi-folder-symlink",     "slot-2"),
+        ("Evidence",  totals.evidence,  "bi-hdd-fill",           "slot-3"),
+        ("Events",    totals.events,    "bi-list-ul",            "slot-1"),
+        ("Timeline",  totals.timeline,  "bi-clock-history",      "slot-3"),
+        ("Incidents", totals.incidents, "bi-shield-exclamation", "crit"),
+        ("Memory",    totals.memory,    "bi-memory",             "slot-2")
+    ] %}
+
+    {% for label, value, icon, tone in tiles %}
+
+    <div class="col-6 col-md-4 col-xl">
+
+        <div class="cx-tile {{ tone }}">
+
+            <div class="cx-tile-icon">
+                <i class="bi {{ icon }}"></i>
+            </div>
+
+            <div class="cx-tile-value">
+                {{ "{:,}".format(value) }}
+            </div>
+
+            <div class="cx-tile-label">
+                {{ label }}
+            </div>
+
+        </div>
+
+    </div>
+
+    {% endfor %}
+
+</div>
+
+
+<!-- ================= CASE BREAKDOWN ================= -->
+
+<div class="cx-card mb-4">
+
+    <div class="cx-card-head">
+
+        <div>
+            <h6>Case breakdown</h6>
+            <small>
+                The same numbers, exactly as the sidebar counts them
+            </small>
+        </div>
+
+    </div>
+
+    <div class="table-responsive">
+
+        <table class="table align-middle cx-table mb-0">
+
+            <thead>
+                <tr>
+                    <th>Case</th>
+                    <th>Status</th>
+                    <th class="text-end">Evidence</th>
+                    <th class="text-end">Events</th>
+                    <th class="text-end">Timeline</th>
+                    <th class="text-end">Incidents</th>
+                    <th class="text-end">Memory</th>
+                    <th></th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for row in cases %}
+
+                <tr>
+
+                    <td>
+                        <div class="fw-semibold">
+                            {{ row.name }}
+                        </div>
+                        <small class="text-muted">
+                            {{ row.number }}
+                        </small>
+                    </td>
+
+                    <td>
+                        {% if row.status == "open" %}
+                        <span class="badge bg-success-subtle text-success-emphasis">
+                            OPEN
+                        </span>
+                        {% elif row.status == "closed" %}
+                        <span class="badge bg-secondary-subtle text-secondary-emphasis">
+                            CLOSED
+                        </span>
+                        {% else %}
+                        <span class="badge bg-warning-subtle text-warning-emphasis">
+                            {{ row.status|upper }}
+                        </span>
+                        {% endif %}
+                    </td>
+
+                    <td class="text-end">{{ "{:,}".format(row.evidence) }}</td>
+                    <td class="text-end">{{ "{:,}".format(row.events) }}</td>
+                    <td class="text-end">{{ "{:,}".format(row.timeline) }}</td>
+                    <td class="text-end">{{ "{:,}".format(row.incidents) }}</td>
+                    <td class="text-end">{{ "{:,}".format(row.memory) }}</td>
+
+                    <td class="text-end">
+                        <a href="/analysis/dashboard/{{ row.id }}"
+                           class="btn btn-sm btn-outline-primary">
+                            Open
+                        </a>
+                    </td>
+
+                </tr>
+
+                {% else %}
+
+                <tr>
+                    <td colspan="8" class="text-center text-muted py-4">
+                        No cases yet.
+                        <a href="/cases/new">Create the first one</a>.
+                    </td>
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+
+            {% if cases %}
+
+            <tfoot>
+                <tr class="fw-semibold">
+                    <td colspan="2">All cases</td>
+                    <td class="text-end">{{ "{:,}".format(totals.evidence) }}</td>
+                    <td class="text-end">{{ "{:,}".format(totals.events) }}</td>
+                    <td class="text-end">{{ "{:,}".format(totals.timeline) }}</td>
+                    <td class="text-end">{{ "{:,}".format(totals.incidents) }}</td>
+                    <td class="text-end">{{ "{:,}".format(totals.memory) }}</td>
+                    <td></td>
+                </tr>
+            </tfoot>
+
+            {% endif %}
+
+        </table>
+
+    </div>
+
+</div>
+
+
+<!-- ================= PER-CASE CHARTS ================= -->
+
+{#  One chart per sidebar tab: canvas id, heading, sub-heading,
+    the total that decides whether there is anything to plot.  #}
+
+{% set per_case_charts = [
+       ("eventsPerCaseChart",    "Events per case",
+        "Parsed event log records", totals.events),
+
+       ("evidencePerCaseChart",  "Evidence per case",
+        "Artifacts uploaded for analysis", totals.evidence),
+
+       ("incidentsPerCaseChart", "Incidents per case",
+        "Correlated detections raised", totals.incidents),
+
+       ("memoryPerCaseChart",    "Memory per case",
+        "Memory images analysed", totals.memory)
+   ] %}
+
+<div class="row g-4 mb-4">
+
+    {% for canvas_id, title, subtitle, total in per_case_charts %}
+
+    <div class="col-xl-6">
+
+        <div class="cx-card h-100">
+
+            <div class="cx-card-head">
+
+                <div>
+                    <h6>{{ title }}</h6>
+                    <small>
+                        {{ subtitle }}{% if total %} · click a bar to open the case{% endif %}
+                    </small>
+                </div>
+
+                <span class="cx-card-total">
+                    {{ "{:,}".format(total) }}
+                </span>
+
+            </div>
+
+            {% if cases and total %}
+
+            <div class="cx-canvas"
+                 style="height:{{ 70 + cases|length * 42 }}px;">
+                <canvas id="{{ canvas_id }}"></canvas>
+            </div>
+
+            {% else %}
+
+            <div class="cx-empty">
+                <i class="bi bi-bar-chart"></i>
+                {% if not cases %}
+                    No cases yet
+                {% else %}
+                    Nothing recorded yet
+                {% endif %}
+            </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+    {% endfor %}
+
+</div>
+
+
+<!-- ================= DETECTIONS + HOSTS ================= -->
+
+<div class="row g-4">
+
+    <div class="col-xl-6">
+
+        <div class="cx-card h-100">
+
+            <div class="cx-card-head">
+
+                <div>
+                    <h6>Top detections</h6>
+                    <small>
+                        Most frequently triggered rules
+                    </small>
+                </div>
+
+            </div>
+
+            {% if top_rules %}
+
+            <div class="cx-canvas"
+                 style="height:{{ 70 + top_rules|length * 34 }}px;">
+                <canvas id="rulesChart"></canvas>
+            </div>
+
+            {% else %}
+
+            <div class="cx-empty">
+                <i class="bi bi-shield-check"></i>
+                No rule hits yet
+            </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+
+    <div class="col-xl-6">
+
+        <div class="cx-card h-100">
+
+            <div class="cx-card-head">
+
+                <div>
+                    <h6>Noisiest hosts</h6>
+                    <small>
+                        Machines contributing the most events
+                    </small>
+                </div>
+
+            </div>
+
+            {% if top_hosts %}
+
+            <div class="cx-canvas"
+                 style="height:{{ 70 + top_hosts|length * 34 }}px;">
+                <canvas id="hostsChart"></canvas>
+            </div>
+
+            {% else %}
+
+            <div class="cx-empty">
+                <i class="bi bi-pc-display"></i>
+                No host data yet
+            </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</div>
+
+
+</div><!-- /viz-root -->
+
+
+
+<style>
+
+/* ---------- chart tokens ---------- */
+
+.viz-root{
+
+    --surface-1:#ffffff;
+    --plane:#f7f8fa;
+
+    --text-primary:#0b0b0b;
+    --text-secondary:#52514e;
+    --text-muted:#898781;
+
+    --grid:#e1e0d9;
+    --border:rgba(11,11,11,.10);
+
+    /* categorical slots */
+    --slot-1:#2a78d6;
+    --slot-2:#eb6834;
+    --slot-3:#1baf7a;
+
+    /* reserved status step */
+    --crit:#d03b3b;
+
+}
+
+
+/* ---------- stat tiles ---------- */
+
+.cx-tile{
+
+    position:relative;
+    height:100%;
+    padding:16px 18px;
+    border-radius:14px;
+    background:var(--surface-1);
+    border:1px solid var(--border);
+    overflow:hidden;
+
+}
+
+.cx-tile::after{
+
+    content:"";
+    position:absolute;
+    left:0;
+    top:0;
+    bottom:0;
+    width:4px;
+    background:var(--slot-1);
+
+}
+
+.cx-tile.slot-2::after{ background:var(--slot-2); }
+.cx-tile.slot-3::after{ background:var(--slot-3); }
+.cx-tile.crit::after{ background:var(--crit); }
+
+.cx-tile-icon{
+
+    font-size:16px;
+    color:var(--text-muted);
+    margin-bottom:6px;
+
+}
+
+.cx-tile-value{
+
+    font-size:28px;
+    font-weight:700;
+    line-height:1.1;
+    color:var(--text-primary);
+
+}
+
+.cx-tile-label{
+
+    font-size:12px;
+    letter-spacing:.4px;
+    text-transform:uppercase;
+    color:var(--text-secondary);
+
+}
+
+
+/* ---------- cards ---------- */
+
+.cx-card{
+
+    background:var(--surface-1);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:18px 20px 20px;
+
+}
+
+.cx-card-head{
+
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:14px;
+
+}
+
+.cx-card-head h6{
+
+    margin:0;
+    font-weight:700;
+    color:var(--text-primary);
+
+}
+
+.cx-card-head small{
+
+    color:var(--text-muted);
+
+}
+
+.cx-card-total{
+
+    font-size:15px;
+    font-weight:700;
+    color:var(--text-secondary);
+    white-space:nowrap;
+
+}
+
+.cx-canvas{
+
+    position:relative;
+
+}
+
+.cx-empty{
+
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    min-height:160px;
+    color:var(--text-muted);
+    background:var(--plane);
+    border-radius:12px;
+
+}
+
+.cx-empty i{
+
+    font-size:26px;
+
+}
+
+
+/* ---------- table ---------- */
+
+.cx-table th{
+
+    font-size:12px;
+    letter-spacing:.4px;
+    text-transform:uppercase;
+    color:var(--text-muted);
+    font-weight:600;
+
+}
+
+.cx-table td{
+
+    font-variant-numeric:tabular-nums;
+
+}
+
+.cx-table tfoot td{
+
+    border-top:2px solid var(--grid);
+
+}
+
+</style>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+(function () {
+
+    if (typeof Chart === "undefined") { return; }
+
+
+    const INK   = "#52514e";
+    const MUTED = "#898781";
+    const GRID  = "#e1e0d9";
+
+    const SLOT_1 = "#2a78d6";
+
+
+    const cases    = {{ cases | tojson }};
+    const topRules = {{ top_rules | tojson }};
+    const topHosts = {{ top_hosts | tojson }};
+
+
+    const nf = new Intl.NumberFormat();
+
+
+    Chart.defaults.font.family =
+        'system-ui, -apple-system, "Segoe UI", sans-serif';
+
+    Chart.defaults.color = MUTED;
+
+
+    // Shared tooltip look - the hover layer every chart gets.
+    const tooltip = {
+        backgroundColor: "#0b0b0b",
+        titleColor: "#ffffff",
+        bodyColor: "#e9e9e6",
+        padding: 10,
+        cornerRadius: 8,
+        displayColors: false
+    };
+
+
+    const valueAxis = {
+        beginAtZero: true,
+        grid: { color: GRID, drawTicks: false },
+        border: { display: false },
+        ticks: {
+            color: MUTED,
+            precision: 0,
+            callback: (value) => nf.format(value)
+        }
+    };
+
+    const labelAxis = {
+        grid: { display: false },
+        border: { color: GRID },
+        ticks: { color: INK }
+    };
+
+
+    // Values sit at the bar end so a tooltip is never the only
+    // way to read one. Horizontal bar charts only.
+    const barValueLabel = {
+
+        id: "barValueLabel",
+
+        afterDatasetsDraw(chart) {
+
+            const ctx = chart.ctx;
+
+            ctx.save();
+            ctx.font = "600 11px " + Chart.defaults.font.family;
+            ctx.fillStyle = INK;
+            ctx.textAlign = "left";
+            ctx.textBaseline = "middle";
+
+            chart.getDatasetMeta(0).data.forEach((bar, index) => {
+
+                const value = chart.data.datasets[0].data[index];
+
+                if (!value) { return; }
+
+                ctx.fillText(nf.format(value), bar.x + 8, bar.y);
+
+            });
+
+            ctx.restore();
+
+        }
+
+    };
+
+
+    // Truncate long labels so the axis stays readable.
+    const shorten = (text, max) => {
+        text = String(text == null ? "-" : text);
+        return text.length > max ? text.slice(0, max - 1) + "…" : text;
+    };
+
+
+    // =====================================================
+    // Per-case charts
+    //
+    // One series each, so one hue per chart. The hue matches
+    // that metric's stat tile, and follows the metric rather
+    // than the bar's rank.
+    // =====================================================
+
+    const perCaseBar = (canvasId, key, unit, color, hoverColor) => {
+
+        const canvas = document.getElementById(canvasId);
+
+        if (!canvas) { return; }
+
+        new Chart(canvas.getContext("2d"), {
+
+            type: "bar",
+
+            plugins: [barValueLabel],
+
+            data: {
+                labels: cases.map((row) => shorten(row.name, 26)),
+                datasets: [{
+                    label: unit,
+                    data: cases.map((row) => row[key]),
+                    backgroundColor: color,
+                    hoverBackgroundColor: hoverColor,
+                    borderRadius: 4,
+                    borderSkipped: false,
+                    barThickness: 18
+                }]
+            },
+
+            options: {
+                indexAxis: "y",
+                responsive: true,
+                maintainAspectRatio: false,
+                layout: { padding: { right: 56 } },
+                onClick: (event, elements) => {
+                    if (!elements.length) { return; }
+                    window.location.href =
+                        "/analysis/dashboard/" + cases[elements[0].index].id;
+                },
+                onHover: (event, elements) => {
+                    event.native.target.style.cursor =
+                        elements.length ? "pointer" : "default";
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: Object.assign({}, tooltip, {
+                        callbacks: {
+                            title: (items) => cases[items[0].dataIndex].name,
+                            label: (item) =>
+                                nf.format(item.parsed.x) + " " + unit
+                        }
+                    })
+                },
+                scales: {
+                    x: valueAxis,
+                    y: labelAxis
+                }
+            }
+
+        });
+
+    };
+
+
+    perCaseBar("eventsPerCaseChart",    "events",    "events",
+               SLOT_1,    "#1c5cab");
+
+    perCaseBar("evidencePerCaseChart",  "evidence",  "evidence items",
+               "#1baf7a", "#158a60");
+
+    perCaseBar("incidentsPerCaseChart", "incidents", "incidents",
+               "#d03b3b", "#a82f2f");
+
+    perCaseBar("memoryPerCaseChart",    "memory",    "memory captures",
+               "#eb6834", "#c14f24");
+
+
+    // =====================================================
+    // Ranked lists - magnitude again, one hue
+    // =====================================================
+
+    const rankedBar = (canvasId, rows, unit) => {
+
+        const canvas = document.getElementById(canvasId);
+
+        if (!canvas) { return; }
+
+        new Chart(canvas.getContext("2d"), {
+
+            type: "bar",
+
+            plugins: [barValueLabel],
+
+            data: {
+                labels: rows.map((row) => shorten(row.label, 30)),
+                datasets: [{
+                    label: unit,
+                    data: rows.map((row) => row.count),
+                    backgroundColor: SLOT_1,
+                    hoverBackgroundColor: "#1c5cab",
+                    borderRadius: 4,
+                    borderSkipped: false,
+                    barThickness: 14
+                }]
+            },
+
+            options: {
+                indexAxis: "y",
+                responsive: true,
+                maintainAspectRatio: false,
+                layout: { padding: { right: 56 } },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: Object.assign({}, tooltip, {
+                        callbacks: {
+                            title: (items) => rows[items[0].dataIndex].label,
+                            label: (item) =>
+                                nf.format(item.parsed.x) + " " + unit
+                        }
+                    })
+                },
+                scales: {
+                    x: valueAxis,
+                    y: Object.assign({}, labelAxis, {
+                        ticks: { color: INK, font: { size: 11 } }
+                    })
+                }
+            }
+
+        });
+
+    };
+
+
+    rankedBar("rulesChart", topRules, "events");
+    rankedBar("hostsChart", topHosts, "events");
+
+})();
+</script>
+
+{% endblock %}
