@@ -561,15 +561,31 @@
     const GRID    = "#e1e0d9";
     const SURFACE = "#ffffff";
 
-    const SLOT_1 = "#2a78d6";
-
 
     const cases    = {{ cases | tojson }};
     const topRules = {{ top_rules | tojson }};
     const topHosts = {{ top_hosts | tojson }};
 
+    const PALETTE     = {{ palette | tojson }};
     const MAX_SLICES  = {{ max_slices | tojson }};
     const OTHER_COLOR = {{ other_color | tojson }};
+
+
+    // The same hue, lightened, so hover reads without changing
+    // which bar is which.
+    const softer = (hex) => {
+        const value = parseInt(hex.slice(1), 16);
+        return "rgba(" + ((value >> 16) & 255) + ","
+            + ((value >> 8) & 255) + ","
+            + (value & 255) + ",.72)";
+    };
+
+
+    // One palette slot per row, in the fixed order that keeps
+    // neighbouring hues apart. Both lists are capped at the
+    // palette size, so no hue is ever generated or reused.
+    const paletteFor = (rows) =>
+        rows.map((row, index) => PALETTE[index] || OTHER_COLOR);
 
 
     const nf = new Intl.NumberFormat();
@@ -826,7 +842,8 @@
 
 
     // =====================================================
-    // Ranked lists - magnitude again, one hue
+    // Ranked lists - a palette slot per entry, with the name
+    // on the axis so the colour never has to carry meaning
     // =====================================================
 
     const rankedBar = (canvasId, rows, unit) => {
@@ -834,6 +851,8 @@
         const canvas = document.getElementById(canvasId);
 
         if (!canvas) { return; }
+
+        const colors = paletteFor(rows);
 
         new Chart(canvas.getContext("2d"), {
 
@@ -846,8 +865,8 @@
                 datasets: [{
                     label: unit,
                     data: rows.map((row) => row.count),
-                    backgroundColor: SLOT_1,
-                    hoverBackgroundColor: "#1c5cab",
+                    backgroundColor: colors,
+                    hoverBackgroundColor: colors.map(softer),
                     borderRadius: 4,
                     borderSkipped: false,
                     barThickness: 14

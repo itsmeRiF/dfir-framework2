@@ -197,6 +197,7 @@ def overview():
     return {
         "totals": totals(),
         "cases": per_case(),
+        "palette": CASE_PALETTE,
         "max_slices": MAX_SLICES,
         "other_color": OTHER_COLOR,
         "top_rules": top_rules(),
