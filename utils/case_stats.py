@@ -6,7 +6,14 @@ from models.case import Case
 from models.evidence import Evidence
 from models.event import Event
 from models.incident import Incident
-from models.memory import MemoryAnalysis
+from models.memory_ioc import MemoryIOC
+from models.memory_network import MemoryNetwork
+from models.memory_process import MemoryProcess
+
+
+# The Memory tab counts what the memory pages list: extracted
+# processes, network connections and IOCs.
+MEMORY_MODELS = (MemoryProcess, MemoryNetwork, MemoryIOC)
 
 
 # =========================================================
@@ -86,7 +93,10 @@ def totals():
 
         "incidents": Incident.query.count(),
 
-        "memory": MemoryAnalysis.query.count()
+        "memory": sum(
+            model.query.count()
+            for model in MEMORY_MODELS
+        )
 
     }
 
@@ -107,7 +117,12 @@ def per_case():
     events = _counts_by_case(Event)
     timeline = _counts_by_case(Event, Event.timestamp.isnot(None))
     incidents = _counts_by_case(Incident)
-    memory = _counts_by_case(MemoryAnalysis)
+
+    memory = {}
+
+    for model in MEMORY_MODELS:
+        for case_id, count in _counts_by_case(model).items():
+            memory[case_id] = memory.get(case_id, 0) + count
 
     # Everything fits the palette, or the tail past slot 7 shares
     # the neutral colour it will be folded into.

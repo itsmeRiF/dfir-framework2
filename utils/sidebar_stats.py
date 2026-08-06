@@ -5,7 +5,9 @@ from models.case import Case
 from models.evidence import Evidence
 from models.event import Event
 from models.incident import Incident
-from models.memory import MemoryAnalysis
+from models.memory_ioc import MemoryIOC
+from models.memory_network import MemoryNetwork
+from models.memory_process import MemoryProcess
 
 
 # =========================================================
@@ -81,8 +83,12 @@ def sidebar_stats(case_id=None):
         "incidents":
             scoped(Incident).count(),
 
+        # What the memory pages actually list: the extracted
+        # processes, network connections and IOCs.
         "memory":
-            scoped(MemoryAnalysis).count()
+            scoped(MemoryProcess).count()
+            + scoped(MemoryNetwork).count()
+            + scoped(MemoryIOC).count()
 
     }
 
