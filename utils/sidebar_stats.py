@@ -1,6 +1,8 @@
 from flask import g
 from sqlalchemy import func
 
+from database.db import db
+
 from models.case import Case
 from models.evidence import Evidence
 from models.event import Event
@@ -67,6 +69,15 @@ def sidebar_stats(case_id=None):
 
         "scoped":
             case_id is not None,
+
+        # Names the sidebar heading inside a case. Read from the
+        # scope itself, so every in-case page gets it whether or
+        # not the route passed a `case` object to the template.
+        "case_name":
+            db.session.query(Case.case_name)
+            .filter(Case.id == case_id)
+            .scalar()
+            if case_id is not None else None,
 
         "evidence":
             scoped(Evidence).count(),

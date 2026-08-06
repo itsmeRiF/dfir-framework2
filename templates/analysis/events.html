@@ -19,14 +19,27 @@
 
     </div>
 
-    <a href="/events/export/{{ case_id }}"
-       class="btn btn-success">
+    <div class="d-flex gap-2">
 
-        <i class="bi bi-download"></i>
+        <a href="/events/export/{{ case_id }}"
+           class="btn btn-success">
 
-        Export CSV
+            <i class="bi bi-download"></i>
 
-    </a>
+            Export CSV
+
+        </a>
+
+        <a href="{{ url_for('analysis.dashboard', case_id=case_id) }}"
+           class="btn btn-outline-primary">
+
+            <i class="bi bi-speedometer2"></i>
+
+            Dashboard
+
+        </a>
+
+    </div>
 
 </div>
 

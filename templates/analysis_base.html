@@ -44,13 +44,15 @@
 
             <h5 class="fw-bold text-primary mb-1">
                 <i class="bi bi-shield-lock-fill"></i>
-                CyberX DFIR
+                {% if stats.case_name %}
+                    {{ stats.case_name }} Analysis
+                {% else %}
+                    Comprehensive Analysis
+                {% endif %}
             </h5>
 
             {% if case %}
             <small class="text-muted d-block mb-3">
-                {{ case.case_name }}
-                <br>
                 #{{ case.id }}
             </small>
             {% endif %}
