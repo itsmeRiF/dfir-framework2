@@ -1,0 +1,355 @@
+{% extends "analysis_base.html" %}
+
+{% block analysis_content %}
+
+<div class="viz-root">
+
+
+<!-- ================= HEADER ================= -->
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <div>
+
+        <h2 class="fw-bold mb-1">
+            <i class="bi bi-exclamation-triangle-fill text-danger"></i>
+            Incidents
+        </h2>
+
+        <p class="text-muted mb-0">
+            Every correlated detection raised, across every case
+        </p>
+
+    </div>
+
+    <div class="d-flex gap-2">
+
+        <a href="{{ url_for('analysis.global_dashboard') }}"
+           class="btn btn-outline-primary">
+            <i class="bi bi-speedometer2"></i>
+            Dashboard
+        </a>
+
+        <a href="/cases" class="btn btn-outline-secondary">
+            <i class="bi bi-folder2-open"></i>
+            Browse Cases
+        </a>
+
+    </div>
+
+</div>
+
+
+<!-- ================= KPI ROW ================= -->
+
+<div class="row g-3 mb-4">
+
+    {% set tiles = [
+        ("Incidents",      totals.incidents,      "bi-shield-exclamation",  "slot-1"),
+        ("Critical",       totals.critical,       "bi-exclamation-octagon", "crit"),
+        ("High",           totals.high,           "bi-exclamation-triangle","slot-2"),
+        ("Medium",         totals.medium,         "bi-dash-circle",         "slot-2"),
+        ("Low",            totals.low,            "bi-info-circle",         "slot-1"),
+        ("Events covered", totals.events,         "bi-list-ul",             "slot-3"),
+        ("Cases affected", totals.cases_affected, "bi-folder2-open",        "slot-3")
+    ] %}
+
+    {% for label, value, icon, tone in tiles %}
+
+    <div class="col-6 col-md-4 col-xl">
+
+        <div class="cx-tile {{ tone }}">
+
+            <div class="cx-tile-icon">
+                <i class="bi {{ icon }}"></i>
+            </div>
+
+            <div class="cx-tile-value">
+                {{ "{:,}".format(value) }}
+            </div>
+
+            <div class="cx-tile-label">
+                {{ label }}
+            </div>
+
+        </div>
+
+    </div>
+
+    {% endfor %}
+
+</div>
+
+
+<!-- ================= INCIDENTS ================= -->
+
+<div class="cx-card">
+
+    <div class="cx-card-head">
+
+        <div>
+            <h6>All incidents</h6>
+            <small>
+                Worst severity first, then by how many events each covers
+            </small>
+        </div>
+
+        <span class="badge bg-danger-subtle text-danger-emphasis"
+              id="incidentCount">
+            {{ "{:,}".format(totals.incidents) }} incidents
+        </span>
+
+    </div>
+
+
+    {% if rows %}
+
+    <!-- ---------- filters ---------- -->
+
+    <div class="row g-2 mb-3">
+
+        <div class="col-md-5">
+
+            <div class="input-group input-group-sm">
+
+                <span class="input-group-text">
+                    <i class="bi bi-search"></i>
+                </span>
+
+                <input type="search"
+                       id="filterText"
+                       class="form-control"
+                       placeholder="Search title, rule or case…">
+
+            </div>
+
+        </div>
+
+        <div class="col-md-4">
+
+            <select id="filterCase" class="form-select form-select-sm">
+                <option value="">All cases</option>
+                {% for case in filter_cases %}
+                <option value="{{ case.id }}">
+                    {{ case.name }} ({{ case.number }})
+                </option>
+                {% endfor %}
+            </select>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <select id="filterSeverity" class="form-select form-select-sm">
+                <option value="">All severities</option>
+                {% for severity in severities %}
+                <option value="{{ severity }}">
+                    {{ severity|capitalize }}
+                </option>
+                {% endfor %}
+            </select>
+
+        </div>
+
+    </div>
+
+    {% endif %}
+
+
+    <div class="table-responsive">
+
+        <table class="table align-middle cx-table mb-0"
+               id="incidentTable">
+
+            <thead>
+                <tr>
+                    <th>Severity</th>
+                    <th>Incident</th>
+                    <th>Case</th>
+                    <th>Rule</th>
+                    <th class="text-end">Events</th>
+                    <th>First seen (IST)</th>
+                    <th>Last seen (IST)</th>
+                    <th class="text-end">Open</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for row in rows %}
+
+                {% set incident = row.incident %}
+                {% set case = row.case %}
+                {% set sev = row.severity %}
+
+                <tr data-case="{{ case.id }}"
+                    data-severity="{{ sev }}"
+                    data-text="{{ [incident.title,
+                                   incident.rule,
+                                   case.name,
+                                   case.number]|select|join(' ')|lower }}">
+
+                    <td>
+                        <span class="cx-sev
+                                     {% if sev == 'critical' %}critical
+                                     {% elif sev == 'high' %}high
+                                     {% elif sev in ('medium', 'med') %}medium
+                                     {% elif sev == 'low' %}low
+                                     {% else %}info{% endif %}">
+                            {{ incident.severity or "unknown" }}
+                        </span>
+                    </td>
+
+                    <td>
+                        <span class="fw-semibold cx-clip"
+                              title="{{ incident.title or '' }}">
+                            {{ incident.title or "Untitled incident" }}
+                        </span>
+                    </td>
+
+                    <td>
+                        <a href="/analysis/incidents/{{ case.id }}"
+                           class="cx-case">
+                            <span class="cx-swatch"
+                                  style="background:{{ case.color }};"></span>
+                            <span>
+                                <span class="fw-semibold d-block">
+                                    {{ case.name }}
+                                </span>
+                                <small class="text-muted">
+                                    {{ case.number }}
+                                </small>
+                            </span>
+                        </a>
+                    </td>
+
+                    <td>
+                        <small class="text-muted cx-clip"
+                               title="{{ incident.rule or '' }}">
+                            {{ incident.rule or "-" }}
+                        </small>
+                    </td>
+
+                    <td class="text-end num">
+                        {{ "{:,}".format(incident.event_count or 0) }}
+                    </td>
+
+                    <td class="num">
+                        <small>{{ format_ist(incident.first_seen) }}</small>
+                    </td>
+
+                    <td class="num">
+                        <small>{{ format_ist(incident.last_seen) }}</small>
+                    </td>
+
+                    <td class="text-end">
+                        <a href="/analysis/incidents/{{ case.id }}"
+                           class="btn btn-sm btn-outline-primary"
+                           title="Open this case's incidents">
+                            <i class="bi bi-box-arrow-up-right"></i>
+                        </a>
+                    </td>
+
+                </tr>
+
+                {% else %}
+
+                <tr>
+                    <td colspan="8" class="text-center text-muted py-5">
+                        <i class="bi bi-shield-check fs-1 d-block mb-3"></i>
+                        No incidents have been raised in any case.
+                        <div>
+                            <small>
+                                Incidents appear once parsed events are
+                                correlated into detections.
+                            </small>
+                        </div>
+                    </td>
+                </tr>
+
+                {% endfor %}
+
+
+                <tr id="noMatchRow" class="d-none">
+                    <td colspan="8" class="text-center text-muted py-5">
+                        <i class="bi bi-funnel fs-1 d-block mb-3"></i>
+                        No incidents match the current filters.
+                    </td>
+                </tr>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+
+</div><!-- /viz-root -->
+
+
+{% include "components/global_styles.html" %}
+
+
+<script>
+(function () {
+
+    const table = document.getElementById("incidentTable");
+
+    if (!table) { return; }
+
+    const rows = Array.prototype.slice.call(
+        table.querySelectorAll("tbody tr[data-case]")
+    );
+
+    if (!rows.length) { return; }
+
+
+    const text     = document.getElementById("filterText");
+    const caseSel  = document.getElementById("filterCase");
+    const severity = document.getElementById("filterSeverity");
+
+    const counter  = document.getElementById("incidentCount");
+    const noMatch  = document.getElementById("noMatchRow");
+
+    const nf = new Intl.NumberFormat();
+
+
+    const apply = () => {
+
+        const needle = (text.value || "").trim().toLowerCase();
+
+        let shown = 0;
+
+        rows.forEach((row) => {
+
+            const visible =
+                (!needle || row.dataset.text.indexOf(needle) !== -1) &&
+                (!caseSel.value  || row.dataset.case === caseSel.value) &&
+                (!severity.value || row.dataset.severity === severity.value);
+
+            row.classList.toggle("d-none", !visible);
+
+            if (visible) { shown += 1; }
+
+        });
+
+        noMatch.classList.toggle("d-none", shown !== 0);
+
+        counter.textContent = shown === rows.length
+            ? nf.format(rows.length) + " incidents"
+            : nf.format(shown) + " of " + nf.format(rows.length) + " incidents";
+
+    };
+
+
+    [text, caseSel, severity].forEach((control) => {
+        control.addEventListener("input", apply);
+        control.addEventListener("change", apply);
+    });
+
+})();
+</script>
+
+{% endblock %}

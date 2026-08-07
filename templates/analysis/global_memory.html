@@ -1,0 +1,616 @@
+{% extends "analysis_base.html" %}
+
+{% block analysis_content %}
+
+<div class="viz-root">
+
+
+<!-- ================= HEADER ================= -->
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <div>
+
+        <h2 class="fw-bold mb-1">
+            <i class="bi bi-memory text-primary"></i>
+            Memory Analysis
+        </h2>
+
+        <p class="text-muted mb-0">
+            Processes, connections and IOCs pooled across every case
+        </p>
+
+    </div>
+
+    <div class="d-flex gap-2">
+
+        <a href="{{ url_for('analysis.global_dashboard') }}"
+           class="btn btn-outline-primary">
+            <i class="bi bi-speedometer2"></i>
+            Dashboard
+        </a>
+
+        <a href="/cases" class="btn btn-outline-secondary">
+            <i class="bi bi-folder2-open"></i>
+            Browse Cases
+        </a>
+
+    </div>
+
+</div>
+
+
+<!-- ================= KPI ROW ================= -->
+
+<div class="row g-3 mb-4">
+
+    {% set tiles = [
+        ("Processes",     totals.processes,         "bi-cpu",                 "slot-1"),
+        ("Risky",         totals.risky_processes,   "bi-exclamation-triangle","crit"),
+        ("Connections",   totals.networks,          "bi-diagram-3",           "slot-3"),
+        ("IOCs",          totals.iocs,              "bi-bullseye",            "slot-2"),
+        ("High-sev IOCs", totals.high_iocs,         "bi-radioactive",         "crit"),
+        ("Cases",         totals.cases_with_memory, "bi-folder2-open",        "slot-3")
+    ] %}
+
+    {% for label, value, icon, tone in tiles %}
+
+    <div class="col-6 col-md-4 col-xl">
+
+        <div class="cx-tile {{ tone }}">
+
+            <div class="cx-tile-icon">
+                <i class="bi {{ icon }}"></i>
+            </div>
+
+            <div class="cx-tile-value">
+                {{ "{:,}".format(value) }}
+            </div>
+
+            <div class="cx-tile-label">
+                {{ label }}
+            </div>
+
+        </div>
+
+    </div>
+
+    {% endfor %}
+
+</div>
+
+
+<!-- ================= TABLES ================= -->
+
+<div class="cx-card">
+
+    <div class="cx-card-head">
+
+        <div>
+            <h6>Memory artifacts</h6>
+            <small>
+                Repeated captures of the same host are collapsed, as on
+                each case's own memory page
+            </small>
+        </div>
+
+        <div class="d-flex gap-2">
+
+            <div class="input-group input-group-sm" style="width:230px;">
+
+                <span class="input-group-text">
+                    <i class="bi bi-search"></i>
+                </span>
+
+                <input type="search"
+                       id="filterText"
+                       class="form-control"
+                       placeholder="Search the open tab…">
+
+            </div>
+
+            <select id="filterCase" class="form-select form-select-sm"
+                    style="width:200px;">
+                <option value="">All cases</option>
+                {% for case in filter_cases %}
+                <option value="{{ case.id }}">
+                    {{ case.name }}
+                </option>
+                {% endfor %}
+            </select>
+
+        </div>
+
+    </div>
+
+
+    <ul class="nav nav-tabs cx-tabs mb-3" role="tablist">
+
+        {% set tabs = [
+            ("processes", "Processes",   "bi-cpu",       processes.total),
+            ("networks",  "Connections", "bi-diagram-3", networks.total),
+            ("iocs",      "IOCs",        "bi-bullseye",  iocs.total)
+        ] %}
+
+        {% for key, label, icon, count in tabs %}
+
+        <li class="nav-item" role="presentation">
+
+            <button class="nav-link {% if loop.first %}active{% endif %}"
+                    data-bs-toggle="tab"
+                    data-bs-target="#tab-{{ key }}"
+                    data-pane="{{ key }}"
+                    type="button"
+                    role="tab">
+                <i class="bi {{ icon }} me-1"></i>
+                {{ label }}
+                <span class="badge rounded-pill ms-1">
+                    {{ "{:,}".format(count) }}
+                </span>
+            </button>
+
+        </li>
+
+        {% endfor %}
+
+    </ul>
+
+
+    <div class="tab-content">
+
+
+        <!-- ---------- PROCESSES ---------- -->
+
+        <div class="tab-pane fade show active"
+             id="tab-processes"
+             data-pane="processes"
+             role="tabpanel">
+
+            <div class="table-responsive cx-scroll">
+
+                <table class="table align-middle cx-table mb-0">
+
+                    <thead class="position-sticky top-0 bg-white">
+                        <tr>
+                            <th>Case</th>
+                            <th class="text-end">PID</th>
+                            <th class="text-end">PPID</th>
+                            <th>Process</th>
+                            <th>Parent</th>
+                            <th>User</th>
+                            <th>Risk</th>
+                            <th>Command line</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for row in processes.rows %}
+
+                        {% set p = row.item %}
+                        {% set risk = (p.risk or "low")|lower %}
+
+                        <tr data-case="{{ row.case.id }}"
+                            data-text="{{ [p.process_name,
+                                           p.parent_name,
+                                           p.username,
+                                           p.command_line,
+                                           p.path,
+                                           row.case.name]|select|join(' ')|lower }}">
+
+                            <td>
+                                <a href="/analysis/memory/{{ row.case.id }}"
+                                   class="cx-case">
+                                    <span class="cx-swatch"
+                                          style="background:{{ row.case.color }};"></span>
+                                    <small class="fw-semibold">
+                                        {{ row.case.name }}
+                                    </small>
+                                </a>
+                            </td>
+
+                            <td class="text-end num">{{ p.pid }}</td>
+
+                            <td class="text-end num">{{ p.ppid }}</td>
+
+                            <td class="fw-semibold">
+                                {{ p.process_name or "-" }}
+                            </td>
+
+                            <td>
+                                <small>{{ p.parent_name or "-" }}</small>
+                            </td>
+
+                            <td>
+                                <small>{{ p.username or "-" }}</small>
+                            </td>
+
+                            <td>
+                                <span class="cx-sev
+                                             {% if risk in ('critical',) %}critical
+                                             {% elif risk == 'high' %}high
+                                             {% elif risk in ('medium', 'med') %}medium
+                                             {% else %}low{% endif %}"
+                                      title="{{ p.risk_reason or '' }}">
+                                    {{ p.risk or "low" }}
+                                </span>
+                            </td>
+
+                            <td>
+                                <small class="text-muted cx-clip"
+                                       title="{{ p.command_line or p.path or '' }}">
+                                    {{ p.command_line or p.path or "-" }}
+                                </small>
+                            </td>
+
+                        </tr>
+
+                        {% else %}
+
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-5">
+                                <i class="bi bi-cpu fs-1 d-block mb-3"></i>
+                                No memory captures have been parsed yet.
+                            </td>
+                        </tr>
+
+                        {% endfor %}
+
+                        <tr class="no-match d-none">
+                            <td colspan="8" class="text-center text-muted py-5">
+                                Nothing matches the current filters.
+                            </td>
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            {% if processes.hidden %}
+            <small class="text-muted d-block mt-2">
+                Showing the first {{ "{:,}".format(processes.rows|length) }}
+                of {{ "{:,}".format(processes.total) }} — open a case to see
+                the rest.
+            </small>
+            {% endif %}
+
+        </div>
+
+
+        <!-- ---------- NETWORK ---------- -->
+
+        <div class="tab-pane fade"
+             id="tab-networks"
+             data-pane="networks"
+             role="tabpanel">
+
+            <div class="table-responsive cx-scroll">
+
+                <table class="table align-middle cx-table mb-0">
+
+                    <thead class="position-sticky top-0 bg-white">
+                        <tr>
+                            <th>Case</th>
+                            <th>Protocol</th>
+                            <th>Local</th>
+                            <th>Remote</th>
+                            <th>State</th>
+                            <th class="text-end">PID</th>
+                            <th>Process</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for row in networks.rows %}
+
+                        {% set n = row.item %}
+
+                        <tr data-case="{{ row.case.id }}"
+                            data-text="{{ [n.protocol,
+                                           n.local_address,
+                                           n.remote_address,
+                                           n.state,
+                                           n.process_name,
+                                           row.case.name]|select|join(' ')|lower }}">
+
+                            <td>
+                                <a href="/analysis/memory/{{ row.case.id }}"
+                                   class="cx-case">
+                                    <span class="cx-swatch"
+                                          style="background:{{ row.case.color }};"></span>
+                                    <small class="fw-semibold">
+                                        {{ row.case.name }}
+                                    </small>
+                                </a>
+                            </td>
+
+                            <td>
+                                <span class="badge bg-secondary-subtle text-secondary-emphasis">
+                                    {{ n.protocol or "-" }}
+                                </span>
+                            </td>
+
+                            <td class="num">
+                                <code>{{ n.local_address or "-" }}</code>
+                            </td>
+
+                            <td class="num">
+                                <code>{{ n.remote_address or "-" }}</code>
+                            </td>
+
+                            <td>
+                                <small>{{ n.state or "-" }}</small>
+                            </td>
+
+                            <td class="text-end num">
+                                {{ n.pid if n.pid is not none else "-" }}
+                            </td>
+
+                            <td class="fw-semibold">
+                                {{ n.process_name or "-" }}
+                            </td>
+
+                        </tr>
+
+                        {% else %}
+
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-5">
+                                <i class="bi bi-diagram-3 fs-1 d-block mb-3"></i>
+                                No network artifacts recovered yet.
+                            </td>
+                        </tr>
+
+                        {% endfor %}
+
+                        <tr class="no-match d-none">
+                            <td colspan="7" class="text-center text-muted py-5">
+                                Nothing matches the current filters.
+                            </td>
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            {% if networks.hidden %}
+            <small class="text-muted d-block mt-2">
+                Showing the first {{ "{:,}".format(networks.rows|length) }}
+                of {{ "{:,}".format(networks.total) }} — open a case to see
+                the rest.
+            </small>
+            {% endif %}
+
+        </div>
+
+
+        <!-- ---------- IOCs ---------- -->
+
+        <div class="tab-pane fade"
+             id="tab-iocs"
+             data-pane="iocs"
+             role="tabpanel">
+
+            <div class="table-responsive cx-scroll">
+
+                <table class="table align-middle cx-table mb-0">
+
+                    <thead class="position-sticky top-0 bg-white">
+                        <tr>
+                            <th>Severity</th>
+                            <th>Case</th>
+                            <th>Type</th>
+                            <th>Indicator</th>
+                            <th>Process</th>
+                            <th>Source</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for row in iocs.rows %}
+
+                        {% set i = row.item %}
+                        {% set sev = (i.severity or "medium")|lower %}
+
+                        <tr data-case="{{ row.case.id }}"
+                            data-text="{{ [i.ioc_type,
+                                           i.indicator,
+                                           i.process_name,
+                                           i.source,
+                                           i.description,
+                                           row.case.name]|select|join(' ')|lower }}">
+
+                            <td>
+                                <span class="cx-sev
+                                             {% if sev == 'critical' %}critical
+                                             {% elif sev == 'high' %}high
+                                             {% elif sev in ('medium', 'med') %}medium
+                                             {% elif sev == 'low' %}low
+                                             {% else %}info{% endif %}">
+                                    {{ i.severity or "medium" }}
+                                </span>
+                            </td>
+
+                            <td>
+                                <a href="/analysis/memory/{{ row.case.id }}"
+                                   class="cx-case">
+                                    <span class="cx-swatch"
+                                          style="background:{{ row.case.color }};"></span>
+                                    <small class="fw-semibold">
+                                        {{ row.case.name }}
+                                    </small>
+                                </a>
+                            </td>
+
+                            <td>
+                                <span class="badge bg-info-subtle text-info-emphasis">
+                                    {{ i.ioc_type or "-" }}
+                                </span>
+                            </td>
+
+                            <td>
+                                <code class="cx-clip"
+                                      title="{{ i.indicator or '' }}">
+                                    {{ i.indicator or "-" }}
+                                </code>
+                            </td>
+
+                            <td>
+                                <small>
+                                    {{ i.process_name or "-" }}
+                                    {% if i.pid is not none %}
+                                    <span class="text-muted">({{ i.pid }})</span>
+                                    {% endif %}
+                                </small>
+                            </td>
+
+                            <td>
+                                <small>{{ i.source or "-" }}</small>
+                            </td>
+
+                            <td>
+                                <small class="text-muted cx-clip"
+                                       title="{{ i.description or '' }}">
+                                    {{ i.description or "-" }}
+                                </small>
+                            </td>
+
+                        </tr>
+
+                        {% else %}
+
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-5">
+                                <i class="bi bi-bullseye fs-1 d-block mb-3"></i>
+                                No indicators extracted yet.
+                            </td>
+                        </tr>
+
+                        {% endfor %}
+
+                        <tr class="no-match d-none">
+                            <td colspan="7" class="text-center text-muted py-5">
+                                Nothing matches the current filters.
+                            </td>
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            {% if iocs.hidden %}
+            <small class="text-muted d-block mt-2">
+                Showing the first {{ "{:,}".format(iocs.rows|length) }}
+                of {{ "{:,}".format(iocs.total) }} — open a case to see
+                the rest.
+            </small>
+            {% endif %}
+
+        </div>
+
+
+    </div>
+
+</div>
+
+
+</div><!-- /viz-root -->
+
+
+{% include "components/global_styles.html" %}
+
+
+<script>
+(function () {
+
+    const text    = document.getElementById("filterText");
+    const caseSel = document.getElementById("filterCase");
+
+    if (!text || !caseSel) { return; }
+
+
+    // The search box applies to whichever tab is on screen, so the
+    // count on each tab keeps meaning "rows you can see here".
+    const panes = Array.prototype.slice.call(
+        document.querySelectorAll(".tab-pane[data-pane]")
+    );
+
+    const counters = {};
+
+    document.querySelectorAll(".cx-tabs [data-pane]").forEach((tab) => {
+        counters[tab.dataset.pane] = tab.querySelector(".badge");
+    });
+
+    const totals = {};
+
+    panes.forEach((pane) => {
+        totals[pane.dataset.pane] =
+            pane.querySelectorAll("tbody tr[data-case]").length;
+    });
+
+    const nf = new Intl.NumberFormat();
+
+
+    const apply = () => {
+
+        const needle = (text.value || "").trim().toLowerCase();
+
+        panes.forEach((pane) => {
+
+            const rows = pane.querySelectorAll("tbody tr[data-case]");
+
+            let shown = 0;
+
+            rows.forEach((row) => {
+
+                const visible =
+                    (!needle || row.dataset.text.indexOf(needle) !== -1) &&
+                    (!caseSel.value || row.dataset.case === caseSel.value);
+
+                row.classList.toggle("d-none", !visible);
+
+                if (visible) { shown += 1; }
+
+            });
+
+            const noMatch = pane.querySelector(".no-match");
+
+            if (noMatch) {
+                noMatch.classList.toggle(
+                    "d-none",
+                    shown !== 0 || rows.length === 0
+                );
+            }
+
+            const counter = counters[pane.dataset.pane];
+
+            if (counter) {
+                counter.textContent = shown === totals[pane.dataset.pane]
+                    ? nf.format(shown)
+                    : nf.format(shown) + " / "
+                      + nf.format(totals[pane.dataset.pane]);
+            }
+
+        });
+
+    };
+
+
+    [text, caseSel].forEach((control) => {
+        control.addEventListener("input", apply);
+        control.addEventListener("change", apply);
+    });
+
+})();
+</script>
+
+{% endblock %}

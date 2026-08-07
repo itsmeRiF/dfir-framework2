@@ -1,0 +1,445 @@
+{% extends "analysis_base.html" %}
+
+{% block analysis_content %}
+
+<div class="viz-root">
+
+
+<!-- ================= HEADER ================= -->
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <div>
+
+        <h2 class="fw-bold mb-1">
+            <i class="bi bi-hdd-stack text-primary"></i>
+            Evidence Repository
+        </h2>
+
+        <p class="text-muted mb-0">
+            Every artifact uploaded across
+            {{ totals.cases }} case{{ '' if totals.cases == 1 else 's' }}
+        </p>
+
+    </div>
+
+    <div class="d-flex gap-2">
+
+        <a href="{{ url_for('analysis.global_dashboard') }}"
+           class="btn btn-outline-primary">
+            <i class="bi bi-speedometer2"></i>
+            Dashboard
+        </a>
+
+        <a href="/cases" class="btn btn-outline-secondary">
+            <i class="bi bi-folder2-open"></i>
+            Browse Cases
+        </a>
+
+    </div>
+
+</div>
+
+
+<!-- ================= KPI ROW ================= -->
+
+<div class="row g-3 mb-4">
+
+    {% set tiles = [
+        ("Evidence",   "{:,}".format(totals.evidence),   "bi-files",             "slot-1"),
+        ("Completed",  "{:,}".format(totals.completed),  "bi-check-circle",      "slot-3"),
+        ("Processing", "{:,}".format(totals.processing), "bi-arrow-repeat",      "slot-1"),
+        ("Queued",     "{:,}".format(totals.queued),     "bi-hourglass-split",   "slot-2"),
+        ("Failed",     "{:,}".format(totals.failed),     "bi-x-circle",          "crit"),
+        ("Total size", "{:,}".format(totals.size_mb) ~ " MB", "bi-hdd",          "slot-3"),
+        ("Cases",      "{:,}".format(totals.cases_with_evidence), "bi-folder2",  "slot-2")
+    ] %}
+
+    {% for label, value, icon, tone in tiles %}
+
+    <div class="col-6 col-md-4 col-xl">
+
+        <div class="cx-tile {{ tone }}">
+
+            <div class="cx-tile-icon">
+                <i class="bi {{ icon }}"></i>
+            </div>
+
+            <div class="cx-tile-value">
+                {{ value }}
+            </div>
+
+            <div class="cx-tile-label">
+                {{ label }}
+            </div>
+
+        </div>
+
+    </div>
+
+    {% endfor %}
+
+</div>
+
+
+<!-- ================= REPOSITORY ================= -->
+
+<div class="cx-card">
+
+    <div class="cx-card-head">
+
+        <div>
+            <h6>All evidence</h6>
+            <small>
+                Newest upload first — every case in one list
+            </small>
+        </div>
+
+        <span class="badge bg-primary-subtle text-primary-emphasis"
+              id="evidenceCount">
+            {{ "{:,}".format(totals.evidence) }} files
+        </span>
+
+    </div>
+
+
+    {% if rows %}
+
+    <!-- ---------- filters ---------- -->
+
+    <div class="row g-2 mb-3 cx-filters">
+
+        <div class="col-md-4">
+
+            <div class="input-group input-group-sm">
+
+                <span class="input-group-text">
+                    <i class="bi bi-search"></i>
+                </span>
+
+                <input type="search"
+                       id="filterText"
+                       class="form-control"
+                       placeholder="Search file, hash, parser, case…">
+
+            </div>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <select id="filterCase" class="form-select form-select-sm">
+                <option value="">All cases</option>
+                {% for case in filter_cases %}
+                <option value="{{ case.id }}">
+                    {{ case.name }} ({{ case.number }})
+                </option>
+                {% endfor %}
+            </select>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <select id="filterArtifact" class="form-select form-select-sm">
+                <option value="">All artifact types</option>
+                {% for artifact in artifact_types %}
+                <option value="{{ artifact|lower }}">
+                    {{ artifact }}
+                </option>
+                {% endfor %}
+            </select>
+
+        </div>
+
+        <div class="col-md-2">
+
+            <select id="filterStatus" class="form-select form-select-sm">
+                <option value="">All statuses</option>
+                <option value="completed">Completed</option>
+                <option value="processing">Processing</option>
+                <option value="queued">Queued</option>
+                <option value="failed">Failed</option>
+            </select>
+
+        </div>
+
+    </div>
+
+    {% endif %}
+
+
+    <div class="table-responsive">
+
+        <table class="table align-middle cx-table mb-0"
+               id="evidenceTable">
+
+            <thead>
+                <tr>
+                    <th>File</th>
+                    <th>Case</th>
+                    <th>Artifact</th>
+                    <th>Parser</th>
+                    <th class="text-end">Size</th>
+                    <th>SHA256</th>
+                    <th>Status</th>
+                    <th>Uploaded</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for row in rows %}
+
+                {% set e = row.evidence %}
+                {% set case = row.case %}
+                {% set state = (e.status or "")|lower %}
+
+                <tr data-case="{{ case.id }}"
+                    data-status="{{ state }}"
+                    data-artifact="{{ (e.artifact_type or '')|lower }}"
+                    data-text="{{ [e.filename,
+                                   e.original_filename,
+                                   e.parser,
+                                   e.artifact_type,
+                                   e.sha256,
+                                   case.name,
+                                   case.number]|select|join(' ')|lower }}">
+
+                    <td>
+                        <div class="fw-semibold">
+                            {{ e.filename }}
+                        </div>
+                        <small class="text-muted">
+                            {{ e.original_filename or "-" }}
+                        </small>
+                    </td>
+
+                    <td>
+                        <a href="/analysis/evidence/{{ case.id }}"
+                           class="cx-case d-flex align-items-center gap-2">
+                            <span class="cx-swatch"
+                                  style="background:{{ case.color }};"></span>
+                            <span>
+                                <span class="fw-semibold d-block">
+                                    {{ case.name }}
+                                </span>
+                                <small class="text-muted">
+                                    {{ case.number }}
+                                </small>
+                            </span>
+                        </a>
+                    </td>
+
+                    <td>
+                        {% if e.artifact_type %}
+                        <span class="badge bg-info-subtle text-info-emphasis">
+                            {{ e.artifact_type }}
+                        </span>
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {{ e.parser or "Pending" }}
+                    </td>
+
+                    <td class="text-end">
+                        {{ e.size_mb }} MB
+                    </td>
+
+                    <td>
+                        {% if e.sha256 %}
+                        <code title="{{ e.sha256 }}">
+                            {{ e.sha256[:16] }}…
+                        </code>
+                        {% else %}
+                        <span class="text-muted">
+                            Not calculated
+                        </span>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {% if state == "completed" %}
+                        <span class="badge bg-success">
+                            <i class="bi bi-check-circle"></i>
+                            Completed
+                        </span>
+                        {% elif state == "failed" %}
+                        <span class="badge bg-danger"
+                              title="{{ e.error_message or '' }}">
+                            <i class="bi bi-x-circle"></i>
+                            Failed
+                        </span>
+                        {% elif state == "processing" %}
+                        <span class="badge bg-primary">
+                            <i class="bi bi-arrow-repeat"></i>
+                            Processing
+                        </span>
+                        {% elif state == "queued" %}
+                        <span class="badge bg-warning text-dark">
+                            <i class="bi bi-hourglass-split"></i>
+                            Queued
+                        </span>
+                        {% else %}
+                        <span class="badge bg-secondary">
+                            {{ e.status or "Unknown" }}
+                        </span>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {% if e.uploaded_at %}
+                        {{ format_ist(e.uploaded_at) }} IST
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+
+                    <td class="text-end">
+
+                        <div class="d-flex justify-content-end gap-1">
+
+                            <a href="/analysis/evidence/{{ case.id }}"
+                               class="btn btn-sm btn-outline-secondary"
+                               title="Open this case's evidence">
+                                <i class="bi bi-box-arrow-up-right"></i>
+                            </a>
+
+                            <form method="POST"
+                                  action="{{ url_for('evidence.reanalyze',
+                                                     evidence_id=e.id) }}"
+                                  onsubmit="return confirm('Re-analyze this evidence?');">
+
+                                <button class="btn btn-sm btn-outline-primary"
+                                        title="Re-analyze">
+                                    <i class="bi bi-arrow-repeat"></i>
+                                </button>
+
+                            </form>
+
+                            <form method="POST"
+                                  action="{{ url_for('evidence.delete_evidence',
+                                                     evidence_id=e.id) }}"
+                                  onsubmit="return confirm('Delete this evidence permanently?');">
+
+                                <button class="btn btn-sm btn-outline-danger"
+                                        title="Delete">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+
+                            </form>
+
+                        </div>
+
+                    </td>
+
+                </tr>
+
+                {% else %}
+
+                <tr>
+                    <td colspan="9" class="text-center text-muted py-5">
+                        <i class="bi bi-inbox fs-1 d-block mb-3"></i>
+                        No evidence uploaded in any case yet.
+                        {% if totals.cases %}
+                        Open a case to add the first artifact.
+                        {% else %}
+                        <a href="/cases/new">Create the first case</a>.
+                        {% endif %}
+                    </td>
+                </tr>
+
+                {% endfor %}
+
+
+                <tr id="noMatchRow" class="d-none">
+                    <td colspan="9" class="text-center text-muted py-5">
+                        <i class="bi bi-funnel fs-1 d-block mb-3"></i>
+                        No evidence matches the current filters.
+                    </td>
+                </tr>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+
+</div><!-- /viz-root -->
+
+
+
+{% include "components/global_styles.html" %}
+
+
+
+<script>
+(function () {
+
+    const table = document.getElementById("evidenceTable");
+
+    if (!table) { return; }
+
+    const rows = Array.prototype.slice.call(
+        table.querySelectorAll("tbody tr[data-case]")
+    );
+
+    if (!rows.length) { return; }
+
+
+    const text     = document.getElementById("filterText");
+    const caseSel  = document.getElementById("filterCase");
+    const artifact = document.getElementById("filterArtifact");
+    const status   = document.getElementById("filterStatus");
+
+    const counter  = document.getElementById("evidenceCount");
+    const noMatch  = document.getElementById("noMatchRow");
+
+    const nf = new Intl.NumberFormat();
+
+
+    const apply = () => {
+
+        const needle = (text.value || "").trim().toLowerCase();
+
+        let shown = 0;
+
+        rows.forEach((row) => {
+
+            const visible =
+                (!needle || row.dataset.text.indexOf(needle) !== -1) &&
+                (!caseSel.value  || row.dataset.case === caseSel.value) &&
+                (!artifact.value || row.dataset.artifact === artifact.value) &&
+                (!status.value   || row.dataset.status === status.value);
+
+            row.classList.toggle("d-none", !visible);
+
+            if (visible) { shown += 1; }
+
+        });
+
+        noMatch.classList.toggle("d-none", shown !== 0);
+
+        counter.textContent = shown === rows.length
+            ? nf.format(rows.length) + " files"
+            : nf.format(shown) + " of " + nf.format(rows.length) + " files";
+
+    };
+
+
+    [text, caseSel, artifact, status].forEach((control) => {
+        control.addEventListener("input", apply);
+        control.addEventListener("change", apply);
+    });
+
+})();
+</script>
+
+{% endblock %}

@@ -21,13 +21,30 @@
        'cases.new_case':            'cases',
        'analysis.global_dashboard': 'dashboard',
        'analysis.dashboard':        'dashboard',
+       'analysis.global_evidence':  'evidence',
        'evidence.evidence_page':    'evidence',
+       'analysis.global_events':    'events',
        'events.view_events':        'events',
        'events.export_events':      'events',
+       'analysis.global_timeline':  'timeline',
        'timeline.timeline':         'timeline',
+       'analysis.global_incidents': 'incidents',
        'incident.incidents':        'incidents',
+       'analysis.global_memory':    'memory',
        'memory.memory_analysis':    'memory'
    }.get(request.endpoint) %}
+
+
+{# Each forensic tab points at that case inside a case, and at
+   the all-cases view of the same data on /cases. #}
+
+{% macro tab_url(tool, global_endpoint) -%}
+    {%- if sidebar_scope -%}
+        /analysis/{{ tool }}/{{ sidebar_scope }}
+    {%- else -%}
+        {{ url_for(global_endpoint) }}
+    {%- endif -%}
+{%- endmacro %}
 
 <div class="container-fluid px-0">
 
@@ -101,7 +118,7 @@
                     </span>
                 </small>
 
-                <a href="/analysis/evidence/{{case_id}}"
+                <a href="{{ tab_url('evidence', 'analysis.global_evidence') }}"
                    class="list-group-item list-group-item-action cx-nav {% if active_tab == 'evidence' %}active{% endif %}">
                     <i class="bi bi-hdd-fill me-2"></i>
                     Evidence
@@ -110,7 +127,7 @@
                     </span>
                 </a>
 
-                <a href="/analysis/events/{{case_id}}"
+                <a href="{{ tab_url('events', 'analysis.global_events') }}"
                    class="list-group-item list-group-item-action cx-nav {% if active_tab == 'events' %}active{% endif %}">
                     <i class="bi bi-list-ul me-2"></i>
                     Event Logs
@@ -119,7 +136,7 @@
                     </span>
                 </a>
 
-                <a href="/analysis/timeline/{{case_id}}"
+                <a href="{{ tab_url('timeline', 'analysis.global_timeline') }}"
                    class="list-group-item list-group-item-action cx-nav {% if active_tab == 'timeline' %}active{% endif %}">
                     <i class="bi bi-clock-history me-2"></i>
                     Timeline
@@ -128,7 +145,7 @@
                     </span>
                 </a>
 
-                <a href="/analysis/incidents/{{case_id}}"
+                <a href="{{ tab_url('incidents', 'analysis.global_incidents') }}"
                    class="list-group-item list-group-item-action cx-nav {% if active_tab == 'incidents' %}active{% endif %}">
                     <i class="bi bi-exclamation-triangle-fill me-2"></i>
                     Incidents
@@ -137,7 +154,7 @@
                     </span>
                 </a>
 
-                <a href="/analysis/memory/{{case_id}}"
+                <a href="{{ tab_url('memory', 'analysis.global_memory') }}"
                    class="list-group-item list-group-item-action cx-nav {% if active_tab == 'memory' %}active{% endif %}">
                     <i class="bi bi-memory me-2"></i>
                     Memory

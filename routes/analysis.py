@@ -1,5 +1,8 @@
-from flask import Blueprint, render_template, redirect, url_for
-from sqlalchemy import func
+from flask import Blueprint, render_template, redirect, request, url_for
+from flask_login import login_required
+from sqlalchemy import func, or_
+
+from datetime import datetime
 
 from database.db import db
 
@@ -10,6 +13,7 @@ from models.incident import Incident
 from models.memory import MemoryAnalysis
 
 from utils import case_stats
+from utils.timezone import format_ist
 
 
 analysis_bp = Blueprint(
@@ -195,6 +199,292 @@ def dashboard(case_id):
 
         severity=severity
 
+    )
+
+
+# =========================================================
+# ALL-CASES EVIDENCE REPOSITORY
+#
+# The sidebar's Evidence tab has no case to point at while you
+# are on /cases, so it lands here: every artifact from every
+# case in one repository view.
+# =========================================================
+
+@analysis_bp.route("/analysis/evidence/")
+def global_evidence():
+
+    return render_template(
+        "analysis/global_evidence.html",
+        format_ist=format_ist,
+        **case_stats.evidence_repository()
+    )
+
+
+# =========================================================
+# ALL-CASES EVENT EXPLORER
+#
+# Same idea as the per-case explorer, with the case as one
+# more filter. Paginated server-side: there can be a lot of
+# events once several cases have been parsed.
+# =========================================================
+
+EVENTS_PER_PAGE = 50
+
+
+@analysis_bp.route("/analysis/events/")
+@login_required
+def global_events():
+
+    page = request.args.get("page", 1, type=int)
+
+    search = request.args.get("search", "").strip()
+
+    case_filter = request.args.get("case", type=int)
+
+    severity = request.args.get("severity", "").strip().lower()
+
+    computer = request.args.get("computer", "").strip()
+
+    channel = request.args.get("channel", "").strip()
+
+
+    # Everything except severity, so the severity tiles keep
+    # showing what is one click away.
+    conditions = []
+
+    if case_filter:
+        conditions.append(Event.case_id == case_filter)
+
+    if search:
+        conditions.append(
+            or_(
+                Event.details.ilike(f"%{search}%"),
+                Event.rule_title.ilike(f"%{search}%"),
+                Event.computer.ilike(f"%{search}%")
+            )
+        )
+
+    if computer:
+        conditions.append(Event.computer == computer)
+
+    if channel:
+        conditions.append(Event.channel == channel)
+
+
+    counts = dict(
+        db.session.query(
+            func.lower(Event.severity),
+            func.count(Event.id)
+        )
+        .filter(*conditions)
+        .group_by(func.lower(Event.severity))
+        .all()
+    )
+
+    def severity_total(*names):
+
+        return sum(
+            counts.get(name, 0)
+            for name in names
+        )
+
+
+    query = Event.query.filter(*conditions)
+
+    if severity:
+        query = query.filter(
+            func.lower(Event.severity) == severity
+        )
+
+    pagination = (
+        query
+        .order_by(
+            Event.timestamp.desc(),
+            Event.id.desc()
+        )
+        .paginate(
+            page=page,
+            per_page=EVENTS_PER_PAGE,
+            error_out=False
+        )
+    )
+
+
+    chips = case_stats.case_chips()
+
+    rows = [
+        {
+            "event": event,
+            "case": case_stats.chip_for(chips, event.case_id)
+        }
+        for event in pagination.items
+    ]
+
+
+    def distinct(column):
+        """Dropdown values, narrowed to the case being looked at."""
+
+        query = (
+            db.session.query(column)
+            .filter(column.isnot(None))
+        )
+
+        if case_filter:
+            query = query.filter(Event.case_id == case_filter)
+
+        return [
+            value
+            for (value,) in (
+                query
+                .distinct()
+                .order_by(column)
+                .all()
+            )
+            if value
+        ]
+
+
+    totals = {
+
+        "events": sum(counts.values()),
+
+        "critical": severity_total("critical"),
+
+        "high": severity_total("high"),
+
+        "medium": severity_total("medium", "med"),
+
+        "low": severity_total("low"),
+
+        "informational": severity_total(
+            "informational",
+            "information",
+            "info"
+        )
+
+    }
+
+
+    return render_template(
+
+        "analysis/global_events.html",
+
+        rows=rows,
+
+        pagination=pagination,
+
+        totals=totals,
+
+        matched=pagination.total,
+
+        filter_cases=list(chips.values()),
+
+        computers=distinct(Event.computer),
+
+        channels=distinct(Event.channel),
+
+        filters={
+            "search": search,
+            "case": case_filter or "",
+            "severity": severity,
+            "computer": computer,
+            "channel": channel
+        },
+
+        # Keeps the current filters on every pagination link.
+        query_args={
+            key: value
+            for key, value in request.args.items()
+            if key != "page"
+        },
+
+        # The severity tiles switch one filter and leave the
+        # rest of the query alone.
+        severity_args={
+            key: value
+            for key, value in request.args.items()
+            if key not in ("page", "severity")
+        },
+
+        format_ist=format_ist
+
+    )
+
+
+# =========================================================
+# ALL-CASES TIMELINE
+#
+# Every case's activity on one day axis, so investigations
+# can be lined up against each other.
+# =========================================================
+
+@analysis_bp.route("/analysis/timeline/")
+def global_timeline():
+
+    def parse(value):
+
+        if not value:
+            return None
+
+        try:
+            return datetime.fromisoformat(value)
+
+        except ValueError:
+            return None
+
+
+    start_raw = request.args.get("start", "").strip()
+
+    end_raw = request.args.get("end", "").strip()
+
+    start = parse(start_raw)
+
+    end = parse(end_raw)
+
+
+    return render_template(
+
+        "analysis/global_timeline.html",
+
+        start=start_raw if start else "",
+
+        end=end_raw if end else "",
+
+        format_ist=format_ist,
+
+        **case_stats.timeline_overview(
+            start=start,
+            end=end
+        )
+
+    )
+
+
+# =========================================================
+# ALL-CASES INCIDENTS
+# =========================================================
+
+@analysis_bp.route("/analysis/incidents/")
+def global_incidents():
+
+    return render_template(
+        "analysis/global_incidents.html",
+        format_ist=format_ist,
+        **case_stats.incident_overview()
+    )
+
+
+# =========================================================
+# ALL-CASES MEMORY
+# =========================================================
+
+@analysis_bp.route("/analysis/memory/")
+@login_required
+def global_memory():
+
+    return render_template(
+        "analysis/global_memory.html",
+        **case_stats.memory_overview()
     )
 
 

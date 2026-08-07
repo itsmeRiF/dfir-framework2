@@ -1,0 +1,389 @@
+{% extends "analysis_base.html" %}
+
+{% block analysis_content %}
+
+<div class="viz-root">
+
+
+<!-- ================= HEADER ================= -->
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <div>
+
+        <h2 class="fw-bold mb-1">
+            <i class="bi bi-list-ul text-primary"></i>
+            Event Explorer
+        </h2>
+
+        <p class="text-muted mb-0">
+            Every parsed event log record, across every case
+        </p>
+
+    </div>
+
+    <div class="d-flex gap-2">
+
+        <a href="{{ url_for('analysis.global_dashboard') }}"
+           class="btn btn-outline-primary">
+            <i class="bi bi-speedometer2"></i>
+            Dashboard
+        </a>
+
+        <a href="/cases" class="btn btn-outline-secondary">
+            <i class="bi bi-folder2-open"></i>
+            Browse Cases
+        </a>
+
+    </div>
+
+</div>
+
+
+<!-- ================= SEVERITY TILES =================
+
+     Each tile is the severity filter it counts, so the
+     numbers double as the way to drill in.                -->
+
+<div class="row g-3 mb-4">
+
+    {% set tiles = [
+        ("",              "All events",     totals.events,        "bi-list-ul",             "slot-1"),
+        ("critical",      "Critical",       totals.critical,      "bi-exclamation-octagon", "crit"),
+        ("high",          "High",           totals.high,          "bi-exclamation-triangle","slot-2"),
+        ("medium",        "Medium",         totals.medium,        "bi-dash-circle",         "slot-2"),
+        ("low",           "Low",            totals.low,           "bi-info-circle",         "slot-1"),
+        ("informational", "Informational",  totals.informational, "bi-journal-text",        "slot-3")
+    ] %}
+
+    {% for value, label, count, icon, tone in tiles %}
+
+    <div class="col-6 col-md-4 col-xl">
+
+        <a href="{{ url_for(request.endpoint, severity=value, **severity_args) }}"
+           class="cx-tile cx-tile-link {{ tone }} {% if filters.severity == value %}on{% endif %}">
+
+            <div class="cx-tile-icon">
+                <i class="bi {{ icon }}"></i>
+            </div>
+
+            <div class="cx-tile-value">
+                {{ "{:,}".format(count) }}
+            </div>
+
+            <div class="cx-tile-label">
+                {{ label }}
+            </div>
+
+        </a>
+
+    </div>
+
+    {% endfor %}
+
+</div>
+
+
+<!-- ================= EVENTS ================= -->
+
+<div class="cx-card">
+
+    <div class="cx-card-head">
+
+        <div>
+            <h6>Events</h6>
+            <small>
+                Newest first
+                {% if filters.severity %}
+                    · severity: {{ filters.severity }}
+                {% endif %}
+            </small>
+        </div>
+
+        <span class="badge bg-primary-subtle text-primary-emphasis">
+            {{ "{:,}".format(matched) }} matching
+        </span>
+
+    </div>
+
+
+    <!-- ---------- filters ---------- -->
+
+    <form method="GET" class="row g-2 mb-3">
+
+        {% if filters.severity %}
+        <input type="hidden" name="severity" value="{{ filters.severity }}">
+        {% endif %}
+
+        <div class="col-md-4">
+
+            <div class="input-group input-group-sm">
+
+                <span class="input-group-text">
+                    <i class="bi bi-search"></i>
+                </span>
+
+                <input type="search"
+                       name="search"
+                       value="{{ filters.search }}"
+                       class="form-control"
+                       placeholder="Search rule, host or details…">
+
+            </div>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <select name="case" class="form-select form-select-sm">
+                <option value="">All cases</option>
+                {% for case in filter_cases %}
+                <option value="{{ case.id }}"
+                        {% if filters.case == case.id %}selected{% endif %}>
+                    {{ case.name }} ({{ case.number }})
+                </option>
+                {% endfor %}
+            </select>
+
+        </div>
+
+        <div class="col-md-2">
+
+            <select name="computer" class="form-select form-select-sm">
+                <option value="">All hosts</option>
+                {% for host in computers %}
+                <option value="{{ host }}"
+                        {% if filters.computer == host %}selected{% endif %}>
+                    {{ host }}
+                </option>
+                {% endfor %}
+            </select>
+
+        </div>
+
+        <div class="col-md-2">
+
+            <select name="channel" class="form-select form-select-sm">
+                <option value="">All channels</option>
+                {% for item in channels %}
+                <option value="{{ item }}"
+                        {% if filters.channel == item %}selected{% endif %}>
+                    {{ item }}
+                </option>
+                {% endfor %}
+            </select>
+
+        </div>
+
+        <div class="col-md-1 d-flex gap-1">
+
+            <button class="btn btn-sm btn-primary flex-fill" type="submit">
+                <i class="bi bi-funnel"></i>
+            </button>
+
+            <a href="{{ url_for(request.endpoint) }}"
+               class="btn btn-sm btn-outline-secondary"
+               title="Clear all filters">
+                <i class="bi bi-x-lg"></i>
+            </a>
+
+        </div>
+
+    </form>
+
+
+    <div class="table-responsive">
+
+        <table class="table align-middle cx-table mb-0">
+
+            <thead>
+                <tr>
+                    <th>Time (IST)</th>
+                    <th>Case</th>
+                    <th>Host</th>
+                    <th>Channel</th>
+                    <th>Event ID</th>
+                    <th>Severity</th>
+                    <th>Rule / Details</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for row in rows %}
+
+                {% set e = row.event %}
+                {% set case = row.case %}
+                {% set sev = (e.severity or "unknown")|lower %}
+
+                <tr>
+
+                    <td class="num">
+                        {% if e.timestamp %}
+                        {{ format_ist(e.timestamp) }}
+                        {% else %}
+                        <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        <a href="/analysis/events/{{ case.id }}"
+                           class="cx-case">
+                            <span class="cx-swatch"
+                                  style="background:{{ case.color }};"></span>
+                            <span class="fw-semibold">
+                                {{ case.name }}
+                            </span>
+                        </a>
+                    </td>
+
+                    <td>
+                        {{ e.computer or "-" }}
+                    </td>
+
+                    <td>
+                        <small>{{ e.channel or "-" }}</small>
+                    </td>
+
+                    <td class="num">
+                        {{ e.event_id or "-" }}
+                    </td>
+
+                    <td>
+                        <span class="cx-sev
+                                     {% if sev == 'critical' %}critical
+                                     {% elif sev == 'high' %}high
+                                     {% elif sev in ('medium', 'med') %}medium
+                                     {% elif sev == 'low' %}low
+                                     {% else %}info{% endif %}">
+                            {{ e.severity or "unknown" }}
+                        </span>
+                    </td>
+
+                    <td>
+                        <a href="{{ url_for('event_detail.event_detail',
+                                            event_id=e.id) }}"
+                           class="fw-semibold text-decoration-none">
+                            {{ e.rule_title or "Untitled detection" }}
+                        </a>
+                        {% if e.details %}
+                        <small class="text-muted cx-clip"
+                               title="{{ e.details }}">
+                            {{ e.details }}
+                        </small>
+                        {% endif %}
+                    </td>
+
+                </tr>
+
+                {% else %}
+
+                <tr>
+                    <td colspan="7" class="text-center text-muted py-5">
+                        <i class="bi bi-funnel fs-1 d-block mb-3"></i>
+                        {% if totals.events %}
+                        No events match the current filters.
+                        {% else %}
+                        No events parsed in any case yet.
+                        {% endif %}
+                    </td>
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+
+    {% if pagination.pages > 1 %}
+
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3">
+
+        <div class="text-muted">
+            Showing
+            <strong>{{ "{:,}".format(pagination.first) }}</strong>
+            -
+            <strong>{{ "{:,}".format(pagination.last) }}</strong>
+            of
+            <strong>{{ "{:,}".format(pagination.total) }}</strong>
+            events
+        </div>
+
+        <nav>
+
+            <ul class="pagination pagination-sm mb-0">
+
+                {% if pagination.has_prev %}
+                <li class="page-item">
+                    <a class="page-link"
+                       href="{{ url_for(request.endpoint, page=1, **query_args) }}">
+                        <i class="bi bi-chevron-double-left"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link"
+                       href="{{ url_for(request.endpoint,
+                                        page=pagination.prev_num,
+                                        **query_args) }}">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+
+                {% for p in pagination.iter_pages(left_edge=1, right_edge=1,
+                                                  left_current=2, right_current=2) %}
+
+                    {% if p %}
+                    <li class="page-item {% if p == pagination.page %}active{% endif %}">
+                        <a class="page-link"
+                           href="{{ url_for(request.endpoint, page=p, **query_args) }}">
+                            {{ p }}
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">…</span>
+                    </li>
+                    {% endif %}
+
+                {% endfor %}
+
+                {% if pagination.has_next %}
+                <li class="page-item">
+                    <a class="page-link"
+                       href="{{ url_for(request.endpoint,
+                                        page=pagination.next_num,
+                                        **query_args) }}">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link"
+                       href="{{ url_for(request.endpoint,
+                                        page=pagination.pages,
+                                        **query_args) }}">
+                        <i class="bi bi-chevron-double-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+
+            </ul>
+
+        </nav>
+
+    </div>
+
+    {% endif %}
+
+</div>
+
+
+</div><!-- /viz-root -->
+
+
+{% include "components/global_styles.html" %}
+
+{% endblock %}

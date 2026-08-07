@@ -144,6 +144,10 @@ def reanalyze(evidence_id):
 
     from modules.evidence.reanalyze import EvidenceReanalyzer
 
+    evidence = Evidence.query.get_or_404(
+        evidence_id
+    )
+
     try:
 
         result = EvidenceReanalyzer.run(
@@ -163,10 +167,18 @@ def reanalyze(evidence_id):
         )
 
 
+    # Back where the button was pressed — the case page or the
+    # all-cases repository — falling back to the case page.
     return redirect(
+
         request.referrer
+        or url_for(
+            "evidence.evidence_page",
+            case_id=evidence.case_id
+        )
+
     )
-    
+
 # =====================================================
 # Delete Evidence
 # =====================================================
@@ -193,6 +205,11 @@ def delete_evidence(evidence_id):
 
 
     case_id = evidence.case_id
+
+
+    # Captured before the row goes, so the redirect below can send
+    # the deleter back to the page they came from.
+    origin = request.referrer
 
 
     try:
@@ -317,9 +334,10 @@ def delete_evidence(evidence_id):
 
     return redirect(
 
-        url_for(
+        origin
+        or url_for(
             "evidence.evidence_page",
             case_id=case_id
         )
 
-    )    
+    )
