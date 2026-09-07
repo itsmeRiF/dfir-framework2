@@ -2,38 +2,52 @@
 
 {% block analysis_content %}
 
-<div class="viz-root">
+{# Indigo header: the explorer is the product's main reading surface. #}
+
+<div class="cx-page"
+     style="--accent:#4f46e5;
+            --hero-1:#1e1b4b; --hero-2:#3730a3;
+            --hero-3:#4f46e5; --hero-4:#818cf8;
+            --hero-glow:79,70,229;">
 
 
-<!-- ================= HEADER ================= -->
+<!-- ================= HERO ================= -->
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="cx-hero mb-4">
 
-    <div>
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
 
-        <h2 class="fw-bold mb-1">
-            <i class="bi bi-list-ul text-primary"></i>
-            Event Explorer
-        </h2>
+        <div>
 
-        <p class="text-muted mb-0">
-            Every parsed event log record, across every case
-        </p>
+            <h2 class="mb-1">
+                <i class="bi bi-list-ul"></i>
+                Event Explorer
+            </h2>
 
-    </div>
+            <p>
+                {{ "{:,}".format(totals.events) }} parsed event log
+                record{{ '' if totals.events == 1 else 's' }} across every case
+                {%- if matched != totals.events %}
+                    &bull; {{ "{:,}".format(matched) }} match the current filters
+                {%- endif %}
+            </p>
 
-    <div class="d-flex gap-2">
+        </div>
 
-        <a href="{{ url_for('analysis.global_dashboard') }}"
-           class="btn btn-outline-primary">
-            <i class="bi bi-speedometer2"></i>
-            Dashboard
-        </a>
+        <div class="d-flex gap-2 cx-hero-actions">
 
-        <a href="/cases" class="btn btn-outline-secondary">
-            <i class="bi bi-folder2-open"></i>
-            Browse Cases
-        </a>
+            <a href="{{ url_for('analysis.global_dashboard') }}"
+               class="btn btn-light fw-semibold">
+                <i class="bi bi-speedometer2"></i>
+                Dashboard
+            </a>
+
+            <a href="/cases" class="btn btn-light fw-semibold">
+                <i class="bi bi-folder2-open"></i>
+                Browse Cases
+            </a>
+
+        </div>
 
     </div>
 
@@ -48,12 +62,12 @@
 <div class="row g-3 mb-4">
 
     {% set tiles = [
-        ("",              "All events",     totals.events,        "bi-list-ul",             "slot-1"),
-        ("critical",      "Critical",       totals.critical,      "bi-exclamation-octagon", "crit"),
-        ("high",          "High",           totals.high,          "bi-exclamation-triangle","slot-2"),
-        ("medium",        "Medium",         totals.medium,        "bi-dash-circle",         "slot-2"),
-        ("low",           "Low",            totals.low,           "bi-info-circle",         "slot-1"),
-        ("informational", "Informational",  totals.informational, "bi-journal-text",        "slot-3")
+        ("",              "All events",     totals.events,        "bi-list-ul",                  "tone-1"),
+        ("critical",      "Critical",       totals.critical,      "bi-exclamation-octagon-fill", "tone-8"),
+        ("high",          "High",           totals.high,          "bi-exclamation-triangle-fill","tone-6"),
+        ("medium",        "Medium",         totals.medium,        "bi-dash-circle-fill",         "tone-5"),
+        ("low",           "Low",            totals.low,           "bi-info-circle-fill",         "tone-4"),
+        ("informational", "Informational",  totals.informational, "bi-journal-text",             "tone-3")
     ] %}
 
     {% for value, label, count, icon, tone in tiles %}
@@ -61,7 +75,7 @@
     <div class="col-6 col-md-4 col-xl">
 
         <a href="{{ url_for(request.endpoint, severity=value, **severity_args) }}"
-           class="cx-tile cx-tile-link {{ tone }} {% if filters.severity == value %}on{% endif %}">
+           class="cx-tile is-link is-filter {{ tone }} {% if filters.severity == value %}on{% endif %}">
 
             <div class="cx-tile-icon">
                 <i class="bi {{ icon }}"></i>
@@ -216,7 +230,7 @@
                 {% set case = row.case %}
                 {% set sev = (e.severity or "unknown")|lower %}
 
-                <tr>
+                <tr data-row style="--case:{{ case.color }};">
 
                     <td class="num">
                         {% if e.timestamp %}
@@ -229,8 +243,7 @@
                     <td>
                         <a href="/analysis/events/{{ case.id }}"
                            class="cx-case">
-                            <span class="cx-swatch"
-                                  style="background:{{ case.color }};"></span>
+                            <span class="cx-swatch"></span>
                             <span class="fw-semibold">
                                 {{ case.name }}
                             </span>
@@ -250,12 +263,10 @@
                     </td>
 
                     <td>
-                        <span class="cx-sev
-                                     {% if sev == 'critical' %}critical
-                                     {% elif sev == 'high' %}high
-                                     {% elif sev in ('medium', 'med') %}medium
-                                     {% elif sev == 'low' %}low
-                                     {% else %}info{% endif %}">
+                        <span class="cx-pill
+                                     {% if sev in ('medium','med') %}sev-medium
+                                     {% elif sev in ('critical','high','low') %}sev-{{ sev }}
+                                     {% else %}sev-informational{% endif %}">
                             {{ e.severity or "unknown" }}
                         </span>
                     </td>
@@ -381,7 +392,7 @@
 </div>
 
 
-</div><!-- /viz-root -->
+</div><!-- /cx-page -->
 
 
 {% include "components/global_styles.html" %}

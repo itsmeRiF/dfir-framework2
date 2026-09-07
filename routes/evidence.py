@@ -11,6 +11,7 @@ from models.case import Case
 from models.evidence import Evidence
 
 from modules.evidence.service import EvidenceService
+from utils import case_stats
 from utils.timezone import format_ist
 
 
@@ -41,10 +42,67 @@ def evidence_page(case_id):
             case_id=case_id
         )
         .order_by(
+            Evidence.uploaded_at.desc(),
             Evidence.id.desc()
         )
         .all()
     )
+
+
+    # The biggest artifact in this case sets the scale for the size bars.
+    largest = max(
+        (item.filesize or 0 for item in evidences),
+        default=0
+    )
+
+    rows = [
+
+        {
+            "evidence": item,
+
+            "size_display": case_stats.human_size(item.filesize),
+
+            "size_share": round(
+                (item.filesize or 0) / largest * 100
+            ) if largest else 0,
+        }
+
+        for item in evidences
+
+    ]
+
+
+    def status_count(name):
+
+        return sum(
+            1
+            for item in evidences
+            if (item.status or "").lower() == name
+        )
+
+
+    totals = {
+
+        "queued": status_count("queued"),
+
+        "processing": status_count("processing"),
+
+        "completed": status_count("completed"),
+
+        "failed": status_count("failed"),
+
+        "size_display": case_stats.human_size(
+            sum(item.filesize or 0 for item in evidences)
+        ),
+
+    }
+
+
+    artifact_types = sorted({
+        item.artifact_type
+        for item in evidences
+        if item.artifact_type
+    })
 
 
     return render_template(
@@ -52,6 +110,9 @@ def evidence_page(case_id):
         case=case,
         case_id=case_id,
         evidences=evidences,
+        rows=rows,
+        totals=totals,
+        artifact_types=artifact_types,
         format_ist=format_ist
     )
 

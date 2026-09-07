@@ -1,364 +1,510 @@
-{% extends "base.html" %}
+{% extends "analysis_base.html" %}
 
-{% block content %}
+{% block analysis_content %}
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-
-<h2 class="fw-bold">
-
-<i class="bi bi-clock-history text-primary"></i>
-
-Timeline - Case #{{ case_id }}
-
-</h2>
-
-</div>
+<div class="cx-page"
+     style="--accent:#0284c7;
+            --hero-1:#082f49; --hero-2:#0369a1;
+            --hero-3:#0ea5e9; --hero-4:#67e8f9;
+            --hero-glow:14,165,233;">
 
 
-<!-- Time Filter -->
+<!-- ================= HERO ================= -->
 
-<div class="card mb-4">
+<div class="cx-hero mb-4">
 
-<div class="card-header">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
 
-<i class="bi bi-calendar-range"></i>
+        <div>
 
-Timeline Range Filter
+            <h2 class="mb-1">
+                <i class="bi bi-clock-history"></i>
+                Timeline
+            </h2>
 
-</div>
+            <p>
+                {{ "{:,}".format(stats.events) }}
+                event{{ '' if stats.events == 1 else 's' }} plotted
+                {%- if start or end %} in the selected range{% endif %}
+                {%- if hidden %}
+                    &bull; newest {{ "{:,}".format(row_cap) }} listed below
+                {%- endif %}
+            </p>
 
+            <div class="cx-hero-meta">
 
-<div class="card-body">
+                <span>
+                    <i class="bi bi-folder2-open"></i>
+                    {{ case.case_name if case else "Case #" ~ case_id }}
+                </span>
 
+                {% if case and case.case_number %}
+                <span>
+                    <i class="bi bi-hash"></i>
+                    {{ case.case_number }}
+                </span>
+                {% endif %}
 
-<form method="GET">
+            </div>
 
+        </div>
 
-<div class="row">
+        <div class="d-flex gap-2 cx-hero-actions">
 
+            <a href="{{ url_for('analysis.dashboard', case_id=case_id) }}"
+               class="btn btn-light fw-semibold">
+                <i class="bi bi-speedometer2"></i>
+                Dashboard
+            </a>
 
-<div class="col-md-5">
+            <a href="{{ url_for('analysis.global_timeline') }}"
+               class="btn btn-light fw-semibold">
+                <i class="bi bi-collection"></i>
+                All Cases
+            </a>
 
-<label class="form-label">
-Start Time
-</label>
-
-
-<input 
-type="datetime-local"
-name="start"
-class="form-control"
-value="{{ start }}">
-
-
-</div>
-
-
-
-<div class="col-md-5">
-
-<label class="form-label">
-End Time
-</label>
-
-
-<input 
-type="datetime-local"
-name="end"
-class="form-control"
-value="{{ end }}">
-
-
-</div>
-
-
-
-<div class="col-md-2">
-
-    <label class="form-label">&nbsp;</label>
-
-    <div class="d-flex gap-2">
-
-        <button type="submit" class="btn btn-primary flex-fill">
-            <i class="bi bi-funnel"></i>
-            Apply
-        </button>
-
-        <a href="/timeline/{{ case_id }}"
-           class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-counterclockwise"></i>
-        </a>
+        </div>
 
     </div>
 
 </div>
 
 
-</form>
+<!-- ================= KPI ROW ================= -->
 
+<div class="row g-3 mb-4">
 
-</div>
+    {% set tiles = [
+        ("Events",       "{:,}".format(stats.events),  "bi-list-ul",         "tone-1"),
+        ("Days covered", "{:,}".format(stats.days),    "bi-calendar3",       "tone-4"),
+        ("First",        stats.first or "—",           "bi-hourglass-top",   "tone-3"),
+        ("Last",         stats.last or "—",            "bi-hourglass-bottom","tone-5"),
+        ("Busiest day",  stats.busiest or "—",         "bi-fire",            "tone-8"),
+        ("Hosts",        "{:,}".format(stats.hosts),   "bi-pc-display",      "tone-2")
+    ] %}
 
-</div>
+    {% for label, value, icon, tone in tiles %}
 
+    <div class="col-6 col-md-4 col-xl">
 
+        <div class="cx-tile {{ tone }}">
 
+            <div class="cx-tile-icon"><i class="bi {{ icon }}"></i></div>
+            <div class="cx-tile-value" style="font-size:19px;">{{ value }}</div>
+            <div class="cx-tile-label">{{ label }}</div>
 
-<!-- Graph -->
+        </div>
 
+    </div>
 
-<div class="card mb-4">
-
-
-<div class="card-header">
-
-<i class="bi bi-bar-chart"></i>
-
-Event Frequency
-
-</div>
-
-
-<div class="card-body">
-
-
-<canvas id="timelineChart"
-height="90"></canvas>
-
+    {% endfor %}
 
 </div>
 
 
-</div>
+<!-- ================= ACTIVITY ================= -->
 
+<div class="cx-card mb-4">
 
+    <div class="cx-card-head">
 
+        <div>
+            <h6>Event frequency</h6>
+            <small>Events per day, in IST</small>
+        </div>
 
+        <form method="GET" class="d-flex flex-wrap gap-2 align-items-center">
 
-<!-- Timeline Table -->
+            <input type="datetime-local"
+                   name="start"
+                   value="{{ start }}"
+                   class="form-control form-control-sm"
+                   style="width:200px;">
 
+            <span class="text-muted small">to</span>
 
-<div class="card">
+            <input type="datetime-local"
+                   name="end"
+                   value="{{ end }}"
+                   class="form-control form-control-sm"
+                   style="width:200px;">
 
+            <button class="btn btn-sm btn-primary" type="submit"
+                    title="Apply this range">
+                <i class="bi bi-funnel"></i>
+            </button>
 
-<div class="card-header">
+            {% if start or end %}
+            <a href="/timeline/{{ case_id }}"
+               class="btn btn-sm btn-outline-secondary"
+               title="Clear the range">
+                <i class="bi bi-x-lg"></i>
+            </a>
+            {% endif %}
 
-Timeline Events
+        </form>
 
-<span class="badge bg-primary">
+    </div>
 
-{{ events|length }}
+    {% if stats.days %}
 
-</span>
+    <div class="cx-canvas" style="height:260px;">
+        <canvas id="timelineChart"></canvas>
+    </div>
 
+    {% else %}
 
-</div>
+    <div class="cx-empty">
+        <i class="bi bi-clock-history"></i>
+        {% if start or end %}
+            No timestamped events in this range.
+        {% else %}
+            No timestamped events in this case yet.
+        {% endif %}
+    </div>
 
-
-<div class="card-body p-0">
-
-
-<div style="max-height:600px;overflow:auto;">
-
-
-<table class="table table-hover mb-0">
-
-
-<thead class="table-light sticky-top">
-
-
-<tr>
-
-<th>Time</th>
-<th>Channel</th>
-<th>Event ID</th>
-<th>Severity</th>
-<th>Details</th>
-
-
-</tr>
-
-
-</thead>
-
-
-<tbody>
-
-
-
-{% for e in events %}
-
-
-<tr>
-
-
-<td>
-{% if e.timestamp %}
-    {{ e.timestamp }}
-{% else %}
-    Unknown
-{% endif %}
-</td>
-
-
-<td>
-
-{{ e.channel }}
-
-</td>
-
-
-
-<td>
-
-<code>
-
-{{ e.event_id }}
-
-</code>
-
-</td>
-
-
-
-<td>
-
-
-{% if e.severity=="critical" %}
-
-<span class="badge bg-danger">
-Critical
-</span>
-
-
-{% elif e.severity=="high" %}
-
-
-<span class="badge bg-warning text-dark">
-High
-</span>
-
-
-{% elif e.severity=="medium" %}
-
-
-<span class="badge bg-info">
-Medium
-</span>
-
-
-{% else %}
-
-
-<span class="badge bg-secondary">
-
-{{ e.severity }}
-
-</span>
-
-
-{% endif %}
-
-
-
-</td>
-
-
-
-<td>
-
-{{ e.details[:120] }}
-
-{% if e.details|length > 120 %}
-...
-{% endif %}
-
-
-</td>
-
-
-</tr>
-
-
-{% endfor %}
-
-
-</tbody>
-
-
-</table>
-
+    {% endif %}
 
 </div>
 
 
+<!-- ================= EVENTS ================= -->
+
+<div class="cx-card">
+
+    <div class="cx-card-head">
+
+        <div>
+            <h6>Timeline events</h6>
+            <small>
+                {% if hidden %}
+                    The newest {{ "{:,}".format(row_cap) }} of
+                    {{ "{:,}".format(stats.events) }}, oldest first
+                {% else %}
+                    Oldest first &bull; click a column heading to sort
+                {% endif %}
+            </small>
+        </div>
+
+        <span class="cx-head-badge" id="timelineCount">
+            {{ "{:,}".format(events|length) }} events
+        </span>
+
+    </div>
+
+
+    {% if events %}
+
+    <div class="row g-2 mb-3" id="timelineTools">
+
+        <div class="col-lg-5">
+
+            <div class="input-group input-group-sm">
+
+                <span class="input-group-text bg-white">
+                    <i class="bi bi-search text-muted"></i>
+                </span>
+
+                <input type="search"
+                       data-search
+                       class="form-control"
+                       placeholder="Search channel, rule or details…">
+
+            </div>
+
+        </div>
+
+        <div class="col-6 col-lg-3">
+
+            <select data-col="severity" class="form-select form-select-sm">
+                <option value="">All severities</option>
+                {% for level in severities %}
+                <option value="{{ level }}">{{ level|capitalize }}</option>
+                {% endfor %}
+            </select>
+
+        </div>
+
+        <div class="col-6 col-lg-3">
+
+            <select data-col="channel" class="form-select form-select-sm">
+                <option value="">All channels</option>
+                {% for channel in channels %}
+                <option value="{{ channel|lower }}">{{ channel }}</option>
+                {% endfor %}
+            </select>
+
+        </div>
+
+        <div class="col-lg-1 d-grid">
+
+            <button type="button"
+                    data-reset
+                    class="btn btn-sm btn-outline-secondary"
+                    title="Clear filters and sorting">
+                <i class="bi bi-arrow-counterclockwise"></i>
+            </button>
+
+        </div>
+
+    </div>
+
+    {% endif %}
+
+
+    <div class="table-responsive cx-scroll">
+
+        <table class="table align-middle cx-table mb-0"
+               id="timelineTable"
+               data-tools="timelineTools"
+               data-count="timelineCount"
+               data-empty="noMatchRow"
+               data-noun="events">
+
+            <thead>
+                <tr>
+                    <th class="sortable" data-sort="time" data-type="text">
+                        <i class="bi bi-clock"></i> Time (IST)
+                        <i class="bi bi-arrow-down-up sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="channel" data-type="text">
+                        <i class="bi bi-diagram-2"></i> Channel
+                        <i class="bi bi-arrow-down-up sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="eventid" data-type="text">
+                        <i class="bi bi-hash"></i> Event ID
+                        <i class="bi bi-arrow-down-up sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="severity" data-type="text">
+                        <i class="bi bi-flag-fill"></i> Severity
+                        <i class="bi bi-arrow-down-up sort-icon"></i>
+                    </th>
+                    <th><i class="bi bi-card-text"></i> Details</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for e in events %}
+
+                {% set sev = (e.severity or 'informational')|lower %}
+
+                <tr data-row
+                    data-time="{{ format_ist(e.timestamp) }}"
+                    data-channel="{{ (e.channel or '')|lower }}"
+                    data-eventid="{{ e.event_id or '' }}"
+                    data-severity="{{ sev }}"
+                    data-text="{{ [e.channel, e.rule_title, e.details,
+                                   e.computer]|select|join(' ')|lower }}">
+
+                    <td class="num">
+                        {% if e.timestamp %}
+                        <small>{{ format_ist(e.timestamp) }}</small>
+                        {% else %}
+                        <span class="text-muted">Unknown</span>
+                        {% endif %}
+                    </td>
+
+                    <td><small>{{ e.channel or "—" }}</small></td>
+
+                    <td class="num">
+                        {% if e.event_id %}
+                        <code class="cx-hash">{{ e.event_id }}</code>
+                        {% else %}
+                        <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        <span class="cx-pill
+                                     {% if sev in ('medium','med') %}sev-medium
+                                     {% elif sev in ('critical','high','low') %}sev-{{ sev }}
+                                     {% else %}sev-informational{% endif %}">
+                            {{ e.severity or "unknown" }}
+                        </span>
+                    </td>
+
+                    <td>
+                        {% if e.rule_title %}
+                        <div class="fw-semibold cx-clip"
+                             title="{{ e.rule_title }}">
+                            {{ e.rule_title }}
+                        </div>
+                        {% endif %}
+                        <small class="text-muted cx-clip"
+                               title="{{ e.details or '' }}">
+                            {{ e.details or "—" }}
+                        </small>
+                    </td>
+
+                </tr>
+
+                {% else %}
+
+                <tr>
+                    <td colspan="5" class="p-0">
+                        <div class="cx-blank">
+                            <div class="cx-blank-icon">
+                                <i class="bi bi-clock-history"></i>
+                            </div>
+                            <h5 class="fw-bold mb-2">Nothing on the timeline</h5>
+                            <p class="text-muted mb-3">
+                                {% if start or end %}
+                                    No events fall inside the selected range.
+                                {% else %}
+                                    Upload and parse evidence to populate this
+                                    case's timeline.
+                                {% endif %}
+                            </p>
+                            <a href="/analysis/evidence/{{ case_id }}"
+                               class="btn btn-primary btn-sm">
+                                <i class="bi bi-hdd-fill"></i>
+                                Open this case's evidence
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+
+                {% endfor %}
+
+
+                <tr id="noMatchRow" class="d-none">
+                    <td colspan="5" class="p-0">
+                        <div class="cx-blank">
+                            <div class="cx-blank-icon">
+                                <i class="bi bi-funnel"></i>
+                            </div>
+                            <h5 class="fw-bold mb-2">Nothing matches</h5>
+                            <p class="text-muted mb-0">
+                                No events match the current filters.
+                            </p>
+                        </div>
+                    </td>
+                </tr>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    {% if hidden %}
+    <small class="text-muted d-block mt-2">
+        <i class="bi bi-info-circle"></i>
+        {{ "{:,}".format(hidden) }} earlier event{{ '' if hidden == 1 else 's' }}
+        are plotted above but not listed — narrow the range, or
+        <a href="/analysis/events/{{ case_id }}">search them all</a>.
+    </small>
+    {% endif %}
+
 </div>
 
 
-</div>
+</div><!-- /cx-page -->
 
 
+{% include "components/global_styles.html" %}
+{% include "components/table_tools.html" %}
 
+
+{% if stats.days %}
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-
 <script>
+(function () {
 
+    if (typeof Chart === "undefined") { return; }
 
-const ctx=document
-.getElementById('timelineChart');
+    const canvas = document.getElementById("timelineChart");
 
+    if (!canvas) { return; }
 
-new Chart(ctx,{
+    const ctx = canvas.getContext("2d");
 
-type:'line',
+    const fill = ctx.createLinearGradient(0, 0, 0, 240);
+    fill.addColorStop(0, "rgba(14,165,233,.32)");
+    fill.addColorStop(1, "rgba(14,165,233,0)");
 
-data:{
+    const nf = new Intl.NumberFormat();
 
+    Chart.defaults.font.family =
+        'system-ui, -apple-system, "Segoe UI", sans-serif';
 
-labels: {{ graph_labels | safe }},
+    Chart.defaults.color = "#898781";
 
+    new Chart(ctx, {
 
-datasets:[{
+        type: "line",
 
-label:'Events',
+        data: {
+            labels: {{ graph_labels | safe }},
+            datasets: [{
+                label: "Events",
+                data: {{ graph_values | safe }},
+                borderColor: "#0284c7",
+                backgroundColor: fill,
+                borderWidth: 2.5,
+                fill: true,
+                tension: .34,
+                pointRadius: 0,
+                pointHoverRadius: 5,
+                pointBackgroundColor: "#fff",
+                pointBorderColor: "#0284c7",
+                pointBorderWidth: 2
+            }]
+        },
 
-data: {{ graph_values | safe }},
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: "index", intersect: false },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: "#0b0b0b",
+                    titleColor: "#ffffff",
+                    bodyColor: "#e9e9e6",
+                    padding: 10,
+                    cornerRadius: 8,
+                    displayColors: false,
+                    callbacks: {
+                        label: (item) => nf.format(item.parsed.y) + " events"
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    border: { color: "#e1e0d9" },
+                    ticks: {
+                        maxRotation: 0,
+                        autoSkip: true,
+                        maxTicksLimit: 12,
+                        // The year is established by the range picker.
+                        callback: function (value) {
+                            const label = this.getLabelForValue(value);
+                            return label ? String(label).slice(5) : label;
+                        }
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: { color: "#e1e0d9", drawTicks: false },
+                    border: { display: false },
+                    ticks: {
+                        precision: 0,
+                        callback: (value) => nf.format(value)
+                    }
+                }
+            }
+        }
 
-borderWidth:2,
+    });
 
-tension:.3
-
-}]
-
-
-},
-
-
-options:{
-
-
-responsive:true,
-
-scales:{
-
-y:{
-
-beginAtZero:true
-
-}
-
-}
-
-}
-
-
-});
-
-
+})();
 </script>
 
-
+{% endif %}
 
 {% endblock %}

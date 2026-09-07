@@ -29,14 +29,29 @@ def _safe_next():
 
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
+
+    error = None
+
     if request.method == "POST":
+
         username = request.form.get("username")
         password = request.form.get("password")
+
         user = User.query.filter_by(username=username, password=password).first()
+
         if user:
             login_user(user)
             return redirect(_safe_next())
-    return render_template("login.html")
+
+        # Deliberately vague: saying which half was wrong would tell an
+        # attacker which usernames exist.
+        error = "Incorrect username or password."
+
+    return render_template(
+        "login.html",
+        error=error,
+        username=request.form.get("username", "")
+    )
 
 
 @auth_bp.route("/logout")

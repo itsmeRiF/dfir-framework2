@@ -147,29 +147,31 @@ def dashboard(case_id):
         .all()
     )
 
-    severity = {
+    # Counted off normalised keys, so "med"/"info" land on the step
+    # they belong to rather than vanishing.
+    graded = {}
 
-        "critical": Event.query.filter_by(
-            case_id=case_id,
-            severity="critical"
-        ).count(),
+    for value, hits in (
+        db.session.query(
+            func.lower(Event.severity),
+            func.count(Event.id)
+        )
+        .filter(Event.case_id == case_id)
+        .group_by(func.lower(Event.severity))
+        .all()
+    ):
+        key = case_stats.normalise_severity(value)
+        graded[key] = graded.get(key, 0) + hits
 
-        "high": Event.query.filter_by(
-            case_id=case_id,
-            severity="high"
-        ).count(),
-
-        "medium": Event.query.filter_by(
-            case_id=case_id,
-            severity="medium"
-        ).count(),
-
-        "low": Event.query.filter_by(
-            case_id=case_id,
-            severity="low"
-        ).count()
-
+    severity_counts = {
+        name: graded.get(name, 0)
+        for name, _, _, _ in case_stats.SEVERITY_META
     }
+
+    memory_total = sum(
+        model.query.filter_by(case_id=case_id).count()
+        for model in case_stats.MEMORY_MODELS
+    )
 
     return render_template(
 
@@ -197,7 +199,11 @@ def dashboard(case_id):
 
         top_hosts=top_hosts,
 
-        severity=severity
+        severity_counts=severity_counts,
+
+        memory_total=memory_total,
+
+        format_ist=format_ist
 
     )
 

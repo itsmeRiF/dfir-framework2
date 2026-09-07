@@ -1,10 +1,13 @@
 from flask import Blueprint, render_template, request
 from flask_login import login_required
 
+from models.case import Case
 from models.memory_process import MemoryProcess
 from models.memory_network import MemoryNetwork
 from models.memory_ioc import MemoryIOC
 from sqlalchemy import or_
+
+from utils import case_stats
 
 
 memory_bp = Blueprint(
@@ -16,6 +19,8 @@ memory_bp = Blueprint(
 @memory_bp.route("/memory/<int:case_id>")
 @login_required
 def memory_analysis(case_id):
+
+    case = Case.query.get_or_404(case_id)
 
     process_search = request.args.get(
         "process",
@@ -173,37 +178,31 @@ def memory_analysis(case_id):
     iocs = unique_iocs
 
 
-    print(
-        "MEMORY COUNTS:",
-        len(processes),
-        len(networks),
-        len(iocs)
-    )
-    
-    import logging
-
-
-    print(
-    "CASE:",
-    case_id
+    # Headline counts for the tiles. "Risky" and "high severity" use
+    # the same severity scale the rest of the product renders.
+    risky_count = sum(
+        1
+        for p in processes
+        if case_stats.severity_rank(p.risk) <= 1
     )
 
-    print(
-        "DB PROCESS:",
-        MemoryProcess.query.filter_by(case_id=case_id).count()
+    high_iocs = sum(
+        1
+        for i in iocs
+        if case_stats.severity_rank(i.severity) <= 1
     )
 
-    print(
-        "DB NETWORK:",
-        MemoryNetwork.query.filter_by(case_id=case_id).count()
-    )
+    host_count = len({
+        n.local_address.split(":")[0]
+        for n in networks
+        if n.local_address
+    })
 
-    print(
-        "DB IOC:",
-        MemoryIOC.query.filter_by(case_id=case_id).count()
-    )
+
     return render_template(
         "analysis/memory.html",
+
+        case=case,
 
         case_id=case_id,
 
@@ -217,5 +216,11 @@ def memory_analysis(case_id):
 
         network_count=len(networks),
 
-        ioc_count=len(iocs)
+        ioc_count=len(iocs),
+
+        risky_count=risky_count,
+
+        high_iocs=high_iocs,
+
+        host_count=host_count
     )

@@ -2,22 +2,88 @@
 
 {% block analysis_content %}
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+{% set sev = (event.severity or 'informational')|lower %}
 
-    <div>
-        <h2 class="fw-bold">
-            <i class="bi bi-file-earmark-text text-primary"></i>
-            Event Detail
-        </h2>
+<div class="cx-page"
+     style="--accent:#4f46e5;
+            --hero-1:#1e1b4b; --hero-2:#3730a3;
+            --hero-3:#4f46e5; --hero-4:#818cf8;
+            --hero-glow:79,70,229;">
+
+
+<!-- ================= HERO ================= -->
+
+<div class="cx-hero mb-4">
+
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+
+        <div class="overflow-hidden">
+
+            <h2 class="mb-1">
+                <i class="bi bi-file-earmark-text"></i>
+                {{ event.rule_title or "Untitled detection" }}
+            </h2>
+
+            <p>
+                {% if event.timestamp %}
+                    {{ format_ist(event.timestamp) }} IST
+                {% else %}
+                    No timestamp recorded
+                {% endif %}
+                {%- if event.computer %} &bull; {{ event.computer }}{% endif %}
+            </p>
+
+            <div class="cx-hero-meta">
+
+                <span>
+                    <i class="bi bi-flag-fill"></i>
+                    {{ event.severity or "unknown" }}
+                </span>
+
+                {% if event.event_id %}
+                <span>
+                    <i class="bi bi-hash"></i>
+                    Event ID {{ event.event_id }}
+                </span>
+                {% endif %}
+
+                {% if event.channel %}
+                <span>
+                    <i class="bi bi-diagram-2"></i>
+                    {{ event.channel }}
+                </span>
+                {% endif %}
+
+                {% if case %}
+                <span>
+                    <i class="bi bi-folder2-open"></i>
+                    {{ case.case_name }}
+                </span>
+                {% endif %}
+
+            </div>
+
+        </div>
+
+        <div class="d-flex gap-2 cx-hero-actions">
+
+            <a href="/analysis/events/{{ event.case_id }}"
+               class="btn btn-light fw-semibold">
+                <i class="bi bi-arrow-left"></i>
+                Back to events
+            </a>
+
+            {% if event.rule_title %}
+            <a href="/analysis/events/{{ event.case_id }}?search={{ event.rule_title|urlencode }}"
+               class="btn btn-light fw-semibold">
+                <i class="bi bi-search"></i>
+                Same rule
+            </a>
+            {% endif %}
+
+        </div>
+
     </div>
-
-    <a href="/events/{{ event.case_id }}"
-       class="btn btn-outline-secondary">
-
-        <i class="bi bi-arrow-left"></i>
-        Back to Events
-
-    </a>
 
 </div>
 
@@ -25,164 +91,208 @@
 <div class="row g-4">
 
 
-    <!-- Basic Information -->
+    <!-- ================= FIELDS ================= -->
 
-    <div class="col-md-6">
+    <div class="col-xl-5">
 
-        <div class="card">
+        <div class="cx-card h-100">
 
-            <div class="card-header">
-                <i class="bi bi-info-circle"></i>
-                Event Information
-            </div>
+            <div class="cx-card-head">
 
+                <div>
+                    <h6>Event information</h6>
+                    <small>As recorded by the parser</small>
+                </div>
 
-            <div class="card-body">
-
-
-                <table class="table table-borderless">
-
-
-                    <tr>
-                        <th width="35%">Event ID</th>
-                        <td>
-                            <code>{{ event.event_id }}</code>
-                        </td>
-                    </tr>
-
-
-                    <tr>
-                        <th>Rule</th>
-                        <td>{{ event.rule_title }}</td>
-                    </tr>
-
-
-                    <tr>
-                        <th>Computer</th>
-                        <td>{{ event.computer }}</td>
-                    </tr>
-
-
-                    <tr>
-                        <th>Channel</th>
-                        <td>{{ event.channel }}</td>
-                    </tr>
-
-
-                    <tr>
-                        <th>Timestamp</th>
-                        <td>{{ event.timestamp }}</td>
-                    </tr>
-
-
-                    <tr>
-                        <th>Record ID</th>
-                        <td>{{ event.record_id }}</td>
-                    </tr>
-
-
-                    <tr>
-                        <th>Severity</th>
-                        <td>
-
-                            {% if event.severity == "critical" %}
-
-                            <span class="badge bg-danger">
-                                Critical
-                            </span>
-
-                            {% elif event.severity == "high" %}
-
-                            <span class="badge bg-warning text-dark">
-                                High
-                            </span>
-
-                            {% elif event.severity == "medium" %}
-
-                            <span class="badge bg-info">
-                                Medium
-                            </span>
-
-                            {% elif event.severity == "low" %}
-
-                            <span class="badge bg-success">
-                                Low
-                            </span>
-
-                            {% else %}
-
-                            <span class="badge bg-secondary">
-                                {{ event.severity }}
-                            </span>
-
-                            {% endif %}
-
-                        </td>
-                    </tr>
-
-
-                </table>
-
+                <span class="cx-pill
+                             {% if sev in ('medium','med') %}sev-medium
+                             {% elif sev in ('critical','high','low') %}sev-{{ sev }}
+                             {% else %}sev-informational{% endif %}">
+                    {{ event.severity or "unknown" }}
+                </span>
 
             </div>
+
+            <div class="cx-facts">
+
+                {% set facts = [
+                    ("Event ID",  event.event_id or "—",   "bi-hash"),
+                    ("Record ID", event.record_id or "—",  "bi-upc"),
+                    ("Channel",   event.channel or "—",    "bi-diagram-2"),
+                    ("Computer",  event.computer or "—",   "bi-pc-display"),
+                    ("Timestamp", format_ist(event.timestamp) ~ " IST"
+                                  if event.timestamp else "—", "bi-clock"),
+                    ("Rule ID",   event.rule_id or "—",    "bi-bullseye")
+                ] %}
+
+                {% for label, value, icon in facts %}
+
+                <div>
+                    <div class="cx-fact-label">
+                        <i class="bi {{ icon }}"></i>
+                        {{ label }}
+                    </div>
+                    <div class="cx-fact-value text-break">{{ value }}</div>
+                </div>
+
+                {% endfor %}
+
+            </div>
+
+            {% if case %}
+
+            <div class="mt-3 pt-3" style="border-top:1px dashed var(--line);">
+
+                <div class="cx-fact-label">
+                    <i class="bi bi-folder2-open"></i>
+                    Case
+                </div>
+
+                <a href="{{ url_for('analysis.dashboard', case_id=event.case_id) }}"
+                   class="cx-fact-value text-decoration-none">
+                    {{ case.case_name }}
+                    <small class="text-muted">
+                        ({{ case.case_number or case.id }})
+                    </small>
+                </a>
+
+            </div>
+
+            {% endif %}
 
         </div>
 
     </div>
 
 
+    <!-- ================= PAYLOAD ================= -->
 
-    <!-- Details -->
+    <div class="col-xl-7">
 
-    <div class="col-md-6">
+        <div class="cx-card mb-4">
 
+            <div class="cx-card-head">
 
-        <div class="card mb-4">
+                <div>
+                    <h6>Details</h6>
+                    <small>The message the rule matched on</small>
+                </div>
 
-            <div class="card-header">
-
-                <i class="bi bi-list-check"></i>
-                Details
+                {% if event.details %}
+                <button type="button"
+                        class="cx-act"
+                        data-copy="details"
+                        title="Copy to clipboard">
+                    <i class="bi bi-clipboard"></i>
+                </button>
+                {% endif %}
 
             </div>
 
-
-            <div class="card-body">
-
-                <pre style="white-space:pre-wrap">{{ event.details }}</pre>
-
+            {% if event.details %}
+            <pre class="cx-pre" id="details">{{ event.details }}</pre>
+            {% else %}
+            <div class="cx-empty">
+                <i class="bi bi-card-text"></i>
+                No details recorded
             </div>
-
+            {% endif %}
 
         </div>
 
 
+        <div class="cx-card">
 
-        <div class="card">
+            <div class="cx-card-head">
 
+                <div>
+                    <h6>Extra information</h6>
+                    <small>Everything else the parser carried over</small>
+                </div>
 
-            <div class="card-header">
+                {% if event.extra_info %}
+                <button type="button"
+                        class="cx-act"
+                        data-copy="extra"
+                        title="Copy to clipboard">
+                    <i class="bi bi-clipboard"></i>
+                </button>
+                {% endif %}
 
+            </div>
+
+            {% if event.extra_info %}
+            <pre class="cx-pre" id="extra">{{ event.extra_info }}</pre>
+            {% else %}
+            <div class="cx-empty">
                 <i class="bi bi-journal-code"></i>
-                Extra Information
-
+                No extra information recorded
             </div>
-
-
-            <div class="card-body">
-
-                <pre style="white-space:pre-wrap">{{ event.extra_info }}</pre>
-
-            </div>
-
+            {% endif %}
 
         </div>
 
-
     </div>
-
 
 </div>
 
+
+</div><!-- /cx-page -->
+
+
+{% include "components/global_styles.html" %}
+
+
+<style>
+
+.cx-pre{
+
+    background:#0b1220;
+    color:#dbe4f3;
+    border-radius:12px;
+    padding:14px 16px;
+    margin:0;
+    font-size:12.5px;
+    line-height:1.6;
+    max-height:340px;
+    overflow:auto;
+    white-space:pre-wrap;
+    word-break:break-word;
+
+}
+
+</style>
+
+
+<script>
+(function () {
+
+    // Payloads are long and often need pasting into a ticket.
+    document.querySelectorAll("[data-copy]").forEach(function (button) {
+
+        button.addEventListener("click", function () {
+
+            var source = document.getElementById(button.dataset.copy);
+
+            if (!source || !navigator.clipboard) { return; }
+
+            navigator.clipboard.writeText(source.textContent).then(function () {
+
+                var icon = button.querySelector("i");
+
+                icon.className = "bi bi-check-lg";
+
+                setTimeout(function () {
+                    icon.className = "bi bi-clipboard";
+                }, 1400);
+
+            });
+
+        });
+
+    });
+
+})();
+</script>
 
 {% endblock %}

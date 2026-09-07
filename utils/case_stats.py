@@ -36,7 +36,7 @@ SEVERITY_ALIASES = {
 }
 
 
-def _normalise_severity(value):
+def normalise_severity(value):
     """One canonical key per severity step."""
 
     key = (value or "").lower().strip()
@@ -303,8 +303,8 @@ def top_rules(limit=8):
 
         entry["count"] += hits
 
-        if _severity_rank(severity) < _severity_rank(entry["severity"]):
-            entry["severity"] = _normalise_severity(severity)
+        if severity_rank(severity) < severity_rank(entry["severity"]):
+            entry["severity"] = normalise_severity(severity)
 
     return sorted(
         combined.values(),
@@ -328,7 +328,7 @@ def severity_split():
     counts = {}
 
     for severity, hits in rows:
-        key = _normalise_severity(severity)
+        key = normalise_severity(severity)
         counts[key] = counts.get(key, 0) + hits
 
     total = sum(counts.values())
@@ -716,7 +716,7 @@ SEVERITY_ORDER = {
 }
 
 
-def _severity_rank(value):
+def severity_rank(value):
 
     return SEVERITY_ORDER.get(
         (value or "").lower().strip(),
@@ -740,7 +740,7 @@ def incident_overview():
             for incident in incidents
         ),
         key=lambda row: (
-            _severity_rank(row["severity"]),
+            severity_rank(row["severity"]),
             -(row["incident"].event_count or 0)
         )
     )
@@ -790,7 +790,7 @@ def incident_overview():
 
         "severities": sorted(
             {row["severity"] for row in rows},
-            key=_severity_rank
+            key=severity_rank
         )
 
     }
@@ -872,9 +872,9 @@ def memory_overview(row_cap=MEMORY_ROW_CAP):
 
     # Worst first — an analyst opening this page is looking for
     # the risky rows, not row 1 of case 1.
-    iocs.sort(key=lambda i: _severity_rank(i.severity))
+    iocs.sort(key=lambda i: severity_rank(i.severity))
 
-    processes.sort(key=lambda p: _severity_rank(p.risk))
+    processes.sort(key=lambda p: severity_rank(p.risk))
 
     def table(items):
 
@@ -921,13 +921,13 @@ def memory_overview(row_cap=MEMORY_ROW_CAP):
             "risky_processes": sum(
                 1
                 for item in processes
-                if _severity_rank(item.risk) <= 1
+                if severity_rank(item.risk) <= 1
             ),
 
             "high_iocs": sum(
                 1
                 for item in iocs
-                if _severity_rank(item.severity) <= 1
+                if severity_rank(item.severity) <= 1
             ),
 
             "cases_with_memory": len(used_ids)

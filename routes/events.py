@@ -3,7 +3,10 @@ from flask_login import login_required
 from sqlalchemy import or_, func
 
 from database.db import db
+from models.case import Case
 from models.event import Event
+
+from utils.timezone import format_ist
 
 import csv
 import io
@@ -22,6 +25,8 @@ events_bp = Blueprint(
 @events_bp.route("/events/<int:case_id>")
 @login_required
 def view_events(case_id):
+
+    case = Case.query.get_or_404(case_id)
 
     page = request.args.get(
         "page",
@@ -380,6 +385,24 @@ def view_events(case_id):
         "analysis/events.html",
 
         events=pagination.items,
+
+        case=case,
+
+        format_ist=format_ist,
+
+        # Keeps the current filters on every pagination link.
+        query_args={
+            key: value
+            for key, value in request.args.items()
+            if key != "page"
+        },
+
+        # The severity tiles switch one filter and leave the rest alone.
+        severity_args={
+            key: value
+            for key, value in request.args.items()
+            if key not in ("page", "severity")
+        },
 
         pagination=pagination,
 

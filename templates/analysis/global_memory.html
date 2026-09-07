@@ -2,38 +2,53 @@
 
 {% block analysis_content %}
 
-<div class="viz-root">
+{# Magenta header: memory is its own kind of artifact, distinct from
+   the log-driven tabs either side of it. #}
+
+<div class="cx-page"
+     style="--accent:#db2777;
+            --hero-1:#4a044e; --hero-2:#a21caf;
+            --hero-3:#db2777; --hero-4:#fda4af;
+            --hero-glow:219,39,119;">
 
 
-<!-- ================= HEADER ================= -->
+<!-- ================= HERO ================= -->
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="cx-hero mb-4">
 
-    <div>
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
 
-        <h2 class="fw-bold mb-1">
-            <i class="bi bi-memory text-primary"></i>
-            Memory Analysis
-        </h2>
+        <div>
 
-        <p class="text-muted mb-0">
-            Processes, connections and IOCs pooled across every case
-        </p>
+            <h2 class="mb-1">
+                <i class="bi bi-memory"></i>
+                Memory Analysis
+            </h2>
 
-    </div>
+            <p>
+                {{ "{:,}".format(totals.processes) }} processes,
+                {{ "{:,}".format(totals.networks) }} connections and
+                {{ "{:,}".format(totals.iocs) }} IOCs
+                pooled across {{ totals.cases_with_memory }}
+                case{{ '' if totals.cases_with_memory == 1 else 's' }}
+            </p>
 
-    <div class="d-flex gap-2">
+        </div>
 
-        <a href="{{ url_for('analysis.global_dashboard') }}"
-           class="btn btn-outline-primary">
-            <i class="bi bi-speedometer2"></i>
-            Dashboard
-        </a>
+        <div class="d-flex gap-2 cx-hero-actions">
 
-        <a href="/cases" class="btn btn-outline-secondary">
-            <i class="bi bi-folder2-open"></i>
-            Browse Cases
-        </a>
+            <a href="{{ url_for('analysis.global_dashboard') }}"
+               class="btn btn-light fw-semibold">
+                <i class="bi bi-speedometer2"></i>
+                Dashboard
+            </a>
+
+            <a href="/cases" class="btn btn-light fw-semibold">
+                <i class="bi bi-folder2-open"></i>
+                Browse Cases
+            </a>
+
+        </div>
 
     </div>
 
@@ -45,12 +60,12 @@
 <div class="row g-3 mb-4">
 
     {% set tiles = [
-        ("Processes",     totals.processes,         "bi-cpu",                 "slot-1"),
-        ("Risky",         totals.risky_processes,   "bi-exclamation-triangle","crit"),
-        ("Connections",   totals.networks,          "bi-diagram-3",           "slot-3"),
-        ("IOCs",          totals.iocs,              "bi-bullseye",            "slot-2"),
-        ("High-sev IOCs", totals.high_iocs,         "bi-radioactive",         "crit"),
-        ("Cases",         totals.cases_with_memory, "bi-folder2-open",        "slot-3")
+        ("Processes",     totals.processes,         "bi-cpu-fill",                  "tone-3"),
+        ("Risky",         totals.risky_processes,   "bi-exclamation-triangle-fill", "tone-8"),
+        ("Connections",   totals.networks,          "bi-diagram-3-fill",            "tone-4"),
+        ("IOCs",          totals.iocs,              "bi-bullseye",                  "tone-7"),
+        ("High-sev IOCs", totals.high_iocs,         "bi-radioactive",               "tone-6"),
+        ("Cases",         totals.cases_with_memory, "bi-folder2-open",              "tone-2")
     ] %}
 
     {% for label, value, icon, tone in tiles %}
@@ -190,7 +205,9 @@
                         {% set p = row.item %}
                         {% set risk = (p.risk or "low")|lower %}
 
-                        <tr data-case="{{ row.case.id }}"
+                        <tr data-row
+                            data-case="{{ row.case.id }}"
+                            style="--case:{{ row.case.color }};"
                             data-text="{{ [p.process_name,
                                            p.parent_name,
                                            p.username,
@@ -201,8 +218,7 @@
                             <td>
                                 <a href="/analysis/memory/{{ row.case.id }}"
                                    class="cx-case">
-                                    <span class="cx-swatch"
-                                          style="background:{{ row.case.color }};"></span>
+                                    <span class="cx-swatch"></span>
                                     <small class="fw-semibold">
                                         {{ row.case.name }}
                                     </small>
@@ -226,11 +242,11 @@
                             </td>
 
                             <td>
-                                <span class="cx-sev
-                                             {% if risk in ('critical',) %}critical
-                                             {% elif risk == 'high' %}high
-                                             {% elif risk in ('medium', 'med') %}medium
-                                             {% else %}low{% endif %}"
+                                <span class="cx-pill
+                                             {% if risk == 'critical' %}sev-critical
+                                             {% elif risk == 'high' %}sev-high
+                                             {% elif risk in ('medium', 'med') %}sev-medium
+                                             {% else %}sev-low{% endif %}"
                                       title="{{ p.risk_reason or '' }}">
                                     {{ p.risk or "low" }}
                                 </span>
@@ -308,7 +324,9 @@
 
                         {% set n = row.item %}
 
-                        <tr data-case="{{ row.case.id }}"
+                        <tr data-row
+                            data-case="{{ row.case.id }}"
+                            style="--case:{{ row.case.color }};"
                             data-text="{{ [n.protocol,
                                            n.local_address,
                                            n.remote_address,
@@ -319,8 +337,7 @@
                             <td>
                                 <a href="/analysis/memory/{{ row.case.id }}"
                                    class="cx-case">
-                                    <span class="cx-swatch"
-                                          style="background:{{ row.case.color }};"></span>
+                                    <span class="cx-swatch"></span>
                                     <small class="fw-semibold">
                                         {{ row.case.name }}
                                     </small>
@@ -419,7 +436,9 @@
                         {% set i = row.item %}
                         {% set sev = (i.severity or "medium")|lower %}
 
-                        <tr data-case="{{ row.case.id }}"
+                        <tr data-row
+                            data-case="{{ row.case.id }}"
+                            style="--case:{{ row.case.color }};"
                             data-text="{{ [i.ioc_type,
                                            i.indicator,
                                            i.process_name,
@@ -428,12 +447,10 @@
                                            row.case.name]|select|join(' ')|lower }}">
 
                             <td>
-                                <span class="cx-sev
-                                             {% if sev == 'critical' %}critical
-                                             {% elif sev == 'high' %}high
-                                             {% elif sev in ('medium', 'med') %}medium
-                                             {% elif sev == 'low' %}low
-                                             {% else %}info{% endif %}">
+                                <span class="cx-pill
+                                             {% if sev in ('medium','med') %}sev-medium
+                                             {% elif sev in ('critical','high','low') %}sev-{{ sev }}
+                                             {% else %}sev-informational{% endif %}">
                                     {{ i.severity or "medium" }}
                                 </span>
                             </td>
@@ -441,8 +458,7 @@
                             <td>
                                 <a href="/analysis/memory/{{ row.case.id }}"
                                    class="cx-case">
-                                    <span class="cx-swatch"
-                                          style="background:{{ row.case.color }};"></span>
+                                    <span class="cx-swatch"></span>
                                     <small class="fw-semibold">
                                         {{ row.case.name }}
                                     </small>
@@ -523,7 +539,7 @@
 </div>
 
 
-</div><!-- /viz-root -->
+</div><!-- /cx-page -->
 
 
 {% include "components/global_styles.html" %}

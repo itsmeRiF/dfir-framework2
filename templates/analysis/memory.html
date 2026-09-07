@@ -1,840 +1,581 @@
-{% extends "base.html" %}
+{% extends "analysis_base.html" %}
 
-{% block content %}
+{% block analysis_content %}
 
-<div class="container-fluid">
-
-
-<!-- HEADER -->
-<div class="d-flex justify-content-between align-items-center mb-4">
-
-<div>
-
-<h3 class="fw-bold">
-
-<i class="bi bi-memory text-primary"></i>
-
-Memory Analysis
-
-</h3>
-
-<small class="text-muted">
-Case #{{ case_id }}
-</small>
-
-</div>
+<div class="cx-page"
+     style="--accent:#db2777;
+            --hero-1:#4a044e; --hero-2:#a21caf;
+            --hero-3:#db2777; --hero-4:#fda4af;
+            --hero-glow:219,39,119;">
 
 
-<button onclick="window.print()"
-class="btn btn-outline-secondary">
+<!-- ================= HERO ================= -->
 
-<i class="bi bi-printer"></i>
-Print Report
+<div class="cx-hero mb-4">
 
-</button>
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
 
+        <div>
 
-</div>
+            <h2 class="mb-1">
+                <i class="bi bi-memory"></i>
+                Memory Analysis
+            </h2>
 
+            <p>
+                {{ "{:,}".format(process_count) }} processes,
+                {{ "{:,}".format(network_count) }} connections and
+                {{ "{:,}".format(ioc_count) }} IOCs recovered
+            </p>
 
+            <div class="cx-hero-meta">
 
-<!-- SUMMARY -->
+                <span>
+                    <i class="bi bi-folder2-open"></i>
+                    {{ case.case_name if case else "Case #" ~ case_id }}
+                </span>
 
-<div class="row g-4 mb-4">
+                {% if case and case.case_number %}
+                <span>
+                    <i class="bi bi-hash"></i>
+                    {{ case.case_number }}
+                </span>
+                {% endif %}
 
+            </div>
 
-<div class="col-md-4">
+        </div>
 
-<div class="card shadow-sm border-0 summary-card">
+        <div class="d-flex gap-2 cx-hero-actions">
 
-<div class="card-body">
+            <a href="{{ url_for('analysis.dashboard', case_id=case_id) }}"
+               class="btn btn-light fw-semibold">
+                <i class="bi bi-speedometer2"></i>
+                Dashboard
+            </a>
 
+            <a href="{{ url_for('analysis.global_memory') }}"
+               class="btn btn-light fw-semibold">
+                <i class="bi bi-collection"></i>
+                All Cases
+            </a>
 
-<div class="d-flex justify-content-between">
+            <button onclick="window.print()"
+                    class="btn btn-light fw-semibold">
+                <i class="bi bi-printer"></i>
+                Print
+            </button>
 
+        </div>
 
-<div>
-
-<small class="text-muted">
-Processes
-</small>
-
-<h2 class="fw-bold">
-{{ process_count }}
-</h2>
-
-
-</div>
-
-
-<i class="bi bi-cpu fs-1 text-primary"></i>
-
-
-</div>
-
-
-</div>
-
-</div>
+    </div>
 
 </div>
 
 
+<!-- ================= KPI ROW ================= -->
 
+<div class="row g-3 mb-4">
 
+    {% set tiles = [
+        ("Processes",   process_count, "bi-cpu-fill",                  "tone-3"),
+        ("Risky",       risky_count,   "bi-exclamation-triangle-fill", "tone-8"),
+        ("Connections", network_count, "bi-diagram-3-fill",            "tone-4"),
+        ("IOCs",        ioc_count,     "bi-bullseye",                  "tone-7"),
+        ("High-sev",    high_iocs,     "bi-radioactive",               "tone-6"),
+        ("Hosts seen",  host_count,    "bi-pc-display",                "tone-2")
+    ] %}
 
-<div class="col-md-4">
+    {% for label, value, icon, tone in tiles %}
 
+    <div class="col-6 col-md-4 col-xl">
 
-<div class="card shadow-sm border-0 summary-card">
+        <div class="cx-tile {{ tone }}">
 
-<div class="card-body">
+            <div class="cx-tile-icon"><i class="bi {{ icon }}"></i></div>
+            <div class="cx-tile-value">{{ "{:,}".format(value) }}</div>
+            <div class="cx-tile-label">{{ label }}</div>
 
+        </div>
 
-<div class="d-flex justify-content-between">
+    </div>
 
-
-<div>
-
-<small class="text-muted">
-Network Connections
-</small>
-
-<h2 class="fw-bold">
-{{ network_count }}
-</h2>
-
-
-</div>
-
-
-<i class="bi bi-diagram-3 fs-1 text-success"></i>
-
+    {% endfor %}
 
 </div>
 
 
-</div>
+<!-- ================= ARTIFACTS ================= -->
+
+<div class="cx-card">
+
+    <div class="cx-card-head">
+
+        <div>
+            <h6>Memory artifacts</h6>
+            <small>
+                Repeated captures of the same host are collapsed
+            </small>
+        </div>
+
+        <div class="input-group input-group-sm" style="width:250px;">
+
+            <span class="input-group-text bg-white">
+                <i class="bi bi-search text-muted"></i>
+            </span>
+
+            <input type="search"
+                   id="memSearch"
+                   class="form-control"
+                   placeholder="Search the open tab…">
+
+        </div>
+
+    </div>
+
+
+    <ul class="nav nav-tabs cx-tabs mb-3" role="tablist">
+
+        {% set tabs = [
+            ("processes", "Processes",   "bi-cpu",       process_count),
+            ("networks",  "Connections", "bi-diagram-3", network_count),
+            ("iocs",      "IOCs",        "bi-bullseye",  ioc_count)
+        ] %}
+
+        {% for key, label, icon, count in tabs %}
+
+        <li class="nav-item" role="presentation">
+
+            <button class="nav-link {% if loop.first %}active{% endif %}"
+                    data-bs-toggle="tab"
+                    data-bs-target="#tab-{{ key }}"
+                    data-pane="{{ key }}"
+                    type="button"
+                    role="tab">
+                <i class="bi {{ icon }} me-1"></i>
+                {{ label }}
+                <span class="badge rounded-pill ms-1">
+                    {{ "{:,}".format(count) }}
+                </span>
+            </button>
+
+        </li>
+
+        {% endfor %}
+
+    </ul>
+
+
+    <div class="tab-content">
+
+
+        <!-- ---------- PROCESSES ---------- -->
+
+        <div class="tab-pane fade show active"
+             id="tab-processes" data-pane="processes" role="tabpanel">
+
+            <div class="table-responsive cx-scroll">
+
+                <table class="table align-middle cx-table mb-0">
+
+                    <thead>
+                        <tr>
+                            <th class="text-end">PID</th>
+                            <th class="text-end">PPID</th>
+                            <th>Process</th>
+                            <th>Parent</th>
+                            <th>User</th>
+                            <th>Risk</th>
+                            <th>Command line</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for p in processes %}
+
+                        {% set risk = (p.risk or "low")|lower %}
+
+                        <tr data-mem-row
+                            data-text="{{ [p.process_name, p.parent_name,
+                                           p.username, p.command_line,
+                                           p.path]|select|join(' ')|lower }}">
+
+                            <td class="text-end num">{{ p.pid }}</td>
+                            <td class="text-end num">{{ p.ppid }}</td>
+
+                            <td class="fw-semibold">{{ p.process_name or "—" }}</td>
+
+                            <td><small>{{ p.parent_name or "—" }}</small></td>
+
+                            <td><small>{{ p.username or "—" }}</small></td>
+
+                            <td>
+                                <span class="cx-pill
+                                             {% if risk in ('critical','high','medium','low') %}sev-{{ risk }}
+                                             {% else %}sev-unknown{% endif %}"
+                                      title="{{ p.risk_reason or '' }}">
+                                    {{ p.risk or "low" }}
+                                </span>
+                            </td>
+
+                            <td>
+                                <small class="text-muted cx-clip"
+                                       title="{{ p.command_line or p.path or '' }}">
+                                    {{ p.command_line or p.path or "—" }}
+                                </small>
+                            </td>
+
+                        </tr>
+
+                        {% else %}
+
+                        <tr>
+                            <td colspan="7" class="p-0">
+                                <div class="cx-blank">
+                                    <div class="cx-blank-icon">
+                                        <i class="bi bi-cpu"></i>
+                                    </div>
+                                    <h5 class="fw-bold mb-2">No processes recovered</h5>
+                                    <p class="text-muted mb-3">
+                                        Upload a memory image to this case and it
+                                        will be analysed with Volatility.
+                                    </p>
+                                    <a href="/analysis/evidence/{{ case_id }}"
+                                       class="btn btn-primary btn-sm">
+                                        <i class="bi bi-hdd-fill"></i>
+                                        Open this case's evidence
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+
+                        {% endfor %}
+
+                        <tr class="mem-no-match d-none">
+                            <td colspan="7" class="p-0">
+                                <div class="cx-blank">
+                                    <div class="cx-blank-icon">
+                                        <i class="bi bi-funnel"></i>
+                                    </div>
+                                    <h5 class="fw-bold mb-0">Nothing matches</h5>
+                                </div>
+                            </td>
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+
+        <!-- ---------- NETWORK ---------- -->
+
+        <div class="tab-pane fade"
+             id="tab-networks" data-pane="networks" role="tabpanel">
+
+            <div class="table-responsive cx-scroll">
+
+                <table class="table align-middle cx-table mb-0">
+
+                    <thead>
+                        <tr>
+                            <th>Protocol</th>
+                            <th>Local</th>
+                            <th>Remote</th>
+                            <th>State</th>
+                            <th class="text-end">PID</th>
+                            <th>Process</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for n in networks %}
+
+                        <tr data-mem-row
+                            data-text="{{ [n.protocol, n.local_address,
+                                           n.remote_address, n.state,
+                                           n.process_name]|select|join(' ')|lower }}">
+
+                            <td>
+                                <span class="cx-chip">{{ n.protocol or "—" }}</span>
+                            </td>
+
+                            <td class="num">
+                                <code class="cx-hash">{{ n.local_address or "—" }}</code>
+                            </td>
+
+                            <td class="num">
+                                <code class="cx-hash">{{ n.remote_address or "—" }}</code>
+                            </td>
+
+                            <td><small>{{ n.state or "—" }}</small></td>
+
+                            <td class="text-end num">
+                                {{ n.pid if n.pid is not none else "—" }}
+                            </td>
+
+                            <td class="fw-semibold">{{ n.process_name or "—" }}</td>
+
+                        </tr>
+
+                        {% else %}
+
+                        <tr>
+                            <td colspan="6" class="p-0">
+                                <div class="cx-blank">
+                                    <div class="cx-blank-icon">
+                                        <i class="bi bi-diagram-3"></i>
+                                    </div>
+                                    <h5 class="fw-bold mb-0">
+                                        No network artifacts recovered
+                                    </h5>
+                                </div>
+                            </td>
+                        </tr>
+
+                        {% endfor %}
+
+                        <tr class="mem-no-match d-none">
+                            <td colspan="6" class="p-0">
+                                <div class="cx-blank">
+                                    <div class="cx-blank-icon">
+                                        <i class="bi bi-funnel"></i>
+                                    </div>
+                                    <h5 class="fw-bold mb-0">Nothing matches</h5>
+                                </div>
+                            </td>
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+
+        <!-- ---------- IOCs ---------- -->
+
+        <div class="tab-pane fade"
+             id="tab-iocs" data-pane="iocs" role="tabpanel">
+
+            <div class="table-responsive cx-scroll">
+
+                <table class="table align-middle cx-table mb-0">
+
+                    <thead>
+                        <tr>
+                            <th>Severity</th>
+                            <th>Type</th>
+                            <th>Indicator</th>
+                            <th>Process</th>
+                            <th>Source</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for i in iocs %}
+
+                        {% set sev = (i.severity or "medium")|lower %}
+
+                        <tr data-mem-row
+                            data-text="{{ [i.ioc_type, i.indicator, i.process_name,
+                                           i.source, i.description]|select|join(' ')|lower }}">
+
+                            <td>
+                                <span class="cx-pill
+                                             {% if sev in ('critical','high','medium','low') %}sev-{{ sev }}
+                                             {% else %}sev-informational{% endif %}">
+                                    {{ i.severity or "medium" }}
+                                </span>
+                            </td>
+
+                            <td>
+                                <span class="cx-chip artifact-memory">
+                                    {{ i.ioc_type or "—" }}
+                                </span>
+                            </td>
+
+                            <td>
+                                <code class="cx-hash cx-clip"
+                                      title="{{ i.indicator or '' }}">
+                                    {{ i.indicator or "—" }}
+                                </code>
+                            </td>
+
+                            <td>
+                                <small>
+                                    {{ i.process_name or "—" }}
+                                    {% if i.pid is not none %}
+                                    <span class="text-muted">({{ i.pid }})</span>
+                                    {% endif %}
+                                </small>
+                            </td>
+
+                            <td><small>{{ i.source or "—" }}</small></td>
+
+                            <td>
+                                <small class="text-muted cx-clip"
+                                       title="{{ i.description or '' }}">
+                                    {{ i.description or "—" }}
+                                </small>
+                            </td>
+
+                        </tr>
+
+                        {% else %}
+
+                        <tr>
+                            <td colspan="6" class="p-0">
+                                <div class="cx-blank">
+                                    <div class="cx-blank-icon">
+                                        <i class="bi bi-bullseye"></i>
+                                    </div>
+                                    <h5 class="fw-bold mb-0">
+                                        No indicators extracted
+                                    </h5>
+                                </div>
+                            </td>
+                        </tr>
+
+                        {% endfor %}
+
+                        <tr class="mem-no-match d-none">
+                            <td colspan="6" class="p-0">
+                                <div class="cx-blank">
+                                    <div class="cx-blank-icon">
+                                        <i class="bi bi-funnel"></i>
+                                    </div>
+                                    <h5 class="fw-bold mb-0">Nothing matches</h5>
+                                </div>
+                            </td>
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+
+    </div>
 
 </div>
 
 
-</div>
+</div><!-- /cx-page -->
 
 
-
-
-
-
-<div class="col-md-4">
-
-
-<div class="card shadow-sm border-0 summary-card">
-
-
-<div class="card-body">
-
-
-<div class="d-flex justify-content-between">
-
-
-<div>
-
-<small class="text-muted">
-Memory IOC
-</small>
-
-<h2 class="fw-bold text-danger">
-{{ ioc_count }}
-</h2>
-
-
-</div>
-
-
-<i class="bi bi-bug fs-1 text-danger"></i>
-
-
-</div>
-
-
-</div>
-
-
-</div>
-
-
-</div>
-
-
-
-</div>
-
-
-
-
-
-
-
-<!-- TABS -->
-
-
-<ul class="nav nav-tabs mb-3">
-
-
-<li class="nav-item">
-
-<button class="nav-link active"
-data-bs-toggle="tab"
-data-bs-target="#process">
-
-<i class="bi bi-cpu"></i>
-Processes
-
-</button>
-
-</li>
-
-
-<li class="nav-item">
-
-<button class="nav-link"
-data-bs-toggle="tab"
-data-bs-target="#network">
-
-
-<i class="bi bi-globe"></i>
-
-Network
-
-
-</button>
-
-</li>
-
-
-
-<li class="nav-item">
-
-<button class="nav-link"
-data-bs-toggle="tab"
-data-bs-target="#ioc">
-
-
-<i class="bi bi-exclamation-triangle"></i>
-
-IOC
-
-
-</button>
-
-</li>
-
-
-</ul>
-
-
-
-
-
-
-
-<div class="tab-content">
-
-
-
-
-
-<!-- ============================= -->
-<!-- PROCESS -->
-<!-- ============================= -->
-
-
-<div class="tab-pane fade show active"
-id="process">
-
-
-
-<div class="card shadow-sm">
-
-
-<div class="card-header fw-bold">
-
-
-<i class="bi bi-list-task"></i>
-
-Process Explorer
-
-
-</div>
-
-
-<div class="card-body">
-
-
-
-<form method="get"
-class="mb-3 print-hide">
-
-
-<div class="input-group">
-
-
-<input type="text"
-name="process"
-class="form-control"
-placeholder="Search process..."
-value="{{request.args.get('process','')}}">
-
-
-
-<button class="btn btn-primary">
-
-<i class="bi bi-search"></i>
-
-</button>
-
-
-</div>
-
-
-</form>
-
-
-
-
-
-<div class="table-responsive">
-
-
-<table class="table table-hover align-middle">
-
-
-<thead class="table-light">
-
-<tr>
-
-<th>PID</th>
-
-<th>PPID</th>
-
-<th>Process</th>
-
-<th>User</th>
-
-<th>Path</th>
-
-<th>Risk</th>
-
-</tr>
-
-
-</thead>
-
-
-
-<tbody>
-
-
-{% for p in processes %}
-
-
-<tr class="
-{% if p.risk=='high' %}
-table-danger
-{% endif %}
-">
-
-
-<td>
-<strong>{{p.pid}}</strong>
-</td>
-
-
-<td>
-{{p.ppid}}
-</td>
-
-
-<td>
-
-<i class="bi bi-terminal"></i>
-
-{{p.process_name}}
-
-</td>
-
-
-<td>
-{{p.username or "-"}}
-</td>
-
-
-<td>
-
-<small>
-{{p.path or "-"}}
-</small>
-
-</td>
-
-
-<td>
-
-
-{% if p.risk=="high" %}
-
-<span class="badge bg-danger">
-HIGH
-</span>
-
-
-{% elif p.risk=="medium" %}
-
-<span class="badge bg-warning text-dark">
-MEDIUM
-</span>
-
-
-{% else %}
-
-<span class="badge bg-success">
-LOW
-</span>
-
-
-{% endif %}
-
-
-</td>
-
-
-
-</tr>
-
-
-{% else %}
-
-<tr>
-
-<td colspan="6"
-class="text-center text-muted">
-
-No processes found
-
-</td>
-
-</tr>
-
-{% endfor %}
-
-
-</tbody>
-
-
-</table>
-
-
-</div>
-
-
-</div>
-
-
-</div>
-
-
-</div>
-
-
-
-
-
-
-
-
-<!-- ============================= -->
-<!-- NETWORK -->
-<!-- ============================= -->
-
-
-<div class="tab-pane fade"
-id="network">
-
-
-
-<div class="card shadow-sm">
-
-
-<div class="card-header fw-bold">
-
-
-<i class="bi bi-diagram-3"></i>
-
-Network Connections
-
-
-</div>
-
-
-<div class="card-body">
-
-
-
-<form method="get"
-class="mb-3 print-hide">
-
-
-<div class="input-group">
-
-
-<input type="text"
-name="network"
-class="form-control"
-placeholder="Search IP / process..."
-value="{{request.args.get('network','')}}">
-
-
-
-<button class="btn btn-success">
-
-<i class="bi bi-search"></i>
-
-</button>
-
-
-</div>
-
-
-</form>
-
-
-
-
-
-<table class="table table-hover">
-
-
-<thead class="table-light">
-
-
-<tr>
-
-<th>Protocol</th>
-
-<th>Local</th>
-
-<th>Remote</th>
-
-<th>Status</th>
-
-<th>PID</th>
-
-<th>Process</th>
-
-
-</tr>
-
-
-</thead>
-
-
-
-<tbody>
-
-
-
-{% for n in networks %}
-
-
-
-<tr>
-
-
-<td>
-
-<span class="badge bg-secondary">
-
-{{n.protocol}}
-
-</span>
-
-</td>
-
-
-<td>
-{{n.local_address}}
-</td>
-
-
-<td>
-{{n.remote_address}}
-</td>
-
-
-<td>
-
-
-{% if n.state=="LISTENING" %}
-
-
-<span class="badge bg-warning text-dark">
-
-{{n.state}}
-
-</span>
-
-
-{% else %}
-
-{{n.state or "-"}}
-
-{% endif %}
-
-
-</td>
-
-
-<td>
-{{n.pid or "-"}}
-</td>
-
-
-<td>
-{{n.process_name or "-"}}
-</td>
-
-
-</tr>
-
-
-
-{% endfor %}
-
-
-
-</tbody>
-
-
-</table>
-
-
-</div>
-
-
-</div>
-
-
-</div>
-
-
-
-
-
-
-
-<!-- ============================= -->
-<!-- IOC -->
-<!-- ============================= -->
-
-
-<div class="tab-pane fade"
-id="ioc">
-
-
-
-<div class="card shadow-sm">
-
-
-<div class="card-header bg-danger text-white fw-bold">
-
-
-<i class="bi bi-bug"></i>
-
-Memory IOC Findings
-
-
-</div>
-
-
-<div class="card-body">
-
-
-
-{% for i in iocs %}
-
-
-
-<div class="border rounded p-3 mb-3">
-
-
-<div class="d-flex justify-content-between">
-
-
-<h5>
-
-{{i.indicator}}
-
-</h5>
-
-
-<span class="badge bg-danger">
-
-{{i.severity}}
-
-</span>
-
-
-</div>
-
-
-
-<hr>
-
-
-<p>
-
-<strong>Type:</strong>
-
-{{i.ioc_type}}
-
-</p>
-
-
-<p>
-
-<strong>Source:</strong>
-
-{{i.source}}
-
-</p>
-
-
-<p>
-
-<strong>Description:</strong>
-
-</p>
-
-
-<div class="bg-light p-3 rounded">
-
-
-{{i.description[:500]}}
-
-{% if i.description|length > 500 %}
-
-...
-
-{% endif %}
-
-
-</div>
-
-
-</div>
-
-
-
-{% else %}
-
-
-<div class="text-muted">
-
-No IOC detected.
-
-</div>
-
-
-{% endfor %}
-
-
-</div>
-
-
-</div>
-
-
-</div>
-
-
-
-</div>
-
-
-
-</div>
-
-
-
-
-
+{% include "components/global_styles.html" %}
 
 
 <style>
 
-
-.summary-card{
-
-border-radius:15px;
-
-}
-
-
-
-.card{
-
-border-radius:14px;
-
-}
-
-
-
-.table td,
-.table th{
-
-vertical-align:middle;
-
-}
-
-
+/* Printing a memory report: drop the chrome, keep the tables. */
 
 @media print{
 
+    .cx-hero-actions,
+    .cx-tabs,
+    .input-group,
+    .cx-sidebar-col,
+    .navbar{ display:none !important; }
 
-.print-hide,
-button,
-.nav-tabs{
+    .cx-page .tab-pane{ display:block !important; opacity:1 !important; }
 
-display:none!important;
+    .cx-scroll{ max-height:none; overflow:visible; }
 
-}
-
-
-.card{
-
-box-shadow:none!important;
-
-border:1px solid #ddd;
+    .cx-card{ box-shadow:none; break-inside:avoid; }
 
 }
-
-
-.tab-pane{
-
-display:block!important;
-
-opacity:1!important;
-
-}
-
-
-}
-
 
 </style>
 
 
+<script>
+(function () {
 
+    // The search box applies to whichever tab is on screen, so each
+    // tab's badge keeps meaning "rows you can see here".
+
+    const search = document.getElementById("memSearch");
+
+    if (!search) { return; }
+
+    const panes = Array.prototype.slice.call(
+        document.querySelectorAll(".tab-pane[data-pane]")
+    );
+
+    const counters = {};
+
+    document.querySelectorAll(".cx-tabs [data-pane]").forEach(function (tab) {
+        counters[tab.dataset.pane] = tab.querySelector(".badge");
+    });
+
+    const totals = {};
+
+    panes.forEach(function (pane) {
+        totals[pane.dataset.pane] =
+            pane.querySelectorAll("tbody tr[data-mem-row]").length;
+    });
+
+    const nf = new Intl.NumberFormat();
+
+
+    search.addEventListener("input", function () {
+
+        const needle = (search.value || "").trim().toLowerCase();
+
+        panes.forEach(function (pane) {
+
+            const rows = pane.querySelectorAll("tbody tr[data-mem-row]");
+
+            let shown = 0;
+
+            rows.forEach(function (row) {
+
+                const visible =
+                    !needle || row.dataset.text.indexOf(needle) !== -1;
+
+                row.classList.toggle("d-none", !visible);
+
+                if (visible) { shown += 1; }
+
+            });
+
+            const blank = pane.querySelector(".mem-no-match");
+
+            if (blank) {
+                blank.classList.toggle(
+                    "d-none",
+                    shown !== 0 || rows.length === 0
+                );
+            }
+
+            const counter = counters[pane.dataset.pane];
+
+            if (counter) {
+                counter.textContent = shown === totals[pane.dataset.pane]
+                    ? nf.format(shown)
+                    : nf.format(shown) + " / "
+                      + nf.format(totals[pane.dataset.pane]);
+            }
+
+        });
+
+    });
+
+})();
+</script>
 
 {% endblock %}

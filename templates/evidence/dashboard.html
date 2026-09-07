@@ -1,724 +1,460 @@
-{# Full-width page: no investigation sidebar #}
+{% extends "analysis_base.html" %}
 
-{% extends "base.html" %}
+{% block analysis_content %}
 
-
-{% block content %}
-
-
-<div class="container-fluid">
-
-
-<!-- ================================================= -->
-<!-- HEADER -->
-<!-- ================================================= -->
+<div class="cx-page"
+     style="--accent:#7c3aed;
+            --hero-1:#2e1065; --hero-2:#6d28d9;
+            --hero-3:#a855f7; --hero-4:#f0abfc;
+            --hero-glow:124,58,237;">
 
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+<!-- ================= HERO ================= -->
 
+<div class="cx-hero mb-4">
 
-<div>
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
 
-<h2 class="fw-bold">
+        <div>
 
-<i class="bi bi-hdd-stack text-primary"></i>
+            <h2 class="mb-1">
+                <i class="bi bi-hdd-stack"></i>
+                Evidence
+            </h2>
 
-Evidence Management
+            <p>
+                {{ "{:,}".format(evidences|length) }}
+                artifact{{ '' if evidences|length == 1 else 's' }} in this case
+                &bull; {{ totals.size_display }} held
+            </p>
 
-</h2>
+            <div class="cx-hero-meta">
 
+                <span>
+                    <i class="bi bi-folder2-open"></i>
+                    {{ case.case_name }}
+                </span>
 
-<p class="text-muted mb-0">
+                <span>
+                    <i class="bi bi-hash"></i>
+                    {{ case.case_number or case.id }}
+                </span>
 
-Case:
+            </div>
 
-<strong>
-{{ case.case_name }}
-</strong>
+        </div>
 
-|
+        <div class="d-flex gap-2 cx-hero-actions">
 
-{{ case.case_number or "#" ~ case.id }}
+            <a href="{{ url_for('analysis.dashboard', case_id=case.id) }}"
+               class="btn btn-light fw-semibold">
+                <i class="bi bi-speedometer2"></i>
+                Dashboard
+            </a>
 
-</p>
+            <a href="{{ url_for('analysis.global_evidence') }}"
+               class="btn btn-light fw-semibold">
+                <i class="bi bi-collection"></i>
+                All Cases
+            </a>
 
+        </div>
 
-</div>
-
-
-
-<div>
-
-<a href="{{ url_for('analysis.dashboard', case_id=case.id) }}"
-class="btn btn-outline-primary">
-
-<i class="bi bi-speedometer2"></i>
-
-Dashboard
-
-</a>
-
-
-</div>
-
-
-</div>
-
-
-
-
-
-
-<!-- ================================================= -->
-<!-- UPLOAD -->
-<!-- ================================================= -->
-
-
-<div class="card shadow-sm mb-4">
-
-
-<div class="card-header fw-bold">
-
-<i class="bi bi-cloud-upload"></i>
-
-Add Evidence
+    </div>
 
 </div>
 
 
+<!-- ================= UPLOAD ================= -->
 
-<div class="card-body">
+<div class="cx-card mb-4">
 
+    <div class="cx-card-head">
 
-<form method="POST"
-action="{{ url_for('evidence.upload_evidence', case_id=case.id) }}"
-enctype="multipart/form-data">
+        <div>
+            <h6>
+                <i class="bi bi-cloud-upload-fill" style="color:var(--accent)"></i>
+                Add evidence
+            </h6>
+            <small>
+                The artifact type and parser are detected on upload
+            </small>
+        </div>
 
+    </div>
 
-<div class="row g-3">
+    <form method="POST"
+          action="{{ url_for('evidence.upload_evidence', case_id=case.id) }}"
+          enctype="multipart/form-data">
 
+        <div class="row g-2">
 
-<div class="col-md-9">
+            <div class="col-md-9">
+                <input type="file" name="file" class="form-control" required>
+            </div>
 
-<input type="file"
-name="file"
-class="form-control"
-required>
+            <div class="col-md-3 d-grid">
+                <button class="btn btn-primary">
+                    <i class="bi bi-upload"></i>
+                    Upload evidence
+                </button>
+            </div>
 
-</div>
+        </div>
 
-
-
-<div class="col-md-3">
-
-
-<button class="btn btn-primary w-100">
-
-<i class="bi bi-upload"></i>
-
-Upload Evidence
-
-</button>
-
-
-</div>
-
-
-</div>
-
-
-</form>
-
-
+    </form>
 
 </div>
 
 
-</div>
+<!-- ================= KPI ROW ================= -->
 
+<div class="row g-3 mb-4">
 
+    {% set tiles = [
+        ("Evidence",   "{:,}".format(evidences|length), "bi-files",            "tone-3", ""),
+        ("Completed",  "{:,}".format(totals.completed), "bi-check-circle-fill","tone-2", "completed"),
+        ("Processing", "{:,}".format(totals.processing),"bi-arrow-repeat",     "tone-5", "processing"),
+        ("Queued",     "{:,}".format(totals.queued),    "bi-hourglass-split",  "tone-3", "queued"),
+        ("Failed",     "{:,}".format(totals.failed),    "bi-x-circle-fill",    "tone-8", "failed"),
+        ("Total size", totals.size_display,             "bi-hdd-fill",         "tone-4", "")
+    ] %}
 
+    {% for label, value, icon, tone, status in tiles %}
 
+    <div class="col-6 col-md-4 col-xl">
 
+        {% if evidences and status %}
 
+        <button type="button"
+                class="cx-tile {{ tone }} is-filter"
+                data-filter-col="status"
+                data-filter-value="{{ status }}"
+                title="Show only {{ label|lower }} evidence">
 
-<!-- ================================================= -->
-<!-- STATISTICS -->
-<!-- ================================================= -->
+            <div class="cx-tile-icon"><i class="bi {{ icon }}"></i></div>
+            <div class="cx-tile-value">{{ value }}</div>
+            <div class="cx-tile-label">{{ label }}</div>
 
+        </button>
 
-<div class="row g-4 mb-4">
+        {% else %}
 
+        <div class="cx-tile {{ tone }}">
 
-<div class="col-md-3">
+            <div class="cx-tile-icon"><i class="bi {{ icon }}"></i></div>
+            <div class="cx-tile-value">{{ value }}</div>
+            <div class="cx-tile-label">{{ label }}</div>
 
-<div class="card shadow-sm border-0">
+        </div>
 
-<div class="card-body">
+        {% endif %}
 
+    </div>
 
-<small class="text-muted">
-Total Evidence
-</small>
-
-
-<h2 class="fw-bold text-primary">
-
-{{ evidences|length }}
-
-</h2>
-
-
-<i class="bi bi-files fs-2 text-primary"></i>
-
-
-</div>
-
-</div>
-
-</div>
-
-
-
-
-
-<div class="col-md-3">
-
-<div class="card shadow-sm border-0">
-
-<div class="card-body">
-
-
-<small class="text-muted">
-Queued
-</small>
-
-
-<h2 class="fw-bold text-warning">
-
-{{ evidences|selectattr("status","equalto","Queued")|list|length }}
-
-</h2>
-
-
-<i class="bi bi-hourglass-split fs-2 text-warning"></i>
-
-
-</div>
-
-</div>
+    {% endfor %}
 
 </div>
 
 
+<!-- ================= REPOSITORY ================= -->
 
+<div class="cx-card">
 
+    <div class="cx-card-head">
 
-<div class="col-md-3">
+        <div>
+            <h6>Evidence repository</h6>
+            <small>
+                Newest upload first &bull; click a column heading to sort
+            </small>
+        </div>
 
-<div class="card shadow-sm border-0">
+        <span class="cx-head-badge" id="evidenceCount">
+            {{ "{:,}".format(evidences|length) }} files
+        </span>
 
-<div class="card-body">
+    </div>
 
 
-<small class="text-muted">
-Completed
-</small>
+    {% if evidences %}
 
+    <div class="row g-2 mb-3" id="evidenceTools">
 
-<h2 class="fw-bold text-success">
+        <div class="col-lg-6">
 
-{{ evidences|selectattr("status","equalto","Completed")|list|length }}
+            <div class="input-group input-group-sm">
 
-</h2>
+                <span class="input-group-text bg-white">
+                    <i class="bi bi-search text-muted"></i>
+                </span>
 
+                <input type="search"
+                       data-search
+                       class="form-control"
+                       placeholder="Search file, hash or parser…">
 
-<i class="bi bi-check-circle fs-2 text-success"></i>
-
-
-</div>
-
-</div>
-
-</div>
-
-
-
-
-
-<div class="col-md-3">
-
-<div class="card shadow-sm border-0">
-
-<div class="card-body">
-
-
-<small class="text-muted">
-Failed
-</small>
-
-
-<h2 class="fw-bold text-danger">
-
-{{ evidences|selectattr("status","equalto","Failed")|list|length }}
-
-</h2>
-
-
-<i class="bi bi-x-circle fs-2 text-danger"></i>
-
-
-</div>
-
-</div>
-
-</div>
-
-
-</div>
-
-
-
-
-
-
-
-<!-- ================================================= -->
-<!-- EVIDENCE TABLE -->
-<!-- ================================================= -->
-
-
-<div class="card shadow-sm">
-
-
-<div class="card-header d-flex justify-content-between">
-
-
-<span>
-
-<i class="bi bi-folder2-open"></i>
-
-Evidence Repository
-
-</span>
-
-
-<span class="badge bg-primary">
-
-{{ evidences|length }}
-
-Files
-
-</span>
-
-
-</div>
-
-
-
-
-
-<div class="table-responsive">
-
-
-<table class="table table-hover mb-0">
-
-
-<thead class="table-light">
-
-
-<tr>
-
-<th>
-File
-</th>
-
-<th>
-Artifact
-</th>
-
-<th>
-Parser
-</th>
-
-<th>
-Size
-</th>
-
-<th>
-SHA256
-</th>
-
-<th>
-Status
-</th>
-
-<th>
-Uploaded
-</th>
-
-<th>
-Actions
-</th>
-
-</tr>
-
-
-</thead>
-
-
-
-
-<tbody>
-
-
-{% for e in evidences %}
-
-
-<tr>
-
-
-<td>
-
-
-<div class="fw-semibold">
-
-{{ e.filename }}
-
-</div>
-
-
-<small class="text-muted">
-
-{{ e.original_filename or "-" }}
-
-</small>
-
-
-</td>
-
-
-
-
-
-
-<td>
-
-
-{% if e.artifact_type %}
-
-
-<span class="badge bg-info">
-
-{{ e.artifact_type }}
-
-</span>
-
-
-{% else %}
-
--
-
-{% endif %}
-
-
-</td>
-
-
-
-
-
-
-<td>
-
-{{ e.parser or "Pending" }}
-
-
-</td>
-
-
-
-
-
-
-<td>
-
-
-{{ e.size_mb }} MB
-
-
-</td>
-
-
-
-
-
-
-<td>
-
-
-{% if e.sha256 %}
-
-
-<code>
-
-{{ e.sha256[:20] }}...
-
-</code>
-
-
-{% else %}
-
-<span class="text-muted">
-
-Not calculated
-
-</span>
-
-
-{% endif %}
-
-
-
-</td>
-
-
-
-
-<td>
-
-
-{% if e.status|lower=="completed" %}
-
-<span class="badge bg-success">
-<i class="bi bi-check-circle"></i>
-Completed
-</span>
-
-
-{% elif e.status|lower=="failed" %}
-
-<span class="badge bg-danger">
-<i class="bi bi-x-circle"></i>
-Failed
-</span>
-
-
-{% elif e.status|lower=="processing" %}
-
-<span class="badge bg-primary">
-<i class="bi bi-arrow-repeat"></i>
-Processing
-</span>
-
-
-{% elif e.status|lower=="queued" %}
-
-<span class="badge bg-warning text-dark">
-<i class="bi bi-hourglass-split"></i>
-Queued
-</span>
-
-
-{% else %}
-
-<span class="badge bg-secondary">
-{{ e.status }}
-</span>
-
-
-{% endif %}
-
-
-
-</td>
-
-
-
-
-
-
-
-<td>
-
-
-{% if e.uploaded_at %}
-
-
-{{ format_ist(e.uploaded_at) }} IST
-
-
-{% else %}
-
--
-
-{% endif %}
-
-
-</td>
-
-<td>
-
-{% if e.status|lower=="completed" %}
-
-<span class="badge bg-success">
-Completed
-</span>
-
-{% elif e.status|lower=="failed" %}
-
-<span class="badge bg-danger">
-Failed
-</span>
-
-{% elif e.status|lower=="processing" %}
-
-<span class="badge bg-primary">
-Processing
-</span>
-
-{% else %}
-
-<span class="badge bg-warning text-dark">
-{{ e.status }}
-</span>
-
-{% endif %}
-
-
-<form method="POST"
-action="{{ url_for('evidence.reanalyze',
-evidence_id=e.id) }}"
-class="mt-2">
-
-
-<button
-class="btn btn-sm btn-outline-primary"
-onclick="return confirm('Re-analyze this evidence?')">
-
-
-<i class="bi bi-arrow-repeat"></i>
-
-Re-analyze
-
-</button>
-
-
-</form>
-
-
-</td>
-
-<td>
-
-<form method="POST"
-action="{{ url_for('evidence.delete_evidence',
-evidence_id=e.id) }}"
-onsubmit="return confirm('Delete this evidence permanently?');">
-
-
-<button class="btn btn-sm btn-outline-danger">
-
-<i class="bi bi-trash"></i>
-
-Delete
-
-</button>
-
-
-</form>
-
-</td>
-
-</tr>
-
-
-
-{% else %}
-
-
-
-<tr>
-
-<td colspan="8"
-class="text-center text-muted p-5">
-
-
-<i class="bi bi-inbox fs-1 d-block mb-3"></i>
-
-
-No evidence available
-
-
-</td>
-
-
-</tr>
-
-
-
-{% endfor %}
-
-
-
-</tbody>
-
-
-</table>
-
+            </div>
+
+        </div>
+
+        <div class="col-6 col-lg-3">
+
+            <select data-col="artifact" class="form-select form-select-sm">
+                <option value="">All artifact types</option>
+                {% for artifact in artifact_types %}
+                <option value="{{ artifact|lower }}">{{ artifact }}</option>
+                {% endfor %}
+            </select>
+
+        </div>
+
+        <div class="col-4 col-lg-2">
+
+            <select data-col="status" class="form-select form-select-sm">
+                <option value="">Status</option>
+                <option value="completed">Completed</option>
+                <option value="processing">Processing</option>
+                <option value="queued">Queued</option>
+                <option value="failed">Failed</option>
+            </select>
+
+        </div>
+
+        <div class="col-2 col-lg-1 d-grid">
+
+            <button type="button"
+                    data-reset
+                    class="btn btn-sm btn-outline-secondary"
+                    title="Clear filters and sorting">
+                <i class="bi bi-arrow-counterclockwise"></i>
+            </button>
+
+        </div>
+
+    </div>
+
+    {% endif %}
+
+
+    <div class="table-responsive">
+
+        <table class="table align-middle cx-table mb-0"
+               id="evidenceTable"
+               data-tools="evidenceTools"
+               data-count="evidenceCount"
+               data-empty="noMatchRow"
+               data-noun="files">
+
+            <thead>
+                <tr>
+                    <th class="sortable" data-sort="file" data-type="text">
+                        <i class="bi bi-file-earmark"></i> File
+                        <i class="bi bi-arrow-down-up sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="artifact" data-type="text">
+                        <i class="bi bi-box-seam"></i> Artifact
+                        <i class="bi bi-arrow-down-up sort-icon"></i>
+                    </th>
+                    <th><i class="bi bi-gear"></i> Parser</th>
+                    <th class="sortable" data-sort="size" data-type="number"
+                        style="min-width:120px;">
+                        <i class="bi bi-hdd"></i> Size
+                        <i class="bi bi-arrow-down-up sort-icon"></i>
+                    </th>
+                    <th><i class="bi bi-fingerprint"></i> SHA256</th>
+                    <th class="sortable" data-sort="status" data-type="text">
+                        <i class="bi bi-activity"></i> Status
+                        <i class="bi bi-arrow-down-up sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="uploaded" data-type="text">
+                        <i class="bi bi-clock"></i> Uploaded
+                        <i class="bi bi-arrow-down-up sort-icon"></i>
+                    </th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for row in rows %}
+
+                {% set e = row.evidence %}
+                {% set state = (e.status or "")|lower %}
+
+                <tr data-row
+                    data-file="{{ e.filename|lower }}"
+                    data-artifact="{{ (e.artifact_type or '')|lower }}"
+                    data-size="{{ e.filesize or 0 }}"
+                    data-status="{{ state }}"
+                    data-uploaded="{{ format_ist(e.uploaded_at) }}"
+                    data-text="{{ [e.filename, e.original_filename, e.parser,
+                                   e.artifact_type, e.sha256]|select|join(' ')|lower }}">
+
+                    <td>
+                        <div class="d-flex align-items-center gap-2"
+                             style="max-width:260px;">
+                            <span class="cx-blank-icon"
+                                  style="width:32px;height:32px;margin:0;
+                                         border-radius:9px;font-size:14px;">
+                                <i class="bi {{ 'bi-cpu'
+                                    if (e.artifact_type or '')|lower == 'memory'
+                                    else 'bi-journal-text' }}"></i>
+                            </span>
+                            <span class="overflow-hidden">
+                                <span class="fw-semibold d-block text-truncate"
+                                      title="{{ e.filename }}">
+                                    {{ e.filename }}
+                                </span>
+                                <small class="text-muted text-truncate d-block"
+                                       title="{{ e.original_filename or '' }}">
+                                    {{ e.original_filename or "—" }}
+                                </small>
+                            </span>
+                        </div>
+                    </td>
+
+                    <td>
+                        {% if e.artifact_type %}
+                        <span class="cx-chip artifact-{{ e.artifact_type|lower }}">
+                            {{ e.artifact_type }}
+                        </span>
+                        {% else %}
+                        <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {% if e.parser %}
+                        <small class="fw-semibold">{{ e.parser }}</small>
+                        {% else %}
+                        <small class="text-muted fst-italic">Pending</small>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        <div class="fw-semibold num">{{ row.size_display }}</div>
+                        <div class="cx-bar" style="max-width:100px;">
+                            <span class="cx-bar-fill"
+                                  style="--bar:var(--accent);"
+                                  data-width="{{ row.size_share }}"></span>
+                        </div>
+                    </td>
+
+                    <td>
+                        {% if e.sha256 %}
+                        <code class="cx-hash" title="{{ e.sha256 }}">
+                            {{ e.sha256[:12] }}…
+                        </code>
+                        {% else %}
+                        <small class="text-muted">Not calculated</small>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {% if state in ("completed", "failed", "processing", "queued") %}
+                        <span class="cx-pill st-{{ state }}"
+                              {% if state == "failed" %}title="{{ e.error_message or '' }}"{% endif %}>
+                            <i class="bi {{
+                                'bi-check-circle-fill' if state == 'completed' else
+                                'bi-x-circle-fill'     if state == 'failed' else
+                                'bi-arrow-repeat'      if state == 'processing' else
+                                'bi-hourglass-split' }}"></i>
+                            {{ e.status }}
+                        </span>
+                        {% else %}
+                        <span class="cx-pill st-other">{{ e.status or "Unknown" }}</span>
+                        {% endif %}
+                    </td>
+
+                    <td class="num">
+                        {% if e.uploaded_at %}
+                        <small>{{ format_ist(e.uploaded_at) }}</small>
+                        <small class="text-muted d-block">IST</small>
+                        {% else %}
+                        <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+
+                    <td class="text-end">
+
+                        <div class="d-flex justify-content-end gap-1">
+
+                            <a href="/analysis/events/{{ case.id }}?evidence_id={{ e.id }}"
+                               class="cx-act"
+                               title="Events parsed from this artifact">
+                                <i class="bi bi-list-ul"></i>
+                            </a>
+
+                            <form method="POST"
+                                  action="{{ url_for('evidence.reanalyze', evidence_id=e.id) }}"
+                                  onsubmit="return confirm('Re-analyze this evidence?');">
+                                <button class="cx-act act-primary" title="Re-analyze">
+                                    <i class="bi bi-arrow-repeat"></i>
+                                </button>
+                            </form>
+
+                            <form method="POST"
+                                  action="{{ url_for('evidence.delete_evidence', evidence_id=e.id) }}"
+                                  onsubmit="return confirm('Delete this evidence permanently?');">
+                                <button class="cx-act act-danger" title="Delete">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+
+                        </div>
+
+                    </td>
+
+                </tr>
+
+                {% else %}
+
+                <tr>
+                    <td colspan="8" class="p-0">
+                        <div class="cx-blank">
+                            <div class="cx-blank-icon">
+                                <i class="bi bi-inbox"></i>
+                            </div>
+                            <h5 class="fw-bold mb-2">No evidence yet</h5>
+                            <p class="text-muted mb-0">
+                                Upload an artifact above and it will be hashed,
+                                identified and parsed into events.
+                            </p>
+                        </div>
+                    </td>
+                </tr>
+
+                {% endfor %}
+
+
+                <tr id="noMatchRow" class="d-none">
+                    <td colspan="8" class="p-0">
+                        <div class="cx-blank">
+                            <div class="cx-blank-icon">
+                                <i class="bi bi-funnel"></i>
+                            </div>
+                            <h5 class="fw-bold mb-2">Nothing matches</h5>
+                            <p class="text-muted mb-0">
+                                No evidence matches the current filters.
+                            </p>
+                        </div>
+                    </td>
+                </tr>
+
+            </tbody>
+
+        </table>
+
+    </div>
 
 </div>
 
 
-</div>
+</div><!-- /cx-page -->
 
 
-
-
-
-
-</div>
-
-
-
-
-
-
-<style>
-
-
-.card{
-
-border-radius:14px;
-
-}
-
-
-.table td,
-.table th{
-
-vertical-align:middle;
-
-}
-
-
-.badge{
-
-padding:.5em .8em;
-
-}
-
-
-code{
-
-font-size:.85rem;
-
-}
-
-
-
-</style>
-
-
+{% include "components/global_styles.html" %}
+{% include "components/table_tools.html" %}
 
 {% endblock %}

@@ -1,503 +1,346 @@
 {% extends "analysis_base.html" %}
 
-
 {% block analysis_content %}
 
-
-<div class="container-fluid">
-
-
-<div class="d-flex justify-content-between align-items-center mb-4">
-
-
-<div>
-
-<h2 class="fw-bold">
-
-<i class="bi bi-folder-plus text-primary"></i>
-
-Create New Investigation Case
-
-</h2>
+<div class="cx-page"
+     style="--accent:#ea580c;
+            --hero-1:#7c2d12; --hero-2:#c2410c;
+            --hero-3:#f97316; --hero-4:#fbbf24;
+            --hero-glow:234,88,12;">
 
 
-<p class="text-muted">
+<!-- ================= HERO ================= -->
 
-Register a new DFIR investigation
+<div class="cx-hero mb-4">
 
-</p>
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
 
-</div>
+        <div>
 
+            <h2 class="mb-1">
+                <i class="bi bi-folder-plus"></i>
+                New Investigation Case
+            </h2>
 
+            <p>
+                A case is the container for evidence, parsed events and the
+                detections raised from them
+            </p>
 
-<a href="/cases"
-class="btn btn-outline-secondary">
+        </div>
 
-<i class="bi bi-arrow-left"></i>
+        <div class="d-flex gap-2 cx-hero-actions">
 
-Back to Cases
+            <a href="/cases" class="btn btn-light fw-semibold">
+                <i class="bi bi-arrow-left"></i>
+                Back to Cases
+            </a>
 
-</a>
+        </div>
 
-
-</div>
-
-
-
-
-
-<div class="card shadow-sm">
-
-
-<div class="card-body">
-
-
-<form method="POST"
-action="/cases/create">
-
-
-
-<div class="row g-3">
-
-
-
-<!-- Case Name -->
-
-<div class="col-md-6">
-
-
-<label class="form-label fw-semibold">
-
-Case Name *
-
-</label>
-
-
-<input type="text"
-name="case_name"
-class="form-control"
-placeholder="Example: Ransomware Investigation"
-required>
-
+    </div>
 
 </div>
 
 
+<form method="POST" action="/cases/create">
+
+<div class="row g-4">
 
 
-<!-- Incident Type -->
+    <!-- ================= IDENTITY ================= -->
 
-<div class="col-md-6">
+    <div class="col-xl-8">
+
+        <div class="cx-card mb-4">
+
+            <div class="cx-card-head">
+                <div>
+                    <h6>
+                        <i class="bi bi-card-heading" style="color:var(--accent)"></i>
+                        Identity
+                    </h6>
+                    <small>What this investigation is called and what it covers</small>
+                </div>
+            </div>
+
+            <div class="row g-3">
+
+                <div class="col-md-6">
+
+                    <label class="cx-fact-label" for="case_name">
+                        <i class="bi bi-folder2-open"></i>
+                        Case name <span class="text-danger">*</span>
+                    </label>
+
+                    <input type="text"
+                           id="case_name"
+                           name="case_name"
+                           class="form-control"
+                           placeholder="Example: Ransomware Investigation"
+                           required>
+
+                    <small class="text-muted">
+                        The case number is generated automatically once saved.
+                    </small>
+
+                </div>
+
+                <div class="col-md-6">
+
+                    <label class="cx-fact-label" for="incident_type">
+                        <i class="bi bi-bug-fill"></i>
+                        Incident type
+                    </label>
+
+                    <select id="incident_type" name="incident_type" class="form-select">
+                        <option value="">Select type</option>
+                        {% for option in ["Malware", "Ransomware", "Phishing",
+                                          "Insider Threat", "Data Exfiltration",
+                                          "Web Attack", "Mobile", "Cloud", "Other"] %}
+                        <option>{{ option }}</option>
+                        {% endfor %}
+                    </select>
+
+                </div>
+
+                <div class="col-12">
+
+                    <label class="cx-fact-label" for="description">
+                        <i class="bi bi-card-text"></i>
+                        Description
+                    </label>
+
+                    <textarea id="description"
+                              name="description"
+                              class="form-control"
+                              rows="4"
+                              placeholder="What happened, and what this investigation is trying to establish…"></textarea>
+
+                </div>
+
+            </div>
+
+        </div>
 
 
-<label class="form-label fw-semibold">
+        <!-- ================= ORGANISATION ================= -->
 
-Incident Type
+        <div class="cx-card mb-4">
 
-</label>
+            <div class="cx-card-head">
+                <div>
+                    <h6>
+                        <i class="bi bi-building" style="color:var(--accent)"></i>
+                        Organisation
+                    </h6>
+                    <small>Who the investigation is for, and who is running it</small>
+                </div>
+            </div>
 
+            <div class="row g-3">
 
-<select name="incident_type"
-class="form-select">
+                <div class="col-md-4">
 
+                    <label class="cx-fact-label" for="organization">
+                        <i class="bi bi-building"></i>
+                        Organization
+                    </label>
 
-<option value="">
+                    <input type="text" id="organization" name="organization"
+                           class="form-control" placeholder="Organization name">
 
-Select Type
+                </div>
 
-</option>
+                <div class="col-md-4">
 
+                    <label class="cx-fact-label" for="department">
+                        <i class="bi bi-diagram-2"></i>
+                        Department
+                    </label>
 
-<option>
-Malware
-</option>
+                    <input type="text" id="department" name="department"
+                           class="form-control" placeholder="Department / unit">
 
+                </div>
 
-<option>
-Ransomware
-</option>
+                <div class="col-md-4">
 
+                    <label class="cx-fact-label" for="lead_investigator">
+                        <i class="bi bi-person-badge-fill"></i>
+                        Lead investigator
+                    </label>
 
-<option>
-Phishing
-</option>
+                    <input type="text" id="lead_investigator" name="lead_investigator"
+                           class="form-control" placeholder="Investigator name">
 
+                </div>
 
-<option>
-Insider Threat
-</option>
+            </div>
 
-
-<option>
-Data Exfiltration
-</option>
-
-
-<option>
-Web Attack
-</option>
-
-
-<option>
-Mobile
-</option>
-
-
-<option>
-Cloud
-</option>
-
-
-<option>
-Other
-</option>
+        </div>
 
 
-</select>
+        <!-- ================= NOTES ================= -->
 
+        <div class="cx-card">
+
+            <div class="cx-card-head">
+                <div>
+                    <h6>
+                        <i class="bi bi-chat-left-text" style="color:var(--accent)"></i>
+                        Notes
+                    </h6>
+                    <small>Tags make a case findable; remarks are free text</small>
+                </div>
+            </div>
+
+            <div class="row g-3">
+
+                <div class="col-12">
+
+                    <label class="cx-fact-label" for="tags">
+                        <i class="bi bi-tag-fill"></i>
+                        Tags
+                    </label>
+
+                    <input type="text" id="tags" name="tags"
+                           class="form-control"
+                           placeholder="malware, ransomware, apt">
+
+                    <small class="text-muted">Separate with commas.</small>
+
+                </div>
+
+                <div class="col-12">
+
+                    <label class="cx-fact-label" for="remarks">
+                        <i class="bi bi-pencil"></i>
+                        Remarks
+                    </label>
+
+                    <textarea id="remarks" name="remarks" class="form-control"
+                              rows="3" placeholder="Investigation notes…"></textarea>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================= CLASSIFICATION ================= -->
+
+    <div class="col-xl-4">
+
+        <div class="cx-card" style="position:sticky; top:20px;">
+
+            <div class="cx-card-head">
+                <div>
+                    <h6>
+                        <i class="bi bi-sliders" style="color:var(--accent)"></i>
+                        Classification
+                    </h6>
+                    <small>Drives the colours and ordering across the product</small>
+                </div>
+            </div>
+
+            <div class="row g-3">
+
+                <div class="col-12">
+
+                    <label class="cx-fact-label" for="severity">
+                        <i class="bi bi-thermometer-half"></i>
+                        Severity
+                    </label>
+
+                    <select id="severity" name="severity" class="form-select">
+                        <option value="low">Low</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="high">High</option>
+                        <option value="critical">Critical</option>
+                    </select>
+
+                </div>
+
+                <div class="col-12">
+
+                    <label class="cx-fact-label" for="priority">
+                        <i class="bi bi-flag-fill"></i>
+                        Priority
+                    </label>
+
+                    <select id="priority" name="priority" class="form-select">
+                        <option value="low">Low</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="high">High</option>
+                        <option value="critical">Critical</option>
+                    </select>
+
+                </div>
+
+                <div class="col-12">
+
+                    <label class="cx-fact-label" for="status">
+                        <i class="bi bi-record-circle"></i>
+                        Status
+                    </label>
+
+                    <select id="status" name="status" class="form-select">
+                        <option value="open" selected>Open</option>
+                        <option value="investigating">Investigating</option>
+                        <option value="closed">Closed</option>
+                    </select>
+
+                </div>
+
+            </div>
+
+            <div class="d-grid gap-2 mt-4">
+
+                <button class="btn btn-primary" type="submit">
+                    <i class="bi bi-save"></i>
+                    Create case
+                </button>
+
+                <a href="/cases" class="btn btn-outline-secondary">
+                    Cancel
+                </a>
+
+            </div>
+
+            <small class="text-muted d-block mt-3">
+                <i class="bi bi-info-circle"></i>
+                Evidence is uploaded once the case exists.
+            </small>
+
+        </div>
+
+    </div>
 
 </div>
-
-
-
-
-
-
-<!-- Priority -->
-
-
-<div class="col-md-4">
-
-
-<label class="form-label fw-semibold">
-
-Priority
-
-</label>
-
-
-<select name="priority"
-class="form-select">
-
-
-<option value="low">
-Low
-</option>
-
-
-<option value="medium" selected>
-Medium
-</option>
-
-
-<option value="high">
-High
-</option>
-
-
-<option value="critical">
-Critical
-</option>
-
-
-</select>
-
-
-</div>
-
-
-
-
-
-
-<!-- Severity -->
-
-
-<div class="col-md-4">
-
-
-<label class="form-label fw-semibold">
-
-Severity
-
-</label>
-
-
-<select name="severity"
-class="form-select">
-
-
-<option value="low">
-Low
-</option>
-
-
-<option value="medium" selected>
-Medium
-</option>
-
-
-<option value="high">
-High
-</option>
-
-
-<option value="critical">
-Critical
-</option>
-
-
-</select>
-
-
-</div>
-
-
-
-
-
-<!-- Status -->
-
-
-<div class="col-md-4">
-
-
-<label class="form-label fw-semibold">
-
-Status
-
-</label>
-
-
-<select name="status"
-class="form-select">
-
-
-<option value="open" selected>
-Open
-</option>
-
-
-<option value="investigating">
-Investigating
-</option>
-
-
-<option value="closed">
-Closed
-</option>
-
-
-</select>
-
-
-</div>
-
-
-
-
-
-
-
-<!-- Organization -->
-
-
-<div class="col-md-6">
-
-
-<label class="form-label fw-semibold">
-
-Organization
-
-</label>
-
-
-<input type="text"
-name="organization"
-class="form-control"
-placeholder="Organization name">
-
-
-</div>
-
-
-
-
-
-<!-- Department -->
-
-
-<div class="col-md-6">
-
-
-<label class="form-label fw-semibold">
-
-Department
-
-</label>
-
-
-<input type="text"
-name="department"
-class="form-control"
-placeholder="Department / Unit">
-
-
-</div>
-
-
-
-
-
-
-
-<!-- Investigator -->
-
-
-<div class="col-md-6">
-
-
-<label class="form-label fw-semibold">
-
-Lead Investigator
-
-</label>
-
-
-<input type="text"
-name="lead_investigator"
-class="form-control"
-placeholder="Investigator name">
-
-
-</div>
-
-
-
-
-
-
-<!-- Tags -->
-
-
-<div class="col-md-6">
-
-
-<label class="form-label fw-semibold">
-
-Tags
-
-</label>
-
-
-<input type="text"
-name="tags"
-class="form-control"
-placeholder="malware,ransomware,apt">
-
-
-</div>
-
-
-
-
-
-
-
-
-<!-- Description -->
-
-
-<div class="col-12">
-
-
-<label class="form-label fw-semibold">
-
-Description
-
-</label>
-
-
-<textarea name="description"
-class="form-control"
-rows="4"
-placeholder="Case summary..."></textarea>
-
-
-</div>
-
-
-
-
-
-
-
-
-<!-- Remarks -->
-
-
-<div class="col-12">
-
-
-<label class="form-label fw-semibold">
-
-Remarks
-
-</label>
-
-
-<textarea name="remarks"
-class="form-control"
-rows="3"
-placeholder="Investigation notes..."></textarea>
-
-
-</div>
-
-
-
-
-
-
-</div>
-
-
-
-
-<hr class="my-4">
-
-
-
-<div class="text-end">
-
-
-<button class="btn btn-primary px-4">
-
-
-<i class="bi bi-save"></i>
-
-Create Case
-
-
-</button>
-
-
-</div>
-
-
 
 </form>
 
 
-</div>
+</div><!-- /cx-page -->
 
 
-</div>
+{% include "components/global_styles.html" %}
 
 
+<style>
 
-</div>
+/* Field labels reuse the fact label, but sit above an input. */
 
+.cx-page label.cx-fact-label{
+
+    margin-bottom:5px;
+
+}
+
+</style>
 
 {% endblock %}

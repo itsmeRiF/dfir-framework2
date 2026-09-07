@@ -2,38 +2,54 @@
 
 {% block analysis_content %}
 
-<div class="viz-root">
+{# Sky header: the timeline is the calm, chronological view. #}
+
+<div class="cx-page"
+     style="--accent:#0284c7;
+            --hero-1:#082f49; --hero-2:#0369a1;
+            --hero-3:#0ea5e9; --hero-4:#67e8f9;
+            --hero-glow:14,165,233;">
 
 
-<!-- ================= HEADER ================= -->
+<!-- ================= HERO ================= -->
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="cx-hero mb-4">
 
-    <div>
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
 
-        <h2 class="fw-bold mb-1">
-            <i class="bi bi-clock-history text-primary"></i>
-            Timeline
-        </h2>
+        <div>
 
-        <p class="text-muted mb-0">
-            Daily activity for every case on one axis
-        </p>
+            <h2 class="mb-1">
+                <i class="bi bi-clock-history"></i>
+                Timeline
+            </h2>
 
-    </div>
+            <p>
+                {% if totals.days %}
+                    {{ "{:,}".format(totals.events) }} timestamped events
+                    over {{ totals.days }} day{{ '' if totals.days == 1 else 's' }},
+                    every case on one axis
+                {% else %}
+                    Daily activity for every case on one axis
+                {% endif %}
+            </p>
 
-    <div class="d-flex gap-2">
+        </div>
 
-        <a href="{{ url_for('analysis.global_dashboard') }}"
-           class="btn btn-outline-primary">
-            <i class="bi bi-speedometer2"></i>
-            Dashboard
-        </a>
+        <div class="d-flex gap-2 cx-hero-actions">
 
-        <a href="/cases" class="btn btn-outline-secondary">
-            <i class="bi bi-folder2-open"></i>
-            Browse Cases
-        </a>
+            <a href="{{ url_for('analysis.global_dashboard') }}"
+               class="btn btn-light fw-semibold">
+                <i class="bi bi-speedometer2"></i>
+                Dashboard
+            </a>
+
+            <a href="/cases" class="btn btn-light fw-semibold">
+                <i class="bi bi-folder2-open"></i>
+                Browse Cases
+            </a>
+
+        </div>
 
     </div>
 
@@ -45,14 +61,14 @@
 <div class="row g-3 mb-4">
 
     {% set tiles = [
-        ("Events",     "{:,}".format(totals.events),                        "bi-list-ul",        "slot-1"),
-        ("Days",       "{:,}".format(totals.days),                          "bi-calendar3",      "slot-3"),
-        ("Cases",      "{:,}".format(totals.cases),                         "bi-folder2-open",   "slot-2"),
-        ("First",      totals.first and format_ist(totals.first)[:10] or "-","bi-hourglass-top", "slot-3"),
-        ("Last",       totals.last and format_ist(totals.last)[:10] or "-",  "bi-hourglass-bottom","slot-1"),
+        ("Events",     "{:,}".format(totals.events),                        "bi-list-ul",        "tone-1"),
+        ("Days",       "{:,}".format(totals.days),                          "bi-calendar3",      "tone-4"),
+        ("Cases",      "{:,}".format(totals.cases),                         "bi-folder2-open",   "tone-2"),
+        ("First",      totals.first and format_ist(totals.first)[:10] or "-","bi-hourglass-top", "tone-3"),
+        ("Last",       totals.last and format_ist(totals.last)[:10] or "-",  "bi-hourglass-bottom","tone-5"),
         ("Busiest day", (totals.busiest_day or "-") ~ (
                         " · " ~ "{:,}".format(totals.busiest_count)
-                        if totals.busiest_day else ""),                      "bi-fire",          "crit")
+                        if totals.busiest_day else ""),                      "bi-fire",          "tone-8")
     ] %}
 
     {% for label, value, icon, tone in tiles %}
@@ -187,13 +203,12 @@
 
                         {% for row in rows %}
 
-                        <tr>
+                        <tr data-row style="--case:{{ row.case.color }};">
 
                             <td>
                                 <a href="/analysis/timeline/{{ row.case.id }}"
                                    class="cx-case">
-                                    <span class="cx-swatch"
-                                          style="background:{{ row.case.color }};"></span>
+                                    <span class="cx-swatch"></span>
                                     <span>
                                         <span class="fw-semibold d-block">
                                             {{ row.case.name }}
@@ -283,7 +298,7 @@
                         {% set e = row.event %}
                         {% set sev = (e.severity or "unknown")|lower %}
 
-                        <tr>
+                        <tr data-row style="--case:{{ row.case.color }};">
 
                             <td class="num">
                                 <small>{{ format_ist(e.timestamp) }}</small>
@@ -291,8 +306,7 @@
 
                             <td>
                                 <span class="cx-case">
-                                    <span class="cx-swatch"
-                                          style="background:{{ row.case.color }};"></span>
+                                    <span class="cx-swatch"></span>
                                     <small class="fw-semibold">
                                         {{ row.case.name }}
                                     </small>
@@ -304,12 +318,10 @@
                             </td>
 
                             <td>
-                                <span class="cx-sev
-                                             {% if sev == 'critical' %}critical
-                                             {% elif sev == 'high' %}high
-                                             {% elif sev in ('medium', 'med') %}medium
-                                             {% elif sev == 'low' %}low
-                                             {% else %}info{% endif %}">
+                                <span class="cx-pill
+                                             {% if sev in ('medium','med') %}sev-medium
+                                             {% elif sev in ('critical','high','low') %}sev-{{ sev }}
+                                             {% else %}sev-informational{% endif %}">
                                     {{ e.severity or "unknown" }}
                                 </span>
                             </td>
@@ -351,10 +363,11 @@
 </div>
 
 
-</div><!-- /viz-root -->
+</div><!-- /cx-page -->
 
 
 {% include "components/global_styles.html" %}
+{% include "components/table_tools.html" %}
 
 
 {% if labels %}

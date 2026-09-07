@@ -1,0 +1,261 @@
+{# Filtering and sorting for the analysis tables.
+
+   Include once per page. Every table that opts in is wired from data
+   attributes, so a page adds markup rather than another copy of this
+   logic.
+
+   On the table:
+     data-tools="<id>"    container holding the filter controls
+     data-count="<id>"    element that shows "X of Y <noun>"
+     data-empty="<id>"    row shown when nothing matches
+     data-noun="files"    what the count calls a row (default "rows")
+
+   On rows:      <tr data-row data-<key>="..." data-text="...">
+   On controls:  data-search        matches data-text (substring)
+                 data-col="<key>"   select -> exact, input -> substring
+                 data-reset         clears every filter and the sort
+   On headers:   <th class="sortable" data-sort="<key>" data-type="text|number">
+   On tiles:     data-filter-col="<key>" data-filter-value="<value>"
+                 toggles that value on the matching control
+
+   A row missing the key a control filters on is treated as not
+   matching, so a filter never silently widens the result. #}
+
+<script>
+(function () {
+
+    var nf = new Intl.NumberFormat();
+
+
+    function initTable(table) {
+
+        var body = table.querySelector("tbody");
+
+        var rows = Array.prototype.slice.call(
+            table.querySelectorAll("tbody tr[data-row]")
+        );
+
+        if (!rows.length) { return; }
+
+        var scope = document.getElementById(table.dataset.tools || "");
+
+        var counter = document.getElementById(table.dataset.count || "");
+        var empty = document.getElementById(table.dataset.empty || "");
+        var noun = table.dataset.noun || "rows";
+
+        var controls = scope
+            ? Array.prototype.slice.call(
+                  scope.querySelectorAll("[data-col],[data-search]"))
+            : [];
+
+        var resets = scope
+            ? Array.prototype.slice.call(scope.querySelectorAll("[data-reset]"))
+            : [];
+
+        var headers = Array.prototype.slice.call(
+            table.querySelectorAll("th.sortable")
+        );
+
+        var tiles = Array.prototype.slice.call(
+            document.querySelectorAll("[data-filter-col]")
+        );
+
+        // The order the server sent, to return to when sorting clears.
+        var original = rows.slice();
+
+        var sortKey = null;
+        var sortDir = 1;
+
+
+        function matches(row) {
+
+            return controls.every(function (control) {
+
+                var wanted = (control.value || "").trim().toLowerCase();
+
+                if (!wanted) { return true; }
+
+                if (control.hasAttribute("data-search")) {
+                    return (row.dataset.text || "")
+                        .toLowerCase().indexOf(wanted) !== -1;
+                }
+
+                var value = (row.dataset[control.dataset.col] || "")
+                    .toLowerCase();
+
+                // A dropdown holds one exact value; a typed filter
+                // matches anywhere inside it.
+                return control.tagName === "SELECT"
+                    ? value === wanted
+                    : value.indexOf(wanted) !== -1;
+
+            });
+
+        }
+
+
+        function render() {
+
+            var shown = 0;
+
+            rows.forEach(function (row) {
+
+                var visible = matches(row);
+
+                row.classList.toggle("d-none", !visible);
+
+                if (visible) { shown += 1; }
+
+            });
+
+            if (empty) { empty.classList.toggle("d-none", shown !== 0); }
+
+            if (counter) {
+                counter.textContent = shown === rows.length
+                    ? nf.format(rows.length) + " " + noun
+                    : nf.format(shown) + " of "
+                      + nf.format(rows.length) + " " + noun;
+            }
+
+            // A tile and the control it drives are one filter, so
+            // whichever was used, both show the same answer.
+            tiles.forEach(function (tile) {
+
+                var control = controls.filter(function (c) {
+                    return c.dataset.col === tile.dataset.filterCol;
+                })[0];
+
+                tile.classList.toggle(
+                    "on",
+                    !!control && control.value === tile.dataset.filterValue
+                );
+
+            });
+
+        }
+
+
+        function sortBy(key, type) {
+
+            // Same column again reverses; a new column starts ascending.
+            if (sortKey === key) {
+                sortDir = -sortDir;
+            } else {
+                sortKey = key;
+                sortDir = 1;
+            }
+
+            original.slice().sort(function (a, b) {
+
+                if (type === "number") {
+                    return (Number(a.dataset[key]) - Number(b.dataset[key]))
+                        * sortDir;
+                }
+
+                return String(a.dataset[key] || "")
+                    .localeCompare(String(b.dataset[key] || "")) * sortDir;
+
+            }).forEach(function (row) {
+                body.appendChild(row);
+            });
+
+            // The empty-state row must stay last.
+            if (empty) { body.appendChild(empty); }
+
+            paintHeaders();
+
+        }
+
+
+        function paintHeaders() {
+
+            headers.forEach(function (header) {
+
+                var on = header.dataset.sort === sortKey;
+
+                header.classList.toggle("sorted", on);
+
+                var icon = header.querySelector(".sort-icon");
+
+                if (!icon) { return; }
+
+                icon.className = "bi sort-icon " + (on
+                    ? (sortDir === 1 ? "bi-sort-down-alt" : "bi-sort-up-alt")
+                    : "bi-arrow-down-up");
+
+            });
+
+        }
+
+
+        controls.forEach(function (control) {
+            control.addEventListener("input", render);
+            control.addEventListener("change", render);
+        });
+
+        headers.forEach(function (header) {
+            header.addEventListener("click", function () {
+                sortBy(header.dataset.sort, header.dataset.type);
+            });
+        });
+
+        // Clicking the tile that is already on clears the filter again.
+        tiles.forEach(function (tile) {
+
+            tile.addEventListener("click", function () {
+
+                var control = controls.filter(function (c) {
+                    return c.dataset.col === tile.dataset.filterCol;
+                })[0];
+
+                if (!control) { return; }
+
+                control.value = control.value === tile.dataset.filterValue
+                    ? ""
+                    : tile.dataset.filterValue;
+
+                render();
+
+            });
+
+        });
+
+        resets.forEach(function (button) {
+
+            button.addEventListener("click", function () {
+
+                controls.forEach(function (control) { control.value = ""; });
+
+                sortKey = null;
+                sortDir = 1;
+
+                original.forEach(function (row) { body.appendChild(row); });
+
+                if (empty) { body.appendChild(empty); }
+
+                paintHeaders();
+                render();
+
+            });
+
+        });
+
+
+        render();
+
+    }
+
+
+    // Bars declare their length in markup and grow into it once laid
+    // out, so a proportion reads as a change rather than furniture.
+    requestAnimationFrame(function () {
+        document.querySelectorAll("[data-width]").forEach(function (bar) {
+            bar.style.width = (bar.dataset.width || 0) + "%";
+        });
+    });
+
+
+    document.querySelectorAll("table[data-tools]").forEach(initTable);
+
+})();
+</script>
