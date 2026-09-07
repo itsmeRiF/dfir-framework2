@@ -12,6 +12,21 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 
+def _safe_next():
+    """The page the visitor was heading for before being asked to log in.
+
+    Only a path on this site is honoured — an absolute URL in `next`
+    would turn the login form into an open redirect.
+    """
+
+    target = request.args.get("next", "")
+
+    if target.startswith("/") and not target.startswith("//"):
+        return target
+
+    return url_for("dashboard.dashboard")
+
+
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -20,7 +35,7 @@ def login():
         user = User.query.filter_by(username=username, password=password).first()
         if user:
             login_user(user)
-            return redirect(url_for("dashboard.dashboard"))
+            return redirect(_safe_next())
     return render_template("login.html")
 
 

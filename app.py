@@ -1,4 +1,5 @@
-from flask import Flask, render_template, redirect, url_for
+from flask import Flask, render_template, redirect, request, url_for
+from flask_login import current_user
 from modules.parser.registry import register_parsers
 from config import Config
 from database.db import db
@@ -16,6 +17,16 @@ from routes.event_detail import event_detail_bp
 from routes.incidents import incident_bp
 from routes.memory import memory_bp
 from utils.sidebar_stats import sidebar_stats
+
+
+# The only things an unauthenticated request may reach: the login
+# form itself and the assets that page needs to render.
+PUBLIC_ENDPOINTS = {
+    "auth.login",
+    "static"
+}
+
+
 def create_app():
 
     app = Flask(__name__)
@@ -42,6 +53,23 @@ def create_app():
     app.register_blueprint(analysis_bp)
     app.register_blueprint(event_detail_bp)
     app.register_blueprint(memory_bp)
+    @app.before_request
+    def require_login():
+        # Case data is behind the login page everywhere, rather than
+        # per route: a view added later is protected by default, and
+        # forgetting a decorator cannot expose one.
+        #
+        # Unmatched URLs are guarded too, so which routes exist is
+        # not something a logged-out visitor can probe.
+
+        if request.endpoint in PUBLIC_ENDPOINTS:
+            return None
+
+        if current_user.is_authenticated:
+            return None
+
+        return login_manager.unauthorized()
+
     @app.context_processor
     def inject_sidebar_stats():
         # Exposed as a callable so the counts are only queried
