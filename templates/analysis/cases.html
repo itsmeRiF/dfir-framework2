@@ -3,323 +3,447 @@
 
 {% block analysis_content %}
 
+<div class="cases-root">
 
-<div class="d-flex justify-content-between align-items-center mb-4">
 
+<!-- ================================================= -->
+<!-- HEADER                                            -->
+<!-- ================================================= -->
 
-<div>
+<div class="cx-hero mb-4">
 
-<h2 class="fw-bold">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
 
-<i class="bi bi-folder2-open text-primary"></i>
+        <div>
 
-Investigation Cases
+            <h2 class="fw-bold mb-1">
+                <i class="bi bi-folder2-open"></i>
+                Investigation Cases
+            </h2>
 
-</h2>
+            <p class="mb-0">
+                {{ totals.cases }} case{{ '' if totals.cases == 1 else 's' }}
+                &bull; {{ totals.open }} open
+                &bull; {{ totals.closed }} closed
+            </p>
 
-<p class="text-muted mb-0">
+        </div>
 
-Case Management Dashboard
+        <div class="d-flex gap-2 cx-hero-actions">
 
-</p>
+            <a href="{{ url_for('analysis.global_dashboard') }}"
+               class="btn btn-light fw-semibold">
+                <i class="bi bi-speedometer2"></i>
+                Dashboard
+            </a>
+
+            <a href="/cases/new" class="btn btn-light fw-semibold">
+                <i class="bi bi-plus-circle-fill text-primary"></i>
+                New Case
+            </a>
+
+        </div>
+
+    </div>
 
 </div>
 
 
-<a href="/cases/new"
-class="btn btn-primary">
+<!-- ================================================= -->
+<!-- PORTFOLIO TOTALS                                  -->
+<!-- ================================================= -->
 
-<i class="bi bi-plus-circle"></i>
+<div class="row g-3 mb-4">
 
-New Case
+    {% set tiles = [
+        ("Cases",     totals.cases,     "bi-folder2-open",        "tone-1", url_for('analysis.global_dashboard')),
+        ("Open",      totals.open,      "bi-folder-symlink-fill", "tone-2", None),
+        ("Evidence",  totals.evidence,  "bi-hdd-fill",            "tone-3", url_for('analysis.global_evidence')),
+        ("Events",    totals.events,    "bi-list-ul",             "tone-4", url_for('analysis.global_events')),
+        ("Incidents", totals.incidents, "bi-exclamation-triangle-fill", "tone-5", url_for('analysis.global_incidents')),
+        ("Alerts",    totals.alerts,    "bi-bell-fill",           "tone-6", url_for('analysis.global_events', severity='high'))
+    ] %}
 
-</a>
+    {% for label, value, icon, tone, link in tiles %}
 
+    <div class="col-6 col-md-4 col-xl-2">
+
+        {% if link %}<a href="{{ link }}" class="cx-tile {{ tone }} is-link">{% else %}<div class="cx-tile {{ tone }}">{% endif %}
+
+            <div class="cx-tile-icon">
+                <i class="bi {{ icon }}"></i>
+            </div>
+
+            <div class="cx-tile-value">
+                {{ "{:,}".format(value) }}
+            </div>
+
+            <div class="cx-tile-label">
+                {{ label }}
+            </div>
+
+        {% if link %}</a>{% else %}</div>{% endif %}
+
+    </div>
+
+    {% endfor %}
 
 </div>
 
 
+<!-- ================================================= -->
+<!-- TOOLBAR                                           -->
+<!-- ================================================= -->
+
+{% if cases %}
+
+<div class="cx-toolbar mb-4">
+
+    <div class="row g-2 align-items-center">
+
+        <div class="col-lg-4">
+
+            <div class="input-group input-group-sm">
+
+                <span class="input-group-text bg-white">
+                    <i class="bi bi-search text-muted"></i>
+                </span>
+
+                <input type="search"
+                       id="caseSearch"
+                       class="form-control"
+                       placeholder="Search name, number, investigator, tag…">
+
+            </div>
+
+        </div>
+
+        <div class="col-6 col-lg-2">
+
+            <select id="filterStatus" class="form-select form-select-sm">
+                <option value="">All statuses</option>
+                {% for value in statuses %}
+                <option value="{{ value }}">{{ value|capitalize }}</option>
+                {% endfor %}
+            </select>
+
+        </div>
+
+        <div class="col-6 col-lg-2">
+
+            <select id="filterSeverity" class="form-select form-select-sm">
+                <option value="">All severities</option>
+                {% for value in severities %}
+                <option value="{{ value }}">{{ value|capitalize }}</option>
+                {% endfor %}
+            </select>
+
+        </div>
+
+        <div class="col-6 col-lg-2">
+
+            <select id="filterType" class="form-select form-select-sm">
+                <option value="">All incident types</option>
+                {% for value in incident_types %}
+                <option value="{{ value }}">{{ value|title }}</option>
+                {% endfor %}
+            </select>
+
+        </div>
+
+        <div class="col-6 col-lg-2 d-flex justify-content-end gap-2">
+
+            <span class="text-muted small align-self-center cx-count"
+                  id="caseCount"></span>
+
+            <button type="button"
+                    id="caseReset"
+                    class="btn btn-sm btn-outline-secondary"
+                    title="Clear filters">
+                <i class="bi bi-arrow-counterclockwise"></i>
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endif %}
 
 
-<div class="row g-4">
+<!-- ================================================= -->
+<!-- CASE CARDS                                        -->
+<!-- ================================================= -->
+
+<div class="row g-4" id="caseGrid">
 
 
 {% for item in cases %}
 
-
 {% set case = item.case %}
+{% set status = (case.status or 'open')|lower %}
+{% set severity = (case.severity or 'medium')|lower %}
+{% set priority = (case.priority or 'medium')|lower %}
 
 
-<div class="col-lg-4">
+<div class="col-xl-4 col-md-6 cx-case-col"
+     data-status="{{ status }}"
+     data-severity="{{ severity }}"
+     data-type="{{ (case.incident_type or '')|lower }}"
+     data-text="{{ [case.case_name,
+                    case.case_number,
+                    case.lead_investigator,
+                    case.organization,
+                    case.department,
+                    case.incident_type,
+                    case.tags]|select|join(' ')|lower }}">
 
 
-<div class="card shadow-sm border-0 h-100">
+<div class="cx-case h-100" style="--case:{{ item.color }};">
 
 
-<div class="card-body">
+    <!-- Coloured ribbon identifying the case -->
+    <div class="cx-case-ribbon"></div>
 
 
-<div class="d-flex justify-content-between align-items-start">
+    <div class="cx-case-body">
 
 
-<div>
+        <!-- ---------- Identity ---------- -->
 
-<h5 class="fw-bold">
+        <div class="d-flex align-items-start gap-3 mb-3">
 
-<i class="bi bi-folder-fill text-warning"></i>
+            <div class="cx-avatar">
+                {{ item.initials }}
+            </div>
 
-{{ case.case_name }}
+            <div class="flex-grow-1 overflow-hidden">
 
-</h5>
+                <h5 class="cx-case-name mb-1" title="{{ case.case_name }}">
+                    {{ case.case_name }}
+                </h5>
+
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+
+                    <span class="cx-case-number">
+                        <i class="bi bi-hash"></i>{{ case.case_number or case.id }}
+                    </span>
+
+                    {% if status == 'open' %}
+                    <span class="cx-pill status-open">
+                        <i class="bi bi-record-circle"></i> Open
+                    </span>
+                    {% elif status == 'closed' %}
+                    <span class="cx-pill status-closed">
+                        <i class="bi bi-check-circle-fill"></i> Closed
+                    </span>
+                    {% else %}
+                    <span class="cx-pill status-other">
+                        <i class="bi bi-hourglass-split"></i> {{ case.status }}
+                    </span>
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+        </div>
 
 
-<small class="text-muted">
+        <!-- ---------- Description ---------- -->
 
-{{ case.case_number }}
+        <p class="cx-case-desc">
+            {% if case.description %}
+                {{ case.description }}
+            {% else %}
+                <span class="text-muted fst-italic">
+                    No description recorded for this investigation.
+                </span>
+            {% endif %}
+        </p>
 
-</small>
 
+        <!-- ---------- Classification ---------- -->
+
+        <div class="d-flex flex-wrap gap-2 mb-3">
+
+            <span class="cx-pill sev-{{ severity }}"
+                  title="Severity">
+                <i class="bi bi-thermometer-half"></i>
+                {{ severity|capitalize }}
+            </span>
+
+            <span class="cx-pill pri-{{ priority }}"
+                  title="Priority">
+                <i class="bi bi-flag-fill"></i>
+                {{ priority|capitalize }}
+            </span>
+
+            {% if case.incident_type %}
+            <span class="cx-pill type-pill" title="Incident type">
+                <i class="bi bi-bug-fill"></i>
+                {{ case.incident_type }}
+            </span>
+            {% endif %}
+
+        </div>
+
+
+        <!-- ---------- Metrics ---------- -->
+
+        <div class="cx-metrics mb-3">
+
+            {% set metrics = [
+                ("Evidence",  item.evidence_count,  "bi-hdd-fill",                  "m-1", "/analysis/evidence/"  ~ case.id),
+                ("Events",    item.event_count,     "bi-list-ul",                   "m-2", "/analysis/events/"    ~ case.id),
+                ("Incidents", item.incident_count,  "bi-exclamation-triangle-fill", "m-3", "/analysis/incidents/" ~ case.id),
+                ("Alerts",    item.alert_count,     "bi-bell-fill",                 "m-4", "/analysis/events/"    ~ case.id)
+            ] %}
+
+            {% for label, value, icon, tone, link in metrics %}
+
+            <a href="{{ link }}"
+               class="cx-metric {{ tone }}"
+               title="{{ value }} {{ label|lower }}">
+
+                <i class="bi {{ icon }}"></i>
+
+                <span class="cx-metric-value">
+                    {{ "{:,}".format(value) }}
+                </span>
+
+                <span class="cx-metric-label">
+                    {{ label }}
+                </span>
+
+            </a>
+
+            {% endfor %}
+
+        </div>
+
+
+        <!-- ---------- Facts ---------- -->
+
+        <div class="cx-facts mb-3">
+
+            <div class="cx-fact">
+                <i class="bi bi-person-badge-fill"></i>
+                <span>{{ case.lead_investigator or 'Unassigned' }}</span>
+            </div>
+
+            <div class="cx-fact">
+                <i class="bi bi-building"></i>
+                <span>
+                    {{ case.organization or '—' }}{% if case.department %}
+                        <span class="text-muted">/ {{ case.department }}</span>
+                    {% endif %}
+                </span>
+            </div>
+
+            <div class="cx-fact">
+                <i class="bi bi-calendar-event"></i>
+                <span>
+                    Opened
+                    {% if case.created_at %}
+                        {{ case.created_at.strftime('%d %b %Y') }}
+                    {% else %}
+                        &mdash;
+                    {% endif %}
+                </span>
+            </div>
+
+            <div class="cx-fact">
+                <i class="bi bi-activity"></i>
+                <span>
+                    Last event
+                    {% if item.last_activity != '-' %}
+                        {{ item.last_activity[:10] }}
+                    {% else %}
+                        &mdash;
+                    {% endif %}
+                </span>
+            </div>
+
+        </div>
+
+
+        <!-- ---------- Tags ---------- -->
+
+        {% if item.tags %}
+
+        <div class="d-flex flex-wrap gap-1 mb-3">
+
+            {% for tag in item.tags %}
+            <span class="cx-tag">
+                <i class="bi bi-tag-fill"></i>{{ tag }}
+            </span>
+            {% endfor %}
+
+        </div>
+
+        {% endif %}
+
+
+        <!-- ---------- Tools ---------- -->
+
+        <div class="d-flex flex-wrap gap-1 mb-3">
+
+            {% for label, slug, icon in case_tools %}
+
+            <a class="cx-tool"
+               href="/analysis/{{ slug }}/{{ case.id }}"
+               title="{{ label }} for {{ case.case_name }}">
+                <i class="bi {{ icon }}"></i>
+                {{ label }}
+            </a>
+
+            {% endfor %}
+
+        </div>
+
+
+        <!-- ---------- Primary action ---------- -->
+
+        <a href="/analysis/{{ case.id }}" class="cx-open mt-auto">
+            <i class="bi bi-graph-up-arrow"></i>
+            Open Analysis
+            <i class="bi bi-arrow-right ms-auto"></i>
+        </a>
+
+
+    </div>
 
 </div>
 
-
-
-{% if case.status|lower == "open" %}
-
-<span class="badge bg-success">
-
-OPEN
-
-</span>
-
-{% elif case.status|lower == "closed" %}
-
-<span class="badge bg-secondary">
-
-CLOSED
-
-</span>
-
-{% else %}
-
-<span class="badge bg-warning text-dark">
-
-{{case.status}}
-
-</span>
-
-{% endif %}
-
-
 </div>
-
-
-
-<hr>
-
-
-
-<div class="row text-center mb-3">
-
-
-<div class="col">
-
-<h5 class="text-primary">
-
-{{ item.evidence_count }}
-
-</h5>
-
-<small>
-
-Evidence
-
-</small>
-
-</div>
-
-
-
-<div class="col">
-
-<h5 class="text-warning">
-
-{{ item.event_count }}
-
-</h5>
-
-<small>
-
-Events
-
-</small>
-
-</div>
-
-
-
-<div class="col">
-
-<h5 class="text-danger">
-
-{{ item.incident_count }}
-
-</h5>
-
-<small>
-
-Incidents
-
-</small>
-
-</div>
-
-
-</div>
-
-
-
-
-<table class="table table-sm">
-
-
-<tr>
-
-<td>
-
-Severity
-
-</td>
-
-
-<td>
-
-
-{% if case.severity == "critical" %}
-
-<span class="badge bg-danger">
-
-Critical
-
-</span>
-
-{% elif case.severity == "high" %}
-
-<span class="badge bg-warning text-dark">
-
-High
-
-</span>
-
-{% else %}
-
-<span class="badge bg-info">
-
-{{case.severity}}
-
-</span>
-
-{% endif %}
-
-
-</td>
-
-
-</tr>
-
-
-
-<tr>
-
-<td>
-
-Priority
-
-</td>
-
-<td>
-
-{{case.priority}}
-
-</td>
-
-
-</tr>
-
-
-
-<tr>
-
-<td>
-
-Type
-
-</td>
-
-<td>
-
-{{case.incident_type or "-"}}
-
-</td>
-
-
-</tr>
-
-
-
-<tr>
-
-<td>
-
-Investigator
-
-</td>
-
-<td>
-
-{{case.lead_investigator or "-"}}
-
-</td>
-
-
-</tr>
-
-
-
-</table>
-
-
-
-
-<a href="/analysis/{{case.id}}"
-class="btn btn-outline-primary w-100">
-
-
-<i class="bi bi-search"></i>
-
-Open Analysis
-
-
-</a>
-
-
-
-</div>
-
-
-</div>
-
-
-</div>
-
 
 
 {% else %}
 
 
-<div class="alert alert-warning">
+<div class="col-12">
 
-No cases available.
+    <div class="cx-empty">
+
+        <div class="cx-empty-icon">
+            <i class="bi bi-folder-plus"></i>
+        </div>
+
+        <h5 class="fw-bold mb-2">No investigation cases yet</h5>
+
+        <p class="text-muted mb-4">
+            A case is the container for evidence, parsed events and the
+            detections raised from them. Create one to begin.
+        </p>
+
+        <a href="/cases/new" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i>
+            Create your first case
+        </a>
+
+    </div>
 
 </div>
 
@@ -330,5 +454,662 @@ No cases available.
 </div>
 
 
+<!-- Shown when the filters exclude every case -->
+<div class="cx-empty d-none" id="noMatch">
+
+    <div class="cx-empty-icon">
+        <i class="bi bi-funnel"></i>
+    </div>
+
+    <h5 class="fw-bold mb-2">No cases match your filters</h5>
+
+    <p class="text-muted mb-0">
+        Try a different search term, or clear the filters to see them all.
+    </p>
+
+</div>
+
+
+</div><!-- /cases-root -->
+
+
+
+<style>
+
+/* ================= tokens ================= */
+
+.cases-root{
+
+    --ink:#111827;
+    --muted:#6b7280;
+    --line:rgba(16,32,64,.09);
+
+    --shadow:0 4px 16px rgba(16,32,64,.07);
+    --shadow-lg:0 18px 40px rgba(16,32,64,.16);
+
+    --tone-1:#2a78d6;
+    --tone-2:#12a150;
+    --tone-3:#7c3aed;
+    --tone-4:#0d9488;
+    --tone-5:#e8590c;
+    --tone-6:#dc3545;
+
+}
+
+
+/* ================= hero ================= */
+
+.cx-hero{
+
+    position:relative;
+    overflow:hidden;
+    border-radius:20px;
+    padding:26px 30px;
+    color:#fff;
+    background:linear-gradient(120deg,#4c1d95 0%,#0d3b8f 40%,#0d6efd 74%,#22b8cf 100%);
+    box-shadow:0 14px 34px rgba(13,110,253,.28);
+
+}
+
+/* Slow drifting glow, so the header has depth without a busy image. */
+
+.cx-hero::after{
+
+    content:"";
+    position:absolute;
+    top:-70%;
+    right:-6%;
+    width:400px;
+    height:400px;
+    border-radius:50%;
+    background:radial-gradient(circle,rgba(255,255,255,.20),transparent 65%);
+    animation:cx-drift 10s ease-in-out infinite alternate;
+    pointer-events:none;
+
+}
+
+@keyframes cx-drift{
+
+    from{ transform:translate(0,0); }
+    to{   transform:translate(-38px,26px); }
+
+}
+
+.cx-hero h2,
+.cx-hero p{
+
+    position:relative;
+    z-index:2;
+
+}
+
+.cx-hero p{
+
+    opacity:.92;
+
+}
+
+.cx-hero-actions{
+
+    position:relative;
+    z-index:2;
+
+}
+
+
+/* ================= totals ================= */
+
+.cx-tile{
+
+    position:relative;
+    display:block;
+    height:100%;
+    padding:14px 16px;
+    border-radius:14px;
+    background:linear-gradient(180deg, color-mix(in srgb, var(--tone) 12%, #fff) 0%, #fff 60%);
+    border:1px solid var(--line);
+    box-shadow:var(--shadow);
+    text-decoration:none;
+    color:inherit;
+    overflow:hidden;
+    transition:transform .2s ease, box-shadow .2s ease;
+
+}
+
+.cx-tile::after{
+
+    content:"";
+    position:absolute;
+    left:0;
+    top:0;
+    bottom:0;
+    width:4px;
+    background:var(--tone);
+
+}
+
+.cx-tile.is-link:hover{
+
+    transform:translateY(-3px);
+    box-shadow:var(--shadow-lg);
+    color:inherit;
+
+}
+
+.cx-tile.tone-1{ --tone:var(--tone-1); }
+.cx-tile.tone-2{ --tone:var(--tone-2); }
+.cx-tile.tone-3{ --tone:var(--tone-3); }
+.cx-tile.tone-4{ --tone:var(--tone-4); }
+.cx-tile.tone-5{ --tone:var(--tone-5); }
+.cx-tile.tone-6{ --tone:var(--tone-6); }
+
+.cx-tile-icon{
+
+    font-size:15px;
+    color:var(--tone);
+    margin-bottom:4px;
+
+}
+
+.cx-tile-value{
+
+    font-size:24px;
+    font-weight:800;
+    line-height:1.1;
+    color:var(--tone);
+    font-variant-numeric:tabular-nums;
+
+}
+
+.cx-tile-label{
+
+    font-size:11px;
+    font-weight:600;
+    letter-spacing:.5px;
+    text-transform:uppercase;
+    color:var(--muted);
+
+}
+
+
+/* ================= toolbar ================= */
+
+.cx-toolbar{
+
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:12px 14px;
+    box-shadow:var(--shadow);
+
+}
+
+.cx-toolbar .form-control,
+.cx-toolbar .form-select{
+
+    border-color:#e3e8ef;
+
+}
+
+.cx-toolbar .form-control:focus,
+.cx-toolbar .form-select:focus{
+
+    border-color:#0d6efd;
+    box-shadow:0 0 0 .15rem rgba(13,110,253,.15);
+
+}
+
+.cx-count{
+
+    font-variant-numeric:tabular-nums;
+    white-space:nowrap;
+
+}
+
+
+/* ================= case card ================= */
+
+.cx-case{
+
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:18px;
+    overflow:hidden;
+    box-shadow:var(--shadow);
+    transition:transform .22s ease, box-shadow .22s ease;
+
+}
+
+.cx-case:hover{
+
+    transform:translateY(-4px);
+    box-shadow:var(--shadow-lg);
+
+}
+
+/* The case's own colour, the same one it wears in every chart. */
+
+.cx-case-ribbon{
+
+    height:5px;
+    background:linear-gradient(90deg,
+               var(--case) 0%,
+               color-mix(in srgb, var(--case) 45%, #fff) 100%);
+
+}
+
+.cx-case-body{
+
+    display:flex;
+    flex-direction:column;
+    flex:1;
+    padding:18px 20px 20px;
+
+}
+
+.cx-avatar{
+
+    width:46px;
+    height:46px;
+    flex:none;
+    border-radius:14px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:800;
+    font-size:15px;
+    letter-spacing:.5px;
+    color:#fff;
+    background:linear-gradient(135deg,
+               var(--case) 0%,
+               color-mix(in srgb, var(--case) 60%, #000) 100%);
+    box-shadow:0 8px 16px -8px var(--case);
+
+}
+
+.cx-case-name{
+
+    font-weight:700;
+    color:var(--ink);
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+
+}
+
+.cx-case-number{
+
+    font-size:12px;
+    font-weight:600;
+    color:var(--muted);
+    font-variant-numeric:tabular-nums;
+
+}
+
+/* Two lines of description, so cards in a row stay the same height. */
+
+.cx-case-desc{
+
+    font-size:13px;
+    line-height:1.5;
+    color:#4b5563;
+    margin-bottom:14px;
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+    overflow:hidden;
+    min-height:39px;
+
+}
+
+
+/* ================= pills ================= */
+
+.cx-pill{
+
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    padding:.28em .6em;
+    border-radius:999px;
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:.3px;
+    text-transform:uppercase;
+    white-space:nowrap;
+    border:1px solid transparent;
+
+}
+
+.status-open{   background:#e3f6ec; color:#0f7a3d; border-color:#b7e6ca; }
+.status-closed{ background:#eceef1; color:#4b5563; border-color:#dee2e6; }
+.status-other{  background:#fff6d9; color:#8a6100; border-color:#ffe69c; }
+
+.sev-critical{ background:#fde7e9; color:#b02a37; border-color:#f5c2c7; }
+.sev-high{     background:#fff0e2; color:#a2540b; border-color:#fdd9b5; }
+.sev-medium{   background:#fff6d9; color:#8a6100; border-color:#ffe69c; }
+.sev-low{      background:#dff7fd; color:#0a7c92; border-color:#b6ecf7; }
+
+.pri-critical{ background:#fde7e9; color:#b02a37; border-color:#f5c2c7; }
+.pri-high{     background:#ffe9e9; color:#a92b2b; border-color:#f8cccc; }
+.pri-medium{   background:#eaf1ff; color:#1b4fa8; border-color:#c9dcff; }
+.pri-low{      background:#eef1f4; color:#4b5563; border-color:#e0e5ea; }
+
+.type-pill{
+
+    background:#f3ecff;
+    color:#5b21b6;
+    border-color:#ddcdfb;
+    text-transform:none;
+    letter-spacing:0;
+
+}
+
+
+/* ================= metrics ================= */
+
+.cx-metrics{
+
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:8px;
+
+}
+
+.cx-metric{
+
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:1px;
+    padding:9px 4px;
+    border-radius:12px;
+    background:color-mix(in srgb, var(--m) 9%, #fff);
+    border:1px solid color-mix(in srgb, var(--m) 22%, #fff);
+    text-decoration:none;
+    transition:.18s;
+
+}
+
+.cx-metric:hover{
+
+    background:color-mix(in srgb, var(--m) 18%, #fff);
+    transform:translateY(-2px);
+
+}
+
+.cx-metric.m-1{ --m:#2a78d6; }
+.cx-metric.m-2{ --m:#0d9488; }
+.cx-metric.m-3{ --m:#e8590c; }
+.cx-metric.m-4{ --m:#dc3545; }
+
+.cx-metric i{
+
+    font-size:13px;
+    color:var(--m);
+
+}
+
+.cx-metric-value{
+
+    font-size:16px;
+    font-weight:800;
+    line-height:1.1;
+    color:var(--m);
+    font-variant-numeric:tabular-nums;
+
+}
+
+.cx-metric-label{
+
+    font-size:10px;
+    font-weight:600;
+    letter-spacing:.3px;
+    text-transform:uppercase;
+    color:var(--muted);
+
+}
+
+
+/* ================= facts ================= */
+
+.cx-facts{
+
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:7px 12px;
+    padding-top:13px;
+    border-top:1px dashed var(--line);
+
+}
+
+.cx-fact{
+
+    display:flex;
+    align-items:center;
+    gap:7px;
+    font-size:12px;
+    color:#4b5563;
+    min-width:0;
+
+}
+
+.cx-fact i{
+
+    color:var(--case);
+    font-size:13px;
+    flex:none;
+
+}
+
+.cx-fact span{
+
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+
+}
+
+
+/* ================= tags + tools ================= */
+
+.cx-tag{
+
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    font-size:11px;
+    font-weight:600;
+    padding:3px 9px;
+    border-radius:999px;
+    background:#eef2f7;
+    color:#42505f;
+
+}
+
+.cx-tag i{
+
+    font-size:9px;
+    opacity:.6;
+
+}
+
+.cx-tool{
+
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    font-size:11px;
+    font-weight:600;
+    padding:5px 10px;
+    border-radius:999px;
+    background:#f4f6fa;
+    color:#44546a;
+    text-decoration:none;
+    transition:.18s;
+
+}
+
+.cx-tool:hover{
+
+    background:var(--case);
+    color:#fff;
+
+}
+
+
+/* ================= primary action ================= */
+
+.cx-open{
+
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:11px 16px;
+    border-radius:12px;
+    font-weight:700;
+    font-size:14px;
+    text-decoration:none;
+    color:var(--case);
+    background:color-mix(in srgb, var(--case) 10%, #fff);
+    border:1px solid color-mix(in srgb, var(--case) 28%, #fff);
+    transition:.2s;
+
+}
+
+.cx-open:hover{
+
+    background:var(--case);
+    color:#fff;
+    border-color:var(--case);
+    box-shadow:0 10px 20px -10px var(--case);
+
+}
+
+
+/* ================= empty ================= */
+
+.cx-empty{
+
+    background:#fff;
+    border:1px dashed #cfd8e3;
+    border-radius:18px;
+    padding:56px 30px;
+    text-align:center;
+
+}
+
+.cx-empty-icon{
+
+    width:66px;
+    height:66px;
+    margin:0 auto 16px;
+    border-radius:20px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:28px;
+    color:#0d6efd;
+    background:linear-gradient(135deg,#e9f2ff,#f3ecff);
+
+}
+
+
+/* Older engines ignore color-mix; keep the cards legible there. */
+
+@supports not (background:color-mix(in srgb,#000 10%,#fff)){
+
+    .cx-metric{ background:#f6f8fb; border-color:#e6ebf2; }
+    .cx-open{ background:#f2f6ff; border-color:#d5e3ff; }
+    .cx-tile{ background:#fff; }
+
+}
+
+</style>
+
+
+
+<script>
+(function () {
+
+    const grid = document.getElementById('caseGrid');
+
+    if (!grid) { return; }
+
+    const cards = Array.from(grid.querySelectorAll('.cx-case-col'));
+
+    if (!cards.length) { return; }
+
+
+    const search   = document.getElementById('caseSearch');
+    const status   = document.getElementById('filterStatus');
+    const severity = document.getElementById('filterSeverity');
+    const type     = document.getElementById('filterType');
+
+    const counter  = document.getElementById('caseCount');
+    const noMatch  = document.getElementById('noMatch');
+    const reset    = document.getElementById('caseReset');
+
+
+    function apply() {
+
+        const term = (search.value || '').trim().toLowerCase();
+
+        let shown = 0;
+
+        cards.forEach(card => {
+
+            const visible =
+                (!term || card.dataset.text.indexOf(term) !== -1) &&
+                (!status.value   || card.dataset.status === status.value) &&
+                (!severity.value || card.dataset.severity === severity.value) &&
+                (!type.value     || card.dataset.type === type.value);
+
+            card.classList.toggle('d-none', !visible);
+
+            if (visible) { shown += 1; }
+
+        });
+
+        if (noMatch) { noMatch.classList.toggle('d-none', shown !== 0); }
+
+        if (counter) {
+            counter.textContent = shown === cards.length
+                ? cards.length + ' cases'
+                : shown + ' of ' + cards.length;
+        }
+
+    }
+
+
+    [search, status, severity, type].forEach(control => {
+        control.addEventListener('input', apply);
+        control.addEventListener('change', apply);
+    });
+
+
+    if (reset) {
+
+        reset.addEventListener('click', () => {
+
+            search.value = '';
+            status.value = '';
+            severity.value = '';
+            type.value = '';
+
+            apply();
+
+        });
+
+    }
+
+
+    apply();
+
+})();
+</script>
 
 {% endblock %}
