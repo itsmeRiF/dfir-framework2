@@ -2,62 +2,91 @@
 
 {% block analysis_content %}
 
-<div class="viz-root">
+<div class="viz-root evidence-root">
 
 
-<!-- ================= HEADER ================= -->
+<!-- ================= HERO ================= -->
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="cx-hero mb-4">
 
-    <div>
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
 
-        <h2 class="fw-bold mb-1">
-            <i class="bi bi-hdd-stack text-primary"></i>
-            Evidence Repository
-        </h2>
+        <div>
 
-        <p class="text-muted mb-0">
-            Every artifact uploaded across
-            {{ totals.cases }} case{{ '' if totals.cases == 1 else 's' }}
-        </p>
+            <h2 class="fw-bold mb-1">
+                <i class="bi bi-hdd-stack"></i>
+                Evidence Repository
+            </h2>
 
-    </div>
+            <p class="mb-0">
+                {{ "{:,}".format(totals.evidence) }}
+                artifact{{ '' if totals.evidence == 1 else 's' }}
+                across {{ totals.cases_with_evidence }} of
+                {{ totals.cases }} case{{ '' if totals.cases == 1 else 's' }}
+                &bull; {{ totals.size_display }} held
+            </p>
 
-    <div class="d-flex gap-2">
+        </div>
 
-        <a href="{{ url_for('analysis.global_dashboard') }}"
-           class="btn btn-outline-primary">
-            <i class="bi bi-speedometer2"></i>
-            Dashboard
-        </a>
+        <div class="d-flex gap-2 cx-hero-actions">
 
-        <a href="/cases" class="btn btn-outline-secondary">
-            <i class="bi bi-folder2-open"></i>
-            Browse Cases
-        </a>
+            <a href="{{ url_for('analysis.global_dashboard') }}"
+               class="btn btn-light fw-semibold">
+                <i class="bi bi-speedometer2"></i>
+                Dashboard
+            </a>
+
+            <a href="/cases" class="btn btn-light fw-semibold">
+                <i class="bi bi-folder2-open"></i>
+                Browse Cases
+            </a>
+
+        </div>
 
     </div>
 
 </div>
 
 
-<!-- ================= KPI ROW ================= -->
+<!-- ================= KPI ROW =================
+
+     The status tiles are the status filter, so the numbers
+     double as the way to narrow the table below.            -->
 
 <div class="row g-3 mb-4">
 
     {% set tiles = [
-        ("Evidence",   "{:,}".format(totals.evidence),   "bi-files",             "slot-1"),
-        ("Completed",  "{:,}".format(totals.completed),  "bi-check-circle",      "slot-3"),
-        ("Processing", "{:,}".format(totals.processing), "bi-arrow-repeat",      "slot-1"),
-        ("Queued",     "{:,}".format(totals.queued),     "bi-hourglass-split",   "slot-2"),
-        ("Failed",     "{:,}".format(totals.failed),     "bi-x-circle",          "crit"),
-        ("Total size", "{:,}".format(totals.size_mb) ~ " MB", "bi-hdd",          "slot-3"),
-        ("Cases",      "{:,}".format(totals.cases_with_evidence), "bi-folder2",  "slot-2")
+        ("Evidence",   "{:,}".format(totals.evidence),            "bi-files",           "tone-1", ""),
+        ("Completed",  "{:,}".format(totals.completed),           "bi-check-circle-fill","tone-2", "completed"),
+        ("Processing", "{:,}".format(totals.processing),          "bi-arrow-repeat",    "tone-5", "processing"),
+        ("Queued",     "{:,}".format(totals.queued),              "bi-hourglass-split", "tone-3", "queued"),
+        ("Failed",     "{:,}".format(totals.failed),              "bi-x-circle-fill",   "tone-6", "failed"),
+        ("Total size", totals.size_display,                       "bi-hdd-fill",        "tone-4", ""),
+        ("Cases",      "{:,}".format(totals.cases_with_evidence), "bi-folder2-open",    "tone-7", "")
     ] %}
 
-    {% for label, value, icon, tone in tiles %}
+    {% for label, value, icon, tone, status in tiles %}
 
     <div class="col-6 col-md-4 col-xl">
+
+        {% if rows and status %}
+
+        <button type="button"
+                class="cx-tile {{ tone }} is-filter"
+                data-status="{{ status }}"
+                title="Show only {{ label|lower }} evidence">
+
+            <div class="cx-tile-icon">
+                <i class="bi {{ icon }}"></i>
+            </div>
+
+            <div class="cx-tile-value">{{ value }}</div>
+
+            <div class="cx-tile-label">{{ label }}</div>
+
+        </button>
+
+        {% else %}
 
         <div class="cx-tile {{ tone }}">
 
@@ -65,15 +94,13 @@
                 <i class="bi {{ icon }}"></i>
             </div>
 
-            <div class="cx-tile-value">
-                {{ value }}
-            </div>
+            <div class="cx-tile-value">{{ value }}</div>
 
-            <div class="cx-tile-label">
-                {{ label }}
-            </div>
+            <div class="cx-tile-label">{{ label }}</div>
 
         </div>
+
+        {% endif %}
 
     </div>
 
@@ -91,12 +118,11 @@
         <div>
             <h6>All evidence</h6>
             <small>
-                Newest upload first — every case in one list
+                Newest upload first &bull; click a column heading to sort
             </small>
         </div>
 
-        <span class="badge bg-primary-subtle text-primary-emphasis"
-              id="evidenceCount">
+        <span class="cx-head-badge" id="evidenceCount">
             {{ "{:,}".format(totals.evidence) }} files
         </span>
 
@@ -109,12 +135,12 @@
 
     <div class="row g-2 mb-3 cx-filters">
 
-        <div class="col-md-4">
+        <div class="col-lg-4">
 
             <div class="input-group input-group-sm">
 
-                <span class="input-group-text">
-                    <i class="bi bi-search"></i>
+                <span class="input-group-text bg-white">
+                    <i class="bi bi-search text-muted"></i>
                 </span>
 
                 <input type="search"
@@ -126,7 +152,7 @@
 
         </div>
 
-        <div class="col-md-3">
+        <div class="col-6 col-lg-3">
 
             <select id="filterCase" class="form-select form-select-sm">
                 <option value="">All cases</option>
@@ -139,7 +165,7 @@
 
         </div>
 
-        <div class="col-md-3">
+        <div class="col-6 col-lg-3">
 
             <select id="filterArtifact" class="form-select form-select-sm">
                 <option value="">All artifact types</option>
@@ -152,15 +178,26 @@
 
         </div>
 
-        <div class="col-md-2">
+        <div class="col-6 col-lg-1">
 
             <select id="filterStatus" class="form-select form-select-sm">
-                <option value="">All statuses</option>
+                <option value="">Status</option>
                 <option value="completed">Completed</option>
                 <option value="processing">Processing</option>
                 <option value="queued">Queued</option>
                 <option value="failed">Failed</option>
             </select>
+
+        </div>
+
+        <div class="col-6 col-lg-1 d-grid">
+
+            <button type="button"
+                    id="filterReset"
+                    class="btn btn-sm btn-outline-secondary"
+                    title="Clear filters and sorting">
+                <i class="bi bi-arrow-counterclockwise"></i>
+            </button>
 
         </div>
 
@@ -176,14 +213,37 @@
 
             <thead>
                 <tr>
-                    <th>File</th>
-                    <th>Case</th>
-                    <th>Artifact</th>
-                    <th>Parser</th>
-                    <th class="text-end">Size</th>
-                    <th>SHA256</th>
-                    <th>Status</th>
-                    <th>Uploaded</th>
+                    <th class="sortable" data-sort="file" data-type="text">
+                        <i class="bi bi-file-earmark"></i> File
+                        <i class="bi bi-arrow-down-up sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="casename" data-type="text">
+                        <i class="bi bi-folder2-open"></i> Case
+                        <i class="bi bi-arrow-down-up sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="artifact" data-type="text">
+                        <i class="bi bi-box-seam"></i> Artifact
+                        <i class="bi bi-arrow-down-up sort-icon"></i>
+                    </th>
+                    <th>
+                        <i class="bi bi-gear"></i> Parser
+                    </th>
+                    <th class="sortable" data-sort="size" data-type="number"
+                        style="min-width:130px;">
+                        <i class="bi bi-hdd"></i> Size
+                        <i class="bi bi-arrow-down-up sort-icon"></i>
+                    </th>
+                    <th>
+                        <i class="bi bi-fingerprint"></i> SHA256
+                    </th>
+                    <th class="sortable" data-sort="status" data-type="text">
+                        <i class="bi bi-activity"></i> Status
+                        <i class="bi bi-arrow-down-up sort-icon"></i>
+                    </th>
+                    <th class="sortable" data-sort="uploaded" data-type="text">
+                        <i class="bi bi-clock"></i> Uploaded
+                        <i class="bi bi-arrow-down-up sort-icon"></i>
+                    </th>
                     <th class="text-end">Actions</th>
                 </tr>
             </thead>
@@ -197,8 +257,13 @@
                 {% set state = (e.status or "")|lower %}
 
                 <tr data-case="{{ case.id }}"
+                    data-casename="{{ case.name|lower }}"
                     data-status="{{ state }}"
                     data-artifact="{{ (e.artifact_type or '')|lower }}"
+                    data-file="{{ e.filename|lower }}"
+                    data-size="{{ e.filesize or 0 }}"
+                    data-uploaded="{{ format_ist(e.uploaded_at) }}"
+                    style="--case:{{ case.color }};"
                     data-text="{{ [e.filename,
                                    e.original_filename,
                                    e.parser,
@@ -208,19 +273,29 @@
                                    case.number]|select|join(' ')|lower }}">
 
                     <td>
-                        <div class="fw-semibold">
-                            {{ e.filename }}
+                        <div class="cx-file">
+                            <span class="cx-file-icon">
+                                <i class="bi {{
+                                    'bi-cpu' if (e.artifact_type or '')|lower == 'memory'
+                                    else 'bi-journal-text' }}"></i>
+                            </span>
+                            <span class="overflow-hidden">
+                                <span class="fw-semibold d-block text-truncate"
+                                      title="{{ e.filename }}">
+                                    {{ e.filename }}
+                                </span>
+                                <small class="text-muted text-truncate d-block"
+                                       title="{{ e.original_filename or '' }}">
+                                    {{ e.original_filename or "-" }}
+                                </small>
+                            </span>
                         </div>
-                        <small class="text-muted">
-                            {{ e.original_filename or "-" }}
-                        </small>
                     </td>
 
                     <td>
                         <a href="/analysis/evidence/{{ case.id }}"
-                           class="cx-case d-flex align-items-center gap-2">
-                            <span class="cx-swatch"
-                                  style="background:{{ case.color }};"></span>
+                           class="cx-case">
+                            <span class="cx-swatch"></span>
                             <span>
                                 <span class="fw-semibold d-block">
                                     {{ case.name }}
@@ -234,68 +309,73 @@
 
                     <td>
                         {% if e.artifact_type %}
-                        <span class="badge bg-info-subtle text-info-emphasis">
+                        <span class="cx-chip artifact-{{ e.artifact_type|lower }}">
                             {{ e.artifact_type }}
                         </span>
                         {% else %}
-                        -
+                        <span class="text-muted">—</span>
                         {% endif %}
                     </td>
 
                     <td>
-                        {{ e.parser or "Pending" }}
+                        {% if e.parser %}
+                        <small class="fw-semibold">{{ e.parser }}</small>
+                        {% else %}
+                        <small class="text-muted fst-italic">Pending</small>
+                        {% endif %}
                     </td>
 
-                    <td class="text-end">
-                        {{ e.size_mb }} MB
+                    <td>
+                        {# Bar is relative to the largest artifact held,
+                           so heavy images stand out at a glance. #}
+                        <div class="fw-semibold num">{{ row.size_display }}</div>
+                        <div class="cx-size">
+                            <span class="cx-size-fill"
+                                  data-width="{{ row.size_share }}"></span>
+                        </div>
                     </td>
 
                     <td>
                         {% if e.sha256 %}
-                        <code title="{{ e.sha256 }}">
-                            {{ e.sha256[:16] }}…
+                        <code class="cx-hash" title="{{ e.sha256 }}">
+                            {{ e.sha256[:12] }}…
                         </code>
                         {% else %}
-                        <span class="text-muted">
-                            Not calculated
-                        </span>
+                        <small class="text-muted">Not calculated</small>
                         {% endif %}
                     </td>
 
                     <td>
                         {% if state == "completed" %}
-                        <span class="badge bg-success">
-                            <i class="bi bi-check-circle"></i>
-                            Completed
+                        <span class="cx-pill st-completed">
+                            <i class="bi bi-check-circle-fill"></i> Completed
                         </span>
                         {% elif state == "failed" %}
-                        <span class="badge bg-danger"
+                        <span class="cx-pill st-failed"
                               title="{{ e.error_message or '' }}">
-                            <i class="bi bi-x-circle"></i>
-                            Failed
+                            <i class="bi bi-x-circle-fill"></i> Failed
                         </span>
                         {% elif state == "processing" %}
-                        <span class="badge bg-primary">
-                            <i class="bi bi-arrow-repeat"></i>
-                            Processing
+                        <span class="cx-pill st-processing">
+                            <i class="bi bi-arrow-repeat"></i> Processing
                         </span>
                         {% elif state == "queued" %}
-                        <span class="badge bg-warning text-dark">
-                            <i class="bi bi-hourglass-split"></i>
-                            Queued
+                        <span class="cx-pill st-queued">
+                            <i class="bi bi-hourglass-split"></i> Queued
                         </span>
                         {% else %}
-                        <span class="badge bg-secondary">
+                        <span class="cx-pill st-other">
                             {{ e.status or "Unknown" }}
                         </span>
                         {% endif %}
                     </td>
 
-                    <td>
+                    <td class="num">
                         {% if e.uploaded_at %}
-                        {{ format_ist(e.uploaded_at) }} IST
+                        <small>{{ format_ist(e.uploaded_at) }}</small>
+                        <small class="text-muted d-block">IST</small>
                         {% else %}
-                        -
+                        <span class="text-muted">—</span>
                         {% endif %}
                     </td>
 
@@ -304,7 +384,7 @@
                         <div class="d-flex justify-content-end gap-1">
 
                             <a href="/analysis/evidence/{{ case.id }}"
-                               class="btn btn-sm btn-outline-secondary"
+                               class="cx-act"
                                title="Open this case's evidence">
                                 <i class="bi bi-box-arrow-up-right"></i>
                             </a>
@@ -314,7 +394,7 @@
                                                      evidence_id=e.id) }}"
                                   onsubmit="return confirm('Re-analyze this evidence?');">
 
-                                <button class="btn btn-sm btn-outline-primary"
+                                <button class="cx-act act-primary"
                                         title="Re-analyze">
                                     <i class="bi bi-arrow-repeat"></i>
                                 </button>
@@ -326,7 +406,7 @@
                                                      evidence_id=e.id) }}"
                                   onsubmit="return confirm('Delete this evidence permanently?');">
 
-                                <button class="btn btn-sm btn-outline-danger"
+                                <button class="cx-act act-danger"
                                         title="Delete">
                                     <i class="bi bi-trash"></i>
                                 </button>
@@ -342,14 +422,28 @@
                 {% else %}
 
                 <tr>
-                    <td colspan="9" class="text-center text-muted py-5">
-                        <i class="bi bi-inbox fs-1 d-block mb-3"></i>
-                        No evidence uploaded in any case yet.
-                        {% if totals.cases %}
-                        Open a case to add the first artifact.
-                        {% else %}
-                        <a href="/cases/new">Create the first case</a>.
-                        {% endif %}
+                    <td colspan="9" class="p-0">
+                        <div class="cx-blank">
+                            <div class="cx-blank-icon">
+                                <i class="bi bi-inbox"></i>
+                            </div>
+                            <h5 class="fw-bold mb-2">No evidence uploaded yet</h5>
+                            <p class="text-muted mb-3">
+                                Evidence is uploaded inside a case, then parsed
+                                into the events and artifacts the other tabs show.
+                            </p>
+                            {% if totals.cases %}
+                            <a href="/cases" class="btn btn-primary btn-sm">
+                                <i class="bi bi-folder2-open"></i>
+                                Open a case to add the first artifact
+                            </a>
+                            {% else %}
+                            <a href="/cases/new" class="btn btn-primary btn-sm">
+                                <i class="bi bi-plus-circle"></i>
+                                Create the first case
+                            </a>
+                            {% endif %}
+                        </div>
                     </td>
                 </tr>
 
@@ -357,9 +451,16 @@
 
 
                 <tr id="noMatchRow" class="d-none">
-                    <td colspan="9" class="text-center text-muted py-5">
-                        <i class="bi bi-funnel fs-1 d-block mb-3"></i>
-                        No evidence matches the current filters.
+                    <td colspan="9" class="p-0">
+                        <div class="cx-blank">
+                            <div class="cx-blank-icon">
+                                <i class="bi bi-funnel"></i>
+                            </div>
+                            <h5 class="fw-bold mb-2">Nothing matches</h5>
+                            <p class="text-muted mb-0">
+                                No evidence matches the current filters.
+                            </p>
+                        </div>
                     </td>
                 </tr>
 
@@ -379,6 +480,386 @@
 {% include "components/global_styles.html" %}
 
 
+<style>
+
+/* ---------- hero ---------- */
+
+.evidence-root .cx-hero{
+
+    position:relative;
+    overflow:hidden;
+    border-radius:20px;
+    padding:26px 30px;
+    color:#fff;
+    background:linear-gradient(120deg,#2e1065 0%,#6d28d9 38%,#a855f7 72%,#f0abfc 100%);
+    box-shadow:0 14px 34px rgba(124,58,237,.30);
+
+}
+
+.evidence-root .cx-hero::after{
+
+    content:"";
+    position:absolute;
+    top:-70%;
+    right:-6%;
+    width:400px;
+    height:400px;
+    border-radius:50%;
+    background:radial-gradient(circle,rgba(255,255,255,.20),transparent 65%);
+    animation:cx-drift 10s ease-in-out infinite alternate;
+    pointer-events:none;
+
+}
+
+@keyframes cx-drift{
+
+    from{ transform:translate(0,0); }
+    to{   transform:translate(-38px,26px); }
+
+}
+
+.evidence-root .cx-hero h2,
+.evidence-root .cx-hero p,
+.evidence-root .cx-hero-actions{
+
+    position:relative;
+    z-index:2;
+
+}
+
+.evidence-root .cx-hero p{ opacity:.92; }
+
+
+/* ---------- KPI tiles ---------- */
+
+.evidence-root{
+
+    --tone-1:#7c3aed;
+    --tone-2:#12a150;
+    --tone-3:#d97706;
+    --tone-4:#0d9488;
+    --tone-5:#2a78d6;
+    --tone-6:#dc3545;
+    --tone-7:#db2777;
+
+}
+
+.evidence-root .cx-tile{
+
+    width:100%;
+    text-align:left;
+    background:linear-gradient(180deg,
+               color-mix(in srgb, var(--tone) 13%, #fff) 0%, #fff 62%);
+    border:1px solid rgba(11,11,11,.10);
+    box-shadow:0 4px 16px rgba(16,32,64,.07);
+
+}
+
+.evidence-root .cx-tile::after{ background:var(--tone); }
+
+.evidence-root .cx-tile.tone-1{ --tone:var(--tone-1); }
+.evidence-root .cx-tile.tone-2{ --tone:var(--tone-2); }
+.evidence-root .cx-tile.tone-3{ --tone:var(--tone-3); }
+.evidence-root .cx-tile.tone-4{ --tone:var(--tone-4); }
+.evidence-root .cx-tile.tone-5{ --tone:var(--tone-5); }
+.evidence-root .cx-tile.tone-6{ --tone:var(--tone-6); }
+.evidence-root .cx-tile.tone-7{ --tone:var(--tone-7); }
+
+.evidence-root .cx-tile-icon,
+.evidence-root .cx-tile-value{ color:var(--tone); }
+
+.evidence-root .cx-tile-value{
+
+    font-size:24px;
+    font-weight:800;
+
+}
+
+/* Status tiles double as the status filter. */
+
+.evidence-root .cx-tile.is-filter{
+
+    cursor:pointer;
+    transition:transform .2s ease, box-shadow .2s ease;
+
+}
+
+.evidence-root .cx-tile.is-filter:hover{
+
+    transform:translateY(-3px);
+    box-shadow:0 16px 38px rgba(16,32,64,.16);
+
+}
+
+.evidence-root .cx-tile.is-filter.on{
+
+    border-color:var(--tone);
+    box-shadow:0 0 0 1px var(--tone) inset,
+               0 10px 24px -12px var(--tone);
+
+}
+
+
+/* ---------- table ---------- */
+
+.evidence-root .cx-card-head small{ color:#898781; }
+
+.evidence-root .cx-head-badge{
+
+    background:#f3ecff;
+    color:#5b21b6;
+    font-size:12px;
+    font-weight:700;
+    padding:5px 12px;
+    border-radius:999px;
+    white-space:nowrap;
+    font-variant-numeric:tabular-nums;
+
+}
+
+.evidence-root .cx-table thead th{
+
+    background:#f7f9fc;
+    border-bottom:1px solid rgba(16,32,64,.08);
+
+}
+
+.evidence-root .cx-table th.sortable{
+
+    cursor:pointer;
+    user-select:none;
+
+}
+
+.evidence-root .cx-table th.sortable:hover{ color:#7c3aed; }
+
+.evidence-root .cx-table th .sort-icon{
+
+    opacity:.25;
+    margin-left:3px;
+    font-size:11px;
+
+}
+
+.evidence-root .cx-table th.sorted,
+.evidence-root .cx-table th.sorted .sort-icon{
+
+    opacity:1;
+    color:#7c3aed;
+
+}
+
+.evidence-root .cx-table tbody tr{
+
+    transition:background .15s ease;
+
+}
+
+.evidence-root .cx-table tbody tr[data-case]:hover{
+
+    background:color-mix(in srgb, var(--case,#7c3aed) 6%, #fff);
+
+}
+
+/* Left edge coloured by the row's own case. */
+
+.evidence-root .cx-table tbody tr[data-case] td:first-child{
+
+    box-shadow:inset 3px 0 0 var(--case,#dee2e6);
+
+}
+
+.evidence-root .cx-swatch{ background:var(--case,#7c3aed); }
+
+
+/* ---------- file cell ---------- */
+
+.cx-file{
+
+    display:flex;
+    align-items:center;
+    gap:10px;
+    max-width:280px;
+
+}
+
+.cx-file-icon{
+
+    width:34px;
+    height:34px;
+    flex:none;
+    border-radius:10px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:15px;
+    color:var(--case,#7c3aed);
+    background:color-mix(in srgb, var(--case,#7c3aed) 12%, #fff);
+
+}
+
+
+/* ---------- chips + pills ---------- */
+
+.cx-chip{
+
+    display:inline-block;
+    padding:.28em .65em;
+    border-radius:7px;
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:.3px;
+    background:#eef2f7;
+    color:#42505f;
+    border:1px solid #e0e6ee;
+
+}
+
+.artifact-evtx{   background:#e8f1ff; color:#1b4fa8; border-color:#c9dcff; }
+.artifact-memory{ background:#f3ecff; color:#5b21b6; border-color:#ddcdfb; }
+
+.evidence-root .cx-pill{
+
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    padding:.3em .65em;
+    border-radius:999px;
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:.3px;
+    text-transform:uppercase;
+    white-space:nowrap;
+    border:1px solid transparent;
+
+}
+
+.st-completed{  background:#e3f6ec; color:#0f7a3d; border-color:#b7e6ca; }
+.st-failed{     background:#fde7e9; color:#b02a37; border-color:#f5c2c7; }
+.st-processing{ background:#e8f1ff; color:#1b4fa8; border-color:#c9dcff; }
+.st-queued{     background:#fff6d9; color:#8a6100; border-color:#ffe69c; }
+.st-other{      background:#eceef1; color:#4b5563; border-color:#dee2e6; }
+
+.cx-hash{
+
+    font-size:.8rem;
+    background:#f4f6fa;
+    border:1px solid #e6ebf2;
+    border-radius:6px;
+    padding:2px 6px;
+    color:#42505f;
+
+}
+
+
+/* ---------- size bar ---------- */
+
+.cx-size{
+
+    height:5px;
+    border-radius:999px;
+    background:#eef1f5;
+    overflow:hidden;
+    margin-top:4px;
+    max-width:110px;
+
+}
+
+.cx-size-fill{
+
+    display:block;
+    height:100%;
+    width:0;
+    border-radius:999px;
+    background:linear-gradient(90deg,
+               var(--case,#7c3aed) 0%,
+               color-mix(in srgb, var(--case,#7c3aed) 45%, #fff) 100%);
+    transition:width .9s cubic-bezier(.22,1,.36,1);
+
+}
+
+
+/* ---------- actions ---------- */
+
+.cx-act{
+
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:30px;
+    height:30px;
+    border-radius:8px;
+    border:1px solid #e0e6ee;
+    background:#fff;
+    color:#5b6672;
+    font-size:13px;
+    text-decoration:none;
+    cursor:pointer;
+    transition:.16s;
+
+}
+
+.cx-act:hover{
+
+    background:#eef2f7;
+    color:#111827;
+
+}
+
+.cx-act.act-primary:hover{
+
+    background:#7c3aed;
+    border-color:#7c3aed;
+    color:#fff;
+
+}
+
+.cx-act.act-danger:hover{
+
+    background:#dc3545;
+    border-color:#dc3545;
+    color:#fff;
+
+}
+
+
+/* ---------- blank states ---------- */
+
+.cx-blank{
+
+    text-align:center;
+    padding:52px 30px;
+
+}
+
+.cx-blank-icon{
+
+    width:64px;
+    height:64px;
+    margin:0 auto 14px;
+    border-radius:19px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:27px;
+    color:#7c3aed;
+    background:linear-gradient(135deg,#f3ecff,#e9f2ff);
+
+}
+
+
+@supports not (background:color-mix(in srgb,#000 10%,#fff)){
+
+    .evidence-root .cx-tile{ background:#fff; }
+    .evidence-root .cx-table tbody tr[data-case]:hover{ background:#f6f9fe; }
+    .cx-file-icon{ background:#f4f6fa; }
+    .cx-size-fill{ background:var(--case,#7c3aed); }
+
+}
+
+</style>
+
+
 
 <script>
 (function () {
@@ -394,6 +875,7 @@
     if (!rows.length) { return; }
 
 
+    const body     = table.querySelector("tbody");
     const text     = document.getElementById("filterText");
     const caseSel  = document.getElementById("filterCase");
     const artifact = document.getElementById("filterArtifact");
@@ -401,8 +883,31 @@
 
     const counter  = document.getElementById("evidenceCount");
     const noMatch  = document.getElementById("noMatchRow");
+    const reset    = document.getElementById("filterReset");
+
+    const tiles    = Array.prototype.slice.call(
+        document.querySelectorAll(".cx-tile.is-filter")
+    );
+
+    const headers  = Array.prototype.slice.call(
+        table.querySelectorAll("th.sortable")
+    );
+
+    // The order the server sent, to return to when sorting is cleared.
+    const original = rows.slice();
 
     const nf = new Intl.NumberFormat();
+
+    let sortKey = null;
+    let sortDir = 1;
+
+
+    // Size bars grow into place once laid out.
+    requestAnimationFrame(function () {
+        document.querySelectorAll(".cx-size-fill").forEach(function (bar) {
+            bar.style.width = (bar.dataset.width || 0) + "%";
+        });
+    });
 
 
     const apply = () => {
@@ -431,6 +936,54 @@
             ? nf.format(rows.length) + " files"
             : nf.format(shown) + " of " + nf.format(rows.length) + " files";
 
+        // The status tiles and the status dropdown are one filter, so
+        // whichever was used, both end up showing the same answer.
+        tiles.forEach((tile) =>
+            tile.classList.toggle("on", tile.dataset.status === status.value));
+
+    };
+
+
+    const sortBy = (key, type) => {
+
+        // Same column again reverses; a new column starts ascending.
+        if (sortKey === key) {
+            sortDir = -sortDir;
+        } else {
+            sortKey = key;
+            sortDir = 1;
+        }
+
+        original.slice().sort((a, b) => {
+
+            if (type === "number") {
+                return (Number(a.dataset[key]) - Number(b.dataset[key])) * sortDir;
+            }
+
+            return String(a.dataset[key] || "")
+                .localeCompare(String(b.dataset[key] || "")) * sortDir;
+
+        }).forEach((row) => body.appendChild(row));
+
+        // The empty-state row must stay last.
+        body.appendChild(noMatch);
+
+        headers.forEach((header) => {
+
+            const on = header.dataset.sort === sortKey;
+
+            header.classList.toggle("sorted", on);
+
+            const icon = header.querySelector(".sort-icon");
+
+            if (icon) {
+                icon.className = "bi sort-icon " + (on
+                    ? (sortDir === 1 ? "bi-sort-down-alt" : "bi-sort-up-alt")
+                    : "bi-arrow-down-up");
+            }
+
+        });
+
     };
 
 
@@ -438,6 +991,55 @@
         control.addEventListener("input", apply);
         control.addEventListener("change", apply);
     });
+
+    // Clicking the tile that is already on clears the filter again.
+    tiles.forEach((tile) => {
+        tile.addEventListener("click", () => {
+            status.value = status.value === tile.dataset.status
+                ? ""
+                : tile.dataset.status;
+            apply();
+        });
+    });
+
+    headers.forEach((header) => {
+        header.addEventListener("click", () =>
+            sortBy(header.dataset.sort, header.dataset.type));
+    });
+
+    if (reset) {
+
+        reset.addEventListener("click", () => {
+
+            text.value = "";
+            caseSel.value = "";
+            artifact.value = "";
+            status.value = "";
+
+            sortKey = null;
+            sortDir = 1;
+
+            original.forEach((row) => body.appendChild(row));
+            body.appendChild(noMatch);
+
+            headers.forEach((header) => {
+
+                header.classList.remove("sorted");
+
+                const icon = header.querySelector(".sort-icon");
+
+                if (icon) { icon.className = "bi sort-icon bi-arrow-down-up"; }
+
+            });
+
+            apply();
+
+        });
+
+    }
+
+
+    apply();
 
 })();
 </script>

@@ -417,6 +417,27 @@ def top_hosts(limit=8):
 # newest first, each row carrying the case it belongs to.
 # =========================================================
 
+def human_size(size):
+    """Bytes as the unit a reader would actually say out loud.
+
+    A 6.5 GB memory image reads better than "6706.21 MB".
+    """
+
+    size = float(size or 0)
+
+    for unit in ("B", "KB", "MB", "GB"):
+
+        if size < 1024 or unit == "GB":
+            break
+
+        size /= 1024
+
+    if unit == "B":
+        return "%d B" % size
+
+    return "%.1f %s" % (size, unit)
+
+
 def evidence_repository():
 
     chips = case_chips()
@@ -430,11 +451,24 @@ def evidence_repository():
         .all()
     )
 
+    # The biggest artifact sets the scale for the size bars.
+    largest = max(
+        (item.filesize or 0 for item in items),
+        default=0
+    )
+
     rows = [
 
         {
             "evidence": item,
-            "case": chip_for(chips, item.case_id)
+
+            "case": chip_for(chips, item.case_id),
+
+            "size_display": human_size(item.filesize),
+
+            "size_share": round(
+                (item.filesize or 0) / largest * 100
+            ) if largest else 0,
         }
 
         for item in items
@@ -464,6 +498,10 @@ def evidence_repository():
         "size_mb": round(
             sum(item.filesize or 0 for item in items) / (1024 * 1024),
             2
+        ),
+
+        "size_display": human_size(
+            sum(item.filesize or 0 for item in items)
         ),
 
         "cases": len(chips),
