@@ -5,51 +5,69 @@
 <div class="viz-root">
 
 
-<!-- ================= HEADER ================= -->
+<!-- ================= HERO ================= -->
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="cx-hero mb-4">
 
-    <div>
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
 
-        <h2 class="fw-bold mb-1">
-            <i class="bi bi-speedometer2 text-primary"></i>
-            All Cases Dashboard
-        </h2>
+        <div>
 
-        <p class="text-muted mb-0">
-            Every sidebar counter, rolled up across
-            {{ totals.cases }} case{{ '' if totals.cases == 1 else 's' }}
-        </p>
+            <h2 class="fw-bold mb-1">
+                <i class="bi bi-speedometer2"></i>
+                All Cases Dashboard
+            </h2>
+
+            <p class="mb-0">
+                Every sidebar counter, rolled up across
+                {{ totals.cases }} case{{ '' if totals.cases == 1 else 's' }}
+                &bull; {{ totals.open_cases }} open
+                &bull; {{ "{:,}".format(totals.events) }} events parsed
+            </p>
+
+        </div>
+
+        <div class="d-flex gap-2 cx-hero-actions">
+
+            <a href="/cases" class="btn btn-light fw-semibold">
+                <i class="bi bi-folder2-open"></i>
+                Browse Cases
+            </a>
+
+            <a href="/cases/new" class="btn btn-light fw-semibold">
+                <i class="bi bi-plus-circle-fill" style="color:#0f766e"></i>
+                New Case
+            </a>
+
+        </div>
 
     </div>
-
-    <a href="/cases" class="btn btn-outline-secondary">
-        <i class="bi bi-folder2-open"></i>
-        Browse Cases
-    </a>
 
 </div>
 
 
-<!-- ================= KPI ROW ================= -->
+<!-- ================= KPI ROW =================
+
+     Each tile is the tab it counts, so the numbers double as
+     the way into the view behind them.                        -->
 
 <div class="row g-3 mb-4">
 
     {% set tiles = [
-        ("Cases",     totals.cases,     "bi-folder2-open",       "slot-1"),
-        ("Open",      totals.open_cases,"bi-folder-symlink",     "slot-2"),
-        ("Evidence",  totals.evidence,  "bi-hdd-fill",           "slot-3"),
-        ("Events",    totals.events,    "bi-list-ul",            "slot-1"),
-        ("Timeline",  totals.timeline,  "bi-clock-history",      "slot-3"),
-        ("Incidents", totals.incidents, "bi-shield-exclamation", "crit"),
-        ("Memory",    totals.memory,    "bi-memory",             "slot-2")
+        ("Cases",     totals.cases,     "bi-folder2-open",              "tone-1", "/cases"),
+        ("Open",      totals.open_cases,"bi-folder-symlink-fill",       "tone-2", "/cases"),
+        ("Evidence",  totals.evidence,  "bi-hdd-fill",                  "tone-3", url_for('analysis.global_evidence')),
+        ("Events",    totals.events,    "bi-list-ul",                   "tone-4", url_for('analysis.global_events')),
+        ("Timeline",  totals.timeline,  "bi-clock-history",             "tone-5", url_for('analysis.global_timeline')),
+        ("Incidents", totals.incidents, "bi-exclamation-triangle-fill", "tone-6", url_for('analysis.global_incidents')),
+        ("Memory",    totals.memory,    "bi-memory",                    "tone-7", url_for('analysis.global_memory'))
     ] %}
 
-    {% for label, value, icon, tone in tiles %}
+    {% for label, value, icon, tone, link in tiles %}
 
     <div class="col-6 col-md-4 col-xl">
 
-        <div class="cx-tile {{ tone }}">
+        <a href="{{ link }}" class="cx-tile {{ tone }}">
 
             <div class="cx-tile-icon">
                 <i class="bi {{ icon }}"></i>
@@ -63,11 +81,143 @@
                 {{ label }}
             </div>
 
-        </div>
+            <i class="bi bi-arrow-right cx-tile-go"></i>
+
+        </a>
 
     </div>
 
     {% endfor %}
+
+</div>
+
+
+<!-- ================= SEVERITY + ACTIVITY ================= -->
+
+<div class="row g-4 mb-4">
+
+    <!-- ---------- severity mix ---------- -->
+
+    <div class="col-xl-4">
+
+        <div class="cx-card h-100">
+
+            <div class="cx-card-head">
+
+                <div>
+                    <h6>Severity mix</h6>
+                    <small>
+                        How the {{ "{:,}".format(totals.events) }} parsed events grade
+                    </small>
+                </div>
+
+            </div>
+
+            {% if totals.events %}
+
+            <div class="cx-canvas mb-3" style="height:190px;">
+                <canvas id="severityChart"></canvas>
+            </div>
+
+            <div class="cx-sev-list">
+
+                {% for row in severity %}
+
+                <a class="cx-sev-row"
+                   href="{{ url_for('analysis.global_events', severity=row.name) }}"
+                   style="--sev:{{ row.color }};"
+                   title="Open the event explorer filtered to {{ row.label|lower }}">
+
+                    <span class="cx-sev-dot"></span>
+
+                    <span class="cx-sev-name">{{ row.label }}</span>
+
+                    <span class="cx-sev-bar">
+                        <span class="cx-sev-fill"
+                              data-width="{{ row.percent }}"></span>
+                    </span>
+
+                    <span class="cx-sev-count">
+                        {{ "{:,}".format(row.count) }}
+                    </span>
+
+                </a>
+
+                {% endfor %}
+
+            </div>
+
+            {% else %}
+
+            <div class="cx-empty">
+                <i class="bi bi-pie-chart"></i>
+                No events parsed yet
+            </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+
+    <!-- ---------- activity ---------- -->
+
+    <div class="col-xl-8">
+
+        <div class="cx-card h-100">
+
+            <div class="cx-card-head">
+
+                <div>
+                    <h6>Detection activity</h6>
+                    <small>
+                        {% if activity.days %}
+                            Events per day over the
+                            {{ activity.days }} most recent day{{ '' if activity.days == 1 else 's' }}
+                            with activity
+                            {%- if activity.trimmed %} &bull; earlier history on the
+                            <a href="{{ url_for('analysis.global_timeline') }}">timeline</a>
+                            {%- endif %}
+                        {% else %}
+                            Events per day
+                        {% endif %}
+                    </small>
+                </div>
+
+                {% if activity.days %}
+                <div class="cx-chip-stats">
+                    <span title="Events in this window">
+                        <i class="bi bi-list-ul"></i>
+                        {{ "{:,}".format(activity.total) }}
+                    </span>
+                    <span title="Busiest single day">
+                        <i class="bi bi-fire"></i>
+                        {{ "{:,}".format(activity.peak) }}
+                    </span>
+                </div>
+                {% endif %}
+
+            </div>
+
+            {% if activity.days %}
+
+            <div class="cx-canvas" style="height:262px;">
+                <canvas id="activityChart"></canvas>
+            </div>
+
+            {% else %}
+
+            <div class="cx-empty">
+                <i class="bi bi-graph-up"></i>
+                No timestamped events yet
+            </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
 
 </div>
 
@@ -85,6 +235,10 @@
             </small>
         </div>
 
+        <span class="badge rounded-pill cx-head-badge">
+            {{ totals.cases }} case{{ '' if totals.cases == 1 else 's' }}
+        </span>
+
     </div>
 
     <div class="table-responsive">
@@ -95,6 +249,7 @@
                 <tr>
                     <th>Case</th>
                     <th>Status</th>
+                    <th>Share of events</th>
                     <th class="text-end">Evidence</th>
                     <th class="text-end">Events</th>
                     <th class="text-end">Timeline</th>
@@ -108,46 +263,68 @@
 
                 {% for row in cases %}
 
-                <tr>
+                <tr style="--case:{{ row.color }};">
 
                     <td>
-                        <div class="fw-semibold d-flex align-items-center gap-2">
+                        <a href="/analysis/dashboard/{{ row.id }}" class="cx-case-cell">
                             <!-- Same colour the case wears in every pie -->
-                            <span class="cx-swatch"
-                                  style="background:{{ row.color }};"></span>
-                            {{ row.name }}
-                        </div>
-                        <small class="text-muted ps-3 ms-1">
-                            {{ row.number }}
-                        </small>
+                            <span class="cx-swatch"></span>
+                            <span>
+                                <span class="fw-semibold d-block">{{ row.name }}</span>
+                                <small class="text-muted">{{ row.number }}</small>
+                            </span>
+                        </a>
                     </td>
 
                     <td>
                         {% if row.status == "open" %}
-                        <span class="badge bg-success-subtle text-success-emphasis">
-                            OPEN
+                        <span class="cx-pill status-open">
+                            <i class="bi bi-record-circle"></i> Open
                         </span>
                         {% elif row.status == "closed" %}
-                        <span class="badge bg-secondary-subtle text-secondary-emphasis">
-                            CLOSED
+                        <span class="cx-pill status-closed">
+                            <i class="bi bi-check-circle-fill"></i> Closed
                         </span>
                         {% else %}
-                        <span class="badge bg-warning-subtle text-warning-emphasis">
-                            {{ row.status|upper }}
+                        <span class="cx-pill status-other">
+                            <i class="bi bi-hourglass-split"></i> {{ row.status }}
                         </span>
                         {% endif %}
                     </td>
 
-                    <td class="text-end">{{ "{:,}".format(row.evidence) }}</td>
-                    <td class="text-end">{{ "{:,}".format(row.events) }}</td>
-                    <td class="text-end">{{ "{:,}".format(row.timeline) }}</td>
-                    <td class="text-end">{{ "{:,}".format(row.incidents) }}</td>
-                    <td class="text-end">{{ "{:,}".format(row.memory) }}</td>
+                    <td style="min-width:150px;">
+
+                        {% set share = (row.events / totals.events * 100)|round|int
+                                       if totals.events else 0 %}
+
+                        <div class="cx-share">
+                            <span class="cx-share-fill"
+                                  data-width="{{ share }}"></span>
+                        </div>
+
+                        <small class="text-muted">{{ share }}%</small>
+
+                    </td>
+
+                    <td class="text-end num">{{ "{:,}".format(row.evidence) }}</td>
+                    <td class="text-end num">{{ "{:,}".format(row.events) }}</td>
+                    <td class="text-end num">{{ "{:,}".format(row.timeline) }}</td>
+                    <td class="text-end num">
+                        {% if row.incidents %}
+                        <span class="fw-bold text-danger">
+                            {{ "{:,}".format(row.incidents) }}
+                        </span>
+                        {% else %}
+                        {{ row.incidents }}
+                        {% endif %}
+                    </td>
+                    <td class="text-end num">{{ "{:,}".format(row.memory) }}</td>
 
                     <td class="text-end">
                         <a href="/analysis/dashboard/{{ row.id }}"
-                           class="btn btn-sm btn-outline-primary">
+                           class="cx-open-btn">
                             Open
+                            <i class="bi bi-arrow-right"></i>
                         </a>
                     </td>
 
@@ -156,7 +333,8 @@
                 {% else %}
 
                 <tr>
-                    <td colspan="8" class="text-center text-muted py-4">
+                    <td colspan="9" class="text-center text-muted py-5">
+                        <i class="bi bi-folder-plus fs-1 d-block mb-3 opacity-50"></i>
                         No cases yet.
                         <a href="/cases/new">Create the first one</a>.
                     </td>
@@ -171,12 +349,12 @@
 
             <tfoot>
                 <tr class="fw-semibold">
-                    <td colspan="2">All cases</td>
-                    <td class="text-end">{{ "{:,}".format(totals.evidence) }}</td>
-                    <td class="text-end">{{ "{:,}".format(totals.events) }}</td>
-                    <td class="text-end">{{ "{:,}".format(totals.timeline) }}</td>
-                    <td class="text-end">{{ "{:,}".format(totals.incidents) }}</td>
-                    <td class="text-end">{{ "{:,}".format(totals.memory) }}</td>
+                    <td colspan="3">All cases</td>
+                    <td class="text-end num">{{ "{:,}".format(totals.evidence) }}</td>
+                    <td class="text-end num">{{ "{:,}".format(totals.events) }}</td>
+                    <td class="text-end num">{{ "{:,}".format(totals.timeline) }}</td>
+                    <td class="text-end num">{{ "{:,}".format(totals.incidents) }}</td>
+                    <td class="text-end num">{{ "{:,}".format(totals.memory) }}</td>
                     <td></td>
                 </tr>
             </tfoot>
@@ -222,7 +400,7 @@
                 <div>
                     <h6>{{ title }}</h6>
                     <small>
-                        {{ subtitle }}{% if total %} · click a slice to open the case{% endif %}
+                        {{ subtitle }}{% if total %} &bull; click a slice to open the case{% endif %}
                     </small>
                 </div>
 
@@ -265,7 +443,7 @@
 
 <div class="row g-4">
 
-    <div class="col-xl-6">
+    <div class="col-xl-7">
 
         <div class="cx-card h-100">
 
@@ -274,7 +452,7 @@
                 <div>
                     <h6>Top detections</h6>
                     <small>
-                        Most frequently triggered rules
+                        Most frequently triggered rules, coloured by worst severity
                     </small>
                 </div>
 
@@ -282,9 +460,41 @@
 
             {% if top_rules %}
 
-            <div class="cx-canvas"
-                 style="height:{{ 70 + top_rules|length * 34 }}px;">
-                <canvas id="rulesChart"></canvas>
+            {% set busiest = top_rules[0].count or 1 %}
+
+            <div class="cx-ranks">
+
+                {% for rule in top_rules %}
+
+                <a class="cx-rank"
+                   href="{{ url_for('analysis.global_events', search=rule.label) }}"
+                   style="--sev:{{
+                       '#dc3545' if rule.severity == 'critical' else
+                       '#fd7e14' if rule.severity == 'high' else
+                       '#f0b400' if rule.severity == 'medium' else
+                       '#0dcaf0' if rule.severity == 'low' else '#6c757d' }};"
+                   title="Search the event explorer for this rule">
+
+                    <div class="cx-rank-head">
+
+                        <span class="cx-rank-title">{{ rule.label }}</span>
+
+                        <span class="d-flex align-items-center gap-2 flex-shrink-0">
+                            <span class="cx-sev-tag">{{ rule.severity }}</span>
+                            <strong class="num">{{ "{:,}".format(rule.count) }}</strong>
+                        </span>
+
+                    </div>
+
+                    <div class="cx-rank-track">
+                        <span class="cx-rank-fill"
+                              data-width="{{ (rule.count / busiest * 100)|round|int }}"></span>
+                    </div>
+
+                </a>
+
+                {% endfor %}
+
             </div>
 
             {% else %}
@@ -301,7 +511,7 @@
     </div>
 
 
-    <div class="col-xl-6">
+    <div class="col-xl-5">
 
         <div class="cx-card h-100">
 
@@ -318,9 +528,39 @@
 
             {% if top_hosts %}
 
-            <div class="cx-canvas"
-                 style="height:{{ 70 + top_hosts|length * 34 }}px;">
-                <canvas id="hostsChart"></canvas>
+            {% set loudest = top_hosts[0].count or 1 %}
+
+            <div class="cx-ranks">
+
+                {% for host in top_hosts %}
+
+                <a class="cx-rank"
+                   href="{{ url_for('analysis.global_events', computer=host.label) }}"
+                   style="--sev:#0d9488;"
+                   title="Open the event explorer for this host">
+
+                    <div class="cx-rank-head">
+
+                        <span class="cx-rank-title">
+                            <i class="bi bi-pc-display-horizontal"></i>
+                            {{ host.label }}
+                        </span>
+
+                        <strong class="num flex-shrink-0">
+                            {{ "{:,}".format(host.count) }}
+                        </strong>
+
+                    </div>
+
+                    <div class="cx-rank-track">
+                        <span class="cx-rank-fill"
+                              data-width="{{ (host.count / loudest * 100)|round|int }}"></span>
+                    </div>
+
+                </a>
+
+                {% endfor %}
+
             </div>
 
             {% else %}
@@ -345,7 +585,7 @@
 
 <style>
 
-/* ---------- chart tokens ---------- */
+/* ---------- tokens ---------- */
 
 .viz-root{
 
@@ -359,28 +599,86 @@
     --grid:#e1e0d9;
     --border:rgba(11,11,11,.10);
 
-    /* categorical slots */
-    --slot-1:#2a78d6;
-    --slot-2:#eb6834;
-    --slot-3:#1baf7a;
+    --shadow:0 4px 16px rgba(16,32,64,.07);
+    --shadow-lg:0 16px 38px rgba(16,32,64,.16);
 
-    /* reserved status step */
-    --crit:#d03b3b;
+    /* one hue per KPI tile */
+    --tone-1:#2a78d6;
+    --tone-2:#12a150;
+    --tone-3:#7c3aed;
+    --tone-4:#0d9488;
+    --tone-5:#0ea5e9;
+    --tone-6:#e8590c;
+    --tone-7:#db2777;
 
 }
 
 
-/* ---------- stat tiles ---------- */
+/* ---------- hero ---------- */
+
+.cx-hero{
+
+    position:relative;
+    overflow:hidden;
+    border-radius:20px;
+    padding:26px 30px;
+    color:#fff;
+    background:linear-gradient(120deg,#052e2b 0%,#0f766e 38%,#14b8a6 72%,#a3e635 100%);
+    box-shadow:0 14px 34px rgba(15,118,110,.32);
+
+}
+
+.cx-hero::after{
+
+    content:"";
+    position:absolute;
+    top:-70%;
+    right:-6%;
+    width:400px;
+    height:400px;
+    border-radius:50%;
+    background:radial-gradient(circle,rgba(255,255,255,.20),transparent 65%);
+    animation:cx-drift 10s ease-in-out infinite alternate;
+    pointer-events:none;
+
+}
+
+@keyframes cx-drift{
+
+    from{ transform:translate(0,0); }
+    to{   transform:translate(-38px,26px); }
+
+}
+
+.cx-hero h2,
+.cx-hero p,
+.cx-hero-actions{
+
+    position:relative;
+    z-index:2;
+
+}
+
+.cx-hero p{ opacity:.92; }
+
+
+/* ---------- KPI tiles ---------- */
 
 .cx-tile{
 
     position:relative;
+    display:block;
     height:100%;
-    padding:16px 18px;
+    padding:14px 16px;
     border-radius:14px;
-    background:var(--surface-1);
+    background:linear-gradient(180deg,
+               color-mix(in srgb, var(--tone) 13%, #fff) 0%, #fff 62%);
     border:1px solid var(--border);
+    box-shadow:var(--shadow);
+    text-decoration:none;
+    color:inherit;
     overflow:hidden;
+    transition:transform .2s ease, box-shadow .2s ease;
 
 }
 
@@ -392,37 +690,74 @@
     top:0;
     bottom:0;
     width:4px;
-    background:var(--slot-1);
+    background:var(--tone);
 
 }
 
-.cx-tile.slot-2::after{ background:var(--slot-2); }
-.cx-tile.slot-3::after{ background:var(--slot-3); }
-.cx-tile.crit::after{ background:var(--crit); }
+.cx-tile:hover{
+
+    transform:translateY(-3px);
+    box-shadow:var(--shadow-lg);
+    color:inherit;
+
+}
+
+.cx-tile.tone-1{ --tone:var(--tone-1); }
+.cx-tile.tone-2{ --tone:var(--tone-2); }
+.cx-tile.tone-3{ --tone:var(--tone-3); }
+.cx-tile.tone-4{ --tone:var(--tone-4); }
+.cx-tile.tone-5{ --tone:var(--tone-5); }
+.cx-tile.tone-6{ --tone:var(--tone-6); }
+.cx-tile.tone-7{ --tone:var(--tone-7); }
 
 .cx-tile-icon{
 
-    font-size:16px;
-    color:var(--text-muted);
-    margin-bottom:6px;
+    font-size:15px;
+    color:var(--tone);
+    margin-bottom:4px;
 
 }
 
 .cx-tile-value{
 
-    font-size:28px;
-    font-weight:700;
+    font-size:24px;
+    font-weight:800;
     line-height:1.1;
-    color:var(--text-primary);
+    color:var(--tone);
+    font-variant-numeric:tabular-nums;
 
 }
 
 .cx-tile-label{
 
-    font-size:12px;
-    letter-spacing:.4px;
+    font-size:11px;
+    font-weight:600;
+    letter-spacing:.5px;
     text-transform:uppercase;
     color:var(--text-secondary);
+
+}
+
+/* The arrow only surfaces on hover, so the tile reads as a number
+   first and a link second. */
+
+.cx-tile-go{
+
+    position:absolute;
+    right:12px;
+    bottom:12px;
+    font-size:13px;
+    color:var(--tone);
+    opacity:0;
+    transform:translateX(-4px);
+    transition:.2s;
+
+}
+
+.cx-tile:hover .cx-tile-go{
+
+    opacity:1;
+    transform:translateX(0);
 
 }
 
@@ -435,6 +770,7 @@
     border:1px solid var(--border);
     border-radius:16px;
     padding:18px 20px 20px;
+    box-shadow:var(--shadow);
 
 }
 
@@ -462,6 +798,38 @@
 
 }
 
+.cx-head-badge{
+
+    background:#eef2f7;
+    color:#475569;
+    font-weight:600;
+    white-space:nowrap;
+
+}
+
+.cx-chip-stats{
+
+    display:flex;
+    gap:8px;
+    flex:none;
+
+}
+
+.cx-chip-stats span{
+
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    padding:3px 10px;
+    border-radius:999px;
+    background:#eef2f7;
+    color:#42505f;
+    font-size:12px;
+    font-weight:700;
+    font-variant-numeric:tabular-nums;
+
+}
+
 .cx-card-total{
 
     margin-top:12px;
@@ -483,21 +851,7 @@
 
 }
 
-.cx-swatch{
-
-    width:10px;
-    height:10px;
-    border-radius:3px;
-    flex:none;
-    display:inline-block;
-
-}
-
-.cx-canvas{
-
-    position:relative;
-
-}
+.cx-canvas{ position:relative; }
 
 .cx-empty{
 
@@ -513,9 +867,83 @@
 
 }
 
-.cx-empty i{
+.cx-empty i{ font-size:26px; }
 
-    font-size:26px;
+
+/* ---------- severity legend ---------- */
+
+.cx-sev-list{
+
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+
+}
+
+.cx-sev-row{
+
+    display:grid;
+    grid-template-columns:10px 92px 1fr auto;
+    align-items:center;
+    gap:9px;
+    padding:6px 8px;
+    border-radius:9px;
+    text-decoration:none;
+    color:inherit;
+    transition:background .16s ease;
+
+}
+
+.cx-sev-row:hover{
+
+    background:color-mix(in srgb, var(--sev) 10%, #fff);
+    color:inherit;
+
+}
+
+.cx-sev-dot{
+
+    width:10px;
+    height:10px;
+    border-radius:50%;
+    background:var(--sev);
+
+}
+
+.cx-sev-name{
+
+    font-size:13px;
+    font-weight:600;
+    color:var(--text-secondary);
+
+}
+
+.cx-sev-bar{
+
+    height:6px;
+    border-radius:999px;
+    background:#eef1f5;
+    overflow:hidden;
+
+}
+
+.cx-sev-fill{
+
+    display:block;
+    height:100%;
+    width:0;
+    border-radius:999px;
+    background:var(--sev);
+    transition:width .9s cubic-bezier(.22,1,.36,1);
+
+}
+
+.cx-sev-count{
+
+    font-size:13px;
+    font-weight:700;
+    color:var(--text-primary);
+    font-variant-numeric:tabular-nums;
 
 }
 
@@ -529,18 +957,233 @@
     text-transform:uppercase;
     color:var(--text-muted);
     font-weight:600;
+    white-space:nowrap;
 
 }
 
-.cx-table td{
+.cx-table td.num,
+.cx-table .num{
 
     font-variant-numeric:tabular-nums;
+
+}
+
+.cx-table tbody tr{
+
+    transition:background .15s ease;
+
+}
+
+.cx-table tbody tr:hover{
+
+    background:color-mix(in srgb, var(--case, #0d6efd) 6%, #fff);
 
 }
 
 .cx-table tfoot td{
 
     border-top:2px solid var(--grid);
+
+}
+
+.cx-case-cell{
+
+    display:flex;
+    align-items:center;
+    gap:9px;
+    text-decoration:none;
+    color:inherit;
+
+}
+
+.cx-case-cell:hover .fw-semibold{ color:#0d6efd; }
+
+.cx-swatch{
+
+    width:10px;
+    height:10px;
+    border-radius:3px;
+    flex:none;
+    display:inline-block;
+    background:var(--case,#0d6efd);
+
+}
+
+.cx-share{
+
+    height:6px;
+    border-radius:999px;
+    background:#eef1f5;
+    overflow:hidden;
+    margin-bottom:3px;
+
+}
+
+.cx-share-fill{
+
+    display:block;
+    height:100%;
+    width:0;
+    border-radius:999px;
+    background:var(--case,#0d6efd);
+    transition:width .9s cubic-bezier(.22,1,.36,1);
+
+}
+
+.cx-open-btn{
+
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    padding:4px 11px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:700;
+    text-decoration:none;
+    color:var(--case,#0d6efd);
+    background:color-mix(in srgb, var(--case,#0d6efd) 10%, #fff);
+    border:1px solid color-mix(in srgb, var(--case,#0d6efd) 30%, #fff);
+    white-space:nowrap;
+    transition:.18s;
+
+}
+
+.cx-open-btn:hover{
+
+    background:var(--case,#0d6efd);
+    color:#fff;
+
+}
+
+
+/* ---------- pills ---------- */
+
+.cx-pill{
+
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    padding:.28em .6em;
+    border-radius:999px;
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:.3px;
+    text-transform:uppercase;
+    white-space:nowrap;
+    border:1px solid transparent;
+
+}
+
+.status-open{   background:#e3f6ec; color:#0f7a3d; border-color:#b7e6ca; }
+.status-closed{ background:#eceef1; color:#4b5563; border-color:#dee2e6; }
+.status-other{  background:#fff6d9; color:#8a6100; border-color:#ffe69c; }
+
+
+/* ---------- ranked lists ---------- */
+
+.cx-ranks{
+
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+
+}
+
+.cx-rank{
+
+    display:block;
+    text-decoration:none;
+    color:inherit;
+    padding:7px 9px;
+    border-radius:10px;
+    transition:background .16s ease;
+
+}
+
+.cx-rank:hover{
+
+    background:color-mix(in srgb, var(--sev) 9%, #fff);
+    color:inherit;
+
+}
+
+.cx-rank-head{
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    margin-bottom:6px;
+
+}
+
+.cx-rank-title{
+
+    font-weight:600;
+    font-size:13.5px;
+    color:var(--text-primary);
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+
+}
+
+.cx-rank-title i{
+
+    color:var(--sev);
+    margin-right:3px;
+
+}
+
+.cx-rank-track{
+
+    height:8px;
+    border-radius:999px;
+    background:#eef1f5;
+    overflow:hidden;
+
+}
+
+.cx-rank-fill{
+
+    display:block;
+    height:100%;
+    width:0;
+    border-radius:999px;
+    background:linear-gradient(90deg,
+               var(--sev) 0%,
+               color-mix(in srgb, var(--sev) 55%, #fff) 100%);
+    transition:width 1s cubic-bezier(.22,1,.36,1);
+
+}
+
+.cx-sev-tag{
+
+    font-size:10px;
+    font-weight:800;
+    letter-spacing:.4px;
+    text-transform:uppercase;
+    padding:.22em .55em;
+    border-radius:5px;
+    color:var(--sev);
+    background:color-mix(in srgb, var(--sev) 14%, #fff);
+    border:1px solid color-mix(in srgb, var(--sev) 32%, #fff);
+    white-space:nowrap;
+
+}
+
+
+/* Older engines ignore color-mix; keep everything legible there. */
+
+@supports not (background:color-mix(in srgb,#000 10%,#fff)){
+
+    .cx-tile{ background:#fff; }
+    .cx-sev-row:hover,
+    .cx-rank:hover,
+    .cx-table tbody tr:hover{ background:#f6f9fe; }
+    .cx-open-btn{ background:#f2f6ff; border-color:#d5e3ff; }
+    .cx-sev-tag{ background:#f4f6fa; border-color:#e3e8ef; }
+    .cx-rank-fill{ background:var(--sev); }
 
 }
 
@@ -552,6 +1195,16 @@
 
 <script>
 (function () {
+
+    // Bars grow into place once laid out, so the proportions read as
+    // a change rather than as static furniture.
+    requestAnimationFrame(function () {
+        document.querySelectorAll('.cx-sev-fill, .cx-share-fill, .cx-rank-fill')
+            .forEach(function (bar) {
+                bar.style.width = (bar.dataset.width || 0) + '%';
+            });
+    });
+
 
     if (typeof Chart === "undefined") { return; }
 
@@ -565,27 +1218,12 @@
     const cases    = {{ cases | tojson }};
     const topRules = {{ top_rules | tojson }};
     const topHosts = {{ top_hosts | tojson }};
+    const severity = {{ severity | tojson }};
+    const activity = {{ activity | tojson }};
 
     const PALETTE     = {{ palette | tojson }};
     const MAX_SLICES  = {{ max_slices | tojson }};
     const OTHER_COLOR = {{ other_color | tojson }};
-
-
-    // The same hue, lightened, so hover reads without changing
-    // which bar is which.
-    const softer = (hex) => {
-        const value = parseInt(hex.slice(1), 16);
-        return "rgba(" + ((value >> 16) & 255) + ","
-            + ((value >> 8) & 255) + ","
-            + (value & 255) + ",.72)";
-    };
-
-
-    // One palette slot per row, in the fixed order that keeps
-    // neighbouring hues apart. Both lists are capped at the
-    // palette size, so no hue is ever generated or reused.
-    const paletteFor = (rows) =>
-        rows.map((row, index) => PALETTE[index] || OTHER_COLOR);
 
 
     const nf = new Intl.NumberFormat();
@@ -608,62 +1246,159 @@
     };
 
 
-    const valueAxis = {
-        beginAtZero: true,
-        grid: { color: GRID, drawTicks: false },
-        border: { display: false },
-        ticks: {
-            color: MUTED,
-            precision: 0,
-            callback: (value) => nf.format(value)
-        }
-    };
-
-    const labelAxis = {
-        grid: { display: false },
-        border: { color: GRID },
-        ticks: { color: INK }
-    };
-
-
-    // Values sit at the bar end so a tooltip is never the only
-    // way to read one. Horizontal bar charts only.
-    const barValueLabel = {
-
-        id: "barValueLabel",
-
-        afterDatasetsDraw(chart) {
-
-            const ctx = chart.ctx;
-
-            ctx.save();
-            ctx.font = "600 11px " + Chart.defaults.font.family;
-            ctx.fillStyle = INK;
-            ctx.textAlign = "left";
-            ctx.textBaseline = "middle";
-
-            chart.getDatasetMeta(0).data.forEach((bar, index) => {
-
-                const value = chart.data.datasets[0].data[index];
-
-                if (!value) { return; }
-
-                ctx.fillText(nf.format(value), bar.x + 8, bar.y);
-
-            });
-
-            ctx.restore();
-
-        }
-
-    };
-
-
     // Truncate long labels so the axis stays readable.
     const shorten = (text, max) => {
         text = String(text == null ? "-" : text);
         return text.length > max ? text.slice(0, max - 1) + "…" : text;
     };
+
+
+    // =====================================================
+    // Severity mix
+    // =====================================================
+
+    const severityCanvas = document.getElementById("severityChart");
+
+    if (severityCanvas) {
+
+        // Steps with no events would render as invisible slivers and
+        // clutter the tooltip, so they stay in the legend only.
+        const present = severity.filter((row) => row.count > 0);
+
+        new Chart(severityCanvas.getContext("2d"), {
+
+            type: "doughnut",
+
+            data: {
+                labels: present.map((row) => row.label),
+                datasets: [{
+                    data: present.map((row) => row.count),
+                    backgroundColor: present.map((row) => row.color),
+                    borderColor: SURFACE,
+                    borderWidth: 2,
+                    hoverOffset: 8
+                }]
+            },
+
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: "62%",
+                onClick: (event, elements) => {
+                    if (!elements.length) { return; }
+                    window.location.href =
+                        "/analysis/events/?severity="
+                        + present[elements[0].index].name;
+                },
+                onHover: (event, elements) => {
+                    event.native.target.style.cursor =
+                        elements.length ? "pointer" : "default";
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: Object.assign({}, tooltip, {
+                        callbacks: {
+                            label: (item) => {
+                                const total = item.dataset.data
+                                    .reduce((sum, value) => sum + value, 0);
+                                const share = total
+                                    ? Math.round((item.parsed / total) * 100)
+                                    : 0;
+                                return nf.format(item.parsed)
+                                    + " events (" + share + "%)";
+                            }
+                        }
+                    })
+                }
+            }
+
+        });
+
+    }
+
+
+    // =====================================================
+    // Detection activity
+    // =====================================================
+
+    const activityCanvas = document.getElementById("activityChart");
+
+    if (activityCanvas) {
+
+        const ctx = activityCanvas.getContext("2d");
+
+        const fill = ctx.createLinearGradient(0, 0, 0, 250);
+        fill.addColorStop(0, "rgba(20,184,166,.32)");
+        fill.addColorStop(1, "rgba(20,184,166,0)");
+
+        new Chart(ctx, {
+
+            type: "line",
+
+            data: {
+                labels: activity.labels,
+                datasets: [{
+                    label: "Events",
+                    data: activity.values,
+                    borderColor: "#0f766e",
+                    backgroundColor: fill,
+                    borderWidth: 2.5,
+                    fill: true,
+                    tension: .34,
+                    pointRadius: 0,
+                    pointHoverRadius: 5,
+                    pointBackgroundColor: "#fff",
+                    pointBorderColor: "#0f766e",
+                    pointBorderWidth: 2
+                }]
+            },
+
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: "index", intersect: false },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: Object.assign({}, tooltip, {
+                        callbacks: {
+                            label: (item) =>
+                                nf.format(item.parsed.y) + " events"
+                        }
+                    })
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        border: { color: GRID },
+                        ticks: {
+                            color: MUTED,
+                            maxRotation: 0,
+                            autoSkip: true,
+                            maxTicksLimit: 10,
+                            // Day and month is enough once the year is
+                            // established by the card's subtitle.
+                            callback: function (value) {
+                                const label = this.getLabelForValue(value);
+                                return label ? label.slice(5) : label;
+                            }
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: GRID, drawTicks: false },
+                        border: { display: false },
+                        ticks: {
+                            color: MUTED,
+                            precision: 0,
+                            callback: (value) => nf.format(value)
+                        }
+                    }
+                }
+            }
+
+        });
+
+    }
 
 
     // =====================================================
@@ -839,70 +1574,6 @@
     perCasePie("evidencePerCaseChart",  "evidence",  "evidence items");
     perCasePie("incidentsPerCaseChart", "incidents", "incidents");
     perCasePie("memoryPerCaseChart",    "memory",    "memory captures");
-
-
-    // =====================================================
-    // Ranked lists - a palette slot per entry, with the name
-    // on the axis so the colour never has to carry meaning
-    // =====================================================
-
-    const rankedBar = (canvasId, rows, unit) => {
-
-        const canvas = document.getElementById(canvasId);
-
-        if (!canvas) { return; }
-
-        const colors = paletteFor(rows);
-
-        new Chart(canvas.getContext("2d"), {
-
-            type: "bar",
-
-            plugins: [barValueLabel],
-
-            data: {
-                labels: rows.map((row) => shorten(row.label, 30)),
-                datasets: [{
-                    label: unit,
-                    data: rows.map((row) => row.count),
-                    backgroundColor: colors,
-                    hoverBackgroundColor: colors.map(softer),
-                    borderRadius: 4,
-                    borderSkipped: false,
-                    barThickness: 14
-                }]
-            },
-
-            options: {
-                indexAxis: "y",
-                responsive: true,
-                maintainAspectRatio: false,
-                layout: { padding: { right: 56 } },
-                plugins: {
-                    legend: { display: false },
-                    tooltip: Object.assign({}, tooltip, {
-                        callbacks: {
-                            title: (items) => rows[items[0].dataIndex].label,
-                            label: (item) =>
-                                nf.format(item.parsed.x) + " " + unit
-                        }
-                    })
-                },
-                scales: {
-                    x: valueAxis,
-                    y: Object.assign({}, labelAxis, {
-                        ticks: { color: INK, font: { size: 11 } }
-                    })
-                }
-            }
-
-        });
-
-    };
-
-
-    rankedBar("rulesChart", topRules, "events");
-    rankedBar("hostsChart", topHosts, "events");
 
 })();
 </script>

@@ -1,5 +1,24 @@
 {% extends "base.html" %}
 
+
+{# The sidebar toggle lives in the navbar, so it is in the same place
+   on every page that has a sidebar and costs the content area nothing. #}
+
+{% block navbar_left %}
+
+<button type="button"
+        class="cx-sidebar-toggle"
+        id="cxSidebarToggle"
+        aria-controls="cxSidebar"
+        aria-expanded="true"
+        title="Hide sidebar">
+    <i class="bi bi-layout-sidebar-inset"></i>
+    <span class="visually-hidden">Toggle sidebar</span>
+</button>
+
+{% endblock %}
+
+
 {% block content %}
 
 {# Sidebar counters.
@@ -46,7 +65,24 @@
     {%- endif -%}
 {%- endmacro %}
 
-<div class="container-fluid px-0">
+<div class="container-fluid px-0 cx-shell" id="cxShell">
+
+{# Applied before the sidebar is painted, so a collapsed sidebar never
+   flashes into view on load. Transitions only start once the shell is
+   marked ready, so this restore does not animate. #}
+<script>
+(function () {
+    try {
+        var stored = localStorage.getItem('cx-sidebar-hidden');
+        var hide = stored === null
+            ? window.matchMedia('(max-width: 767.98px)').matches
+            : stored === '1';
+        if (hide) {
+            document.getElementById('cxShell').classList.add('sidebar-hidden');
+        }
+    } catch (e) { /* storage blocked - open by default */ }
+})();
+</script>
 
 <div class="row g-0">
 
@@ -54,7 +90,8 @@
     <!-- SIDEBAR -->
     <!-- ===================================== -->
 
-    <div class="col-md-3 col-lg-2 border-end bg-white"
+    <div class="col-md-3 col-lg-2 border-end bg-white cx-sidebar-col"
+         id="cxSidebar"
          style="min-height:calc(100vh - 56px);">
 
         <div class="p-3">
@@ -224,7 +261,7 @@
     <!-- CONTENT -->
     <!-- ===================================== -->
 
-    <div class="col-md-9 col-lg-10">
+    <div class="col-md-9 col-lg-10 cx-content-col">
 
         <div class="p-4">
 
@@ -241,6 +278,95 @@
 
 
 <style>
+
+/* ---------- Sidebar toggle ---------- */
+
+.cx-sidebar-toggle{
+
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:38px;
+    height:38px;
+    margin-right:12px;
+    border:1px solid #dfe3e8;
+    border-radius:10px;
+    background:#fff;
+    color:#44546a;
+    font-size:17px;
+    cursor:pointer;
+    transition:.18s;
+
+}
+
+.cx-sidebar-toggle:hover{
+
+    background:#e9f2ff;
+    border-color:#0d6efd;
+    color:#0d6efd;
+
+}
+
+.cx-sidebar-toggle:focus-visible{
+
+    outline:2px solid #0d6efd;
+    outline-offset:2px;
+
+}
+
+/* Both columns animate their width, so the sidebar slides away rather
+   than disappearing. Transitions are held back until the shell is
+   marked ready, so restoring a saved state on load does not animate. */
+
+.cx-shell.cx-ready .cx-sidebar-col,
+.cx-shell.cx-ready .cx-content-col{
+
+    transition:flex-basis .22s ease,
+               max-width .22s ease,
+               opacity .18s ease;
+
+}
+
+.cx-sidebar-col{
+
+    overflow:hidden;
+
+}
+
+.cx-shell.sidebar-hidden .cx-sidebar-col{
+
+    flex:0 0 0 !important;
+    max-width:0 !important;
+    padding:0 !important;
+    opacity:0;
+    border-right-width:0 !important;
+
+    /* Keeps links in a collapsed sidebar out of the tab order,
+       but only once it has finished sliding shut. */
+    visibility:hidden;
+    transition:flex-basis .22s ease,
+               max-width .22s ease,
+               opacity .18s ease,
+               visibility 0s linear .22s;
+
+}
+
+.cx-shell.sidebar-hidden .cx-content-col{
+
+    flex:0 0 100% !important;
+    max-width:100% !important;
+
+}
+
+@media (prefers-reduced-motion:reduce){
+
+    .cx-shell.cx-ready .cx-sidebar-col,
+    .cx-shell.cx-ready .cx-content-col,
+    .cx-shell.sidebar-hidden .cx-sidebar-col{
+        transition:none;
+    }
+
+}
 
 .list-group-item{
 
@@ -343,5 +469,59 @@ hr{
 }
 
 </style>
+
+
+<script>
+(function () {
+
+    var shell  = document.getElementById('cxShell');
+    var button = document.getElementById('cxSidebarToggle');
+
+    if (!shell || !button) { return; }
+
+    var KEY  = 'cx-sidebar-hidden';
+    var icon = button.querySelector('i');
+
+    // The inline script above already applied the saved state; enabling
+    // transitions only now keeps that restore from animating.
+    requestAnimationFrame(function () {
+        shell.classList.add('cx-ready');
+    });
+
+
+    function paint() {
+
+        var hidden = shell.classList.contains('sidebar-hidden');
+
+        button.setAttribute('aria-expanded', String(!hidden));
+        button.title = hidden ? 'Show sidebar' : 'Hide sidebar';
+
+        // The icon points at what the button will do next.
+        icon.className = 'bi ' + (hidden
+            ? 'bi-layout-sidebar-inset-reverse'
+            : 'bi-layout-sidebar-inset');
+
+    }
+
+
+    button.addEventListener('click', function () {
+
+        var hidden = shell.classList.toggle('sidebar-hidden');
+
+        try {
+            localStorage.setItem(KEY, hidden ? '1' : '0');
+        } catch (e) {
+            // Storage blocked: the choice simply lasts for this page.
+        }
+
+        paint();
+
+    });
+
+
+    paint();
+
+})();
+</script>
 
 {% endblock %}

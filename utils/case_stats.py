@@ -18,6 +18,32 @@ from utils.timezone import to_ist
 MEMORY_MODELS = (MemoryProcess, MemoryNetwork, MemoryIOC)
 
 
+# Severity steps, worst first, with the colour every chart and badge
+# renders them in.
+SEVERITY_META = [
+    ("critical",      "Critical",      "#dc3545", "bi-exclamation-octagon-fill"),
+    ("high",          "High",          "#fd7e14", "bi-exclamation-triangle-fill"),
+    ("medium",        "Medium",        "#f0b400", "bi-exclamation-circle-fill"),
+    ("low",           "Low",           "#0dcaf0", "bi-info-circle-fill"),
+    ("informational", "Informational", "#6c757d", "bi-dot"),
+]
+
+# Parsers spell the middle steps more than one way.
+SEVERITY_ALIASES = {
+    "med": "medium",
+    "info": "informational",
+    "information": "informational",
+}
+
+
+def _normalise_severity(value):
+    """One canonical key per severity step."""
+
+    key = (value or "").lower().strip()
+
+    return SEVERITY_ALIASES.get(key, key) or "informational"
+
+
 # =========================================================
 # GLOBAL (ALL-CASES) STATISTICS
 #
@@ -248,24 +274,119 @@ def per_case():
 
 
 def top_rules(limit=8):
-    """Most frequently triggered detection rules, across all cases."""
+    """Most frequently triggered detection rules, across all cases.
+
+    Each rule carries the worst severity it was ever raised at, so the
+    ranking can be coloured by risk rather than by position.
+    """
 
     rows = (
         db.session.query(
             Event.rule_title,
+            func.lower(Event.severity),
             func.count(Event.id)
         )
         .filter(Event.rule_title.isnot(None))
-        .group_by(Event.rule_title)
-        .order_by(func.count(Event.id).desc())
-        .limit(limit)
+        .group_by(Event.rule_title, func.lower(Event.severity))
         .all()
     )
 
+    combined = {}
+
+    for title, severity, hits in rows:
+
+        entry = combined.setdefault(title, {
+            "label": title,
+            "count": 0,
+            "severity": "informational"
+        })
+
+        entry["count"] += hits
+
+        if _severity_rank(severity) < _severity_rank(entry["severity"]):
+            entry["severity"] = _normalise_severity(severity)
+
+    return sorted(
+        combined.values(),
+        key=lambda row: row["count"],
+        reverse=True
+    )[:limit]
+
+
+def severity_split():
+    """Event counts per severity step, worst first, with shares."""
+
+    rows = (
+        db.session.query(
+            func.lower(Event.severity),
+            func.count(Event.id)
+        )
+        .group_by(func.lower(Event.severity))
+        .all()
+    )
+
+    counts = {}
+
+    for severity, hits in rows:
+        key = _normalise_severity(severity)
+        counts[key] = counts.get(key, 0) + hits
+
+    total = sum(counts.values())
+
     return [
-        {"label": title, "count": hits}
-        for title, hits in rows
+        {
+            "name": name,
+            "label": label,
+            "color": colour,
+            "icon": icon,
+            "count": counts.get(name, 0),
+            "percent": round(counts.get(name, 0) / total * 100) if total else 0,
+        }
+        for name, label, colour, icon in SEVERITY_META
     ]
+
+
+def activity_trend(days=30):
+    """Events per IST day, over the most recent days that carry any.
+
+    Anchored to the data rather than to today: an investigation loaded
+    last month would otherwise chart as a flat line of zeroes.
+    """
+
+    stamps = (
+        db.session.query(Event.timestamp)
+        .filter(Event.timestamp.isnot(None))
+        .all()
+    )
+
+    buckets = {}
+
+    for (when,) in stamps:
+
+        day = to_ist(when).strftime("%Y-%m-%d")
+
+        buckets[day] = buckets.get(day, 0) + 1
+
+    recent = sorted(buckets)[-days:]
+
+    values = [buckets[day] for day in recent]
+
+    return {
+
+        "labels": recent,
+
+        "values": values,
+
+        "total": sum(values),
+
+        "peak": max(values) if values else 0,
+
+        "days": len(recent),
+
+        # True when the window is only part of the recorded history.
+        "trimmed": len(buckets) > len(recent),
+
+    }
 
 
 def top_hosts(limit=8):
@@ -788,5 +909,7 @@ def overview():
         "max_slices": MAX_SLICES,
         "other_color": OTHER_COLOR,
         "top_rules": top_rules(),
-        "top_hosts": top_hosts()
+        "top_hosts": top_hosts(),
+        "severity": severity_split(),
+        "activity": activity_trend()
     }
