@@ -4,18 +4,132 @@
 
 <style>
 
+/* ---------- Design tokens ----------
+
+   base.html loads Bootstrap only, so the page owns its own tokens
+   rather than inheriting them from a stylesheet that is not linked. */
+
+.dash{
+
+    --cx-radius:16px;
+
+    --cx-shadow:0 4px 16px rgba(16,32,64,.07);
+    --cx-shadow-lg:0 16px 38px rgba(16,32,64,.16);
+
+    /* One hue per severity, used by the badge, the filter button,
+       the row accent and the donut alike. */
+    --cx-critical:#dc3545;
+    --cx-high:#fd7e14;
+    --cx-medium:#f0b400;
+    --cx-low:#0dcaf0;
+    --cx-informational:#6c757d;
+
+    --cx-ink:#1b2537;
+    --cx-muted:#6c757d;
+
+}
+
+/* The page sits on a tinted ground so white cards read as cards. */
+
+body{
+
+    background:
+        radial-gradient(1200px 500px at 12% -8%, #e6efff 0%, transparent 60%),
+        radial-gradient(900px 420px at 92% 4%, #f2e9ff 0%, transparent 55%),
+        #f5f7fb;
+
+}
+
+.dash .card{
+
+    border:1px solid rgba(16,32,64,.07);
+    border-radius:var(--cx-radius);
+    box-shadow:var(--cx-shadow);
+    overflow:hidden;
+
+}
+
+.dash .card-header{
+
+    background:#fff;
+    border-bottom:1px solid rgba(16,32,64,.07);
+    font-weight:700;
+    color:var(--cx-ink);
+    padding:14px 18px;
+
+}
+
+/* A tinted rule under each card header, so the sections read as
+   different subjects rather than one long white column. */
+
+.dash .card-header{
+
+    box-shadow:inset 0 -2px 0 var(--head,#0d6efd);
+
+}
+
+.dash .card-hover{
+
+    transition:transform .22s ease, box-shadow .22s ease;
+
+}
+
+.dash .card-hover:hover{
+
+    transform:translateY(-3px);
+    box-shadow:var(--cx-shadow-lg);
+
+}
+
+
+/* ---------- Severity badges ---------- */
+
+.sev-badge{
+
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    padding:.32em .7em;
+    border-radius:999px;
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:.4px;
+    text-transform:uppercase;
+    white-space:nowrap;
+    border:1px solid transparent;
+
+}
+
+.sev-badge::before{
+
+    content:"";
+    width:6px;
+    height:6px;
+    border-radius:50%;
+    background:currentColor;
+
+}
+
+.sev-critical{      background:#fde7e9; color:#b02a37; border-color:#f5c2c7; }
+.sev-high{          background:#fff0e2; color:#a2540b; border-color:#fdd9b5; }
+.sev-medium{        background:#fff6d9; color:#8a6100; border-color:#ffe69c; }
+.sev-low{           background:#dff7fd; color:#0a7c92; border-color:#b6ecf7; }
+.sev-informational{ background:#eceef1; color:#4b5563; border-color:#dee2e6; }
+.sev-unknown{       background:#eceef1; color:#4b5563; border-color:#dee2e6; }
+
+
 /* ---------- Hero ---------- */
 
 .hero{
 
     position:relative;
     overflow:hidden;
-    border-radius:18px;
-    padding:28px 32px;
+    border-radius:20px;
+    padding:30px 34px;
     margin-bottom:28px;
     color:#fff;
-    background:linear-gradient(120deg,#0d3b8f 0%,#0d6efd 55%,#3a9bfc 100%);
-    box-shadow:0 10px 30px rgba(13,110,253,.28);
+    background:linear-gradient(120deg,#4c1d95 0%,#0d3b8f 38%,#0d6efd 72%,#22b8cf 100%);
+    box-shadow:0 14px 36px rgba(13,110,253,.32);
 
 }
 
@@ -77,7 +191,9 @@
     position:relative;
     overflow:hidden;
     border-radius:var(--cx-radius);
-    background:#fff;
+    background:
+        linear-gradient(180deg, var(--accent-soft,#e9f2ff) 0%, #fff 42%);
+    border:1px solid rgba(16,32,64,.07);
     box-shadow:var(--cx-shadow);
     padding:20px;
     height:100%;
@@ -106,7 +222,9 @@
     top:0;
     bottom:0;
     width:5px;
-    background:var(--accent,#0d6efd);
+    background:linear-gradient(180deg,
+                var(--accent,#0d6efd),
+                var(--accent-2,var(--accent,#0d6efd)));
 
 }
 
@@ -114,13 +232,16 @@
 
     width:52px;
     height:52px;
-    border-radius:14px;
+    border-radius:15px;
     display:flex;
     align-items:center;
     justify-content:center;
     font-size:24px;
-    color:var(--accent,#0d6efd);
-    background:var(--accent-soft,#e9f2ff);
+    color:#fff;
+    background:linear-gradient(135deg,
+               var(--accent,#0d6efd),
+               var(--accent-2,var(--accent,#0d6efd)));
+    box-shadow:0 8px 18px -6px var(--accent,#0d6efd);
     flex-shrink:0;
 
 }
@@ -128,9 +249,10 @@
 .stat-value{
 
     font-size:32px;
-    font-weight:700;
+    font-weight:800;
     line-height:1.1;
     font-variant-numeric:tabular-nums;
+    color:var(--accent,#0d6efd);
 
 }
 
@@ -351,34 +473,86 @@
 
 /* ---------- Activity feed ---------- */
 
+/* Each chip wears the severity it filters to, so the button and the
+   badge it selects are recognisably the same thing. */
+
 .filter-chip{
 
-    border:1px solid #dfe3e8;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    border:1px solid var(--chip,#dfe3e8);
     background:#fff;
     border-radius:999px;
-    padding:5px 13px;
+    padding:5px 12px;
     font-size:12px;
-    font-weight:600;
-    color:#5b6672;
+    font-weight:700;
+    /* Label stays neutral-dark while idle — the pale severities would
+       not be readable on white in their own hue. The icon and border
+       carry the colour instead. */
+    color:#42505f;
     cursor:pointer;
     transition:.18s;
 
 }
 
+.filter-chip i{
+
+    color:var(--chip,#5b6672);
+
+}
+
+.filter-chip.active i{
+
+    color:var(--chip-ink,#fff);
+
+}
+
 .filter-chip:hover{
 
-    border-color:#0d6efd;
-    color:#0d6efd;
+    background:var(--chip-soft,#f1f5fb);
+    transform:translateY(-1px);
 
 }
 
 .filter-chip.active{
 
-    background:#0d6efd;
-    border-color:#0d6efd;
-    color:#fff;
+    background:var(--chip,#0d6efd);
+    border-color:var(--chip,#0d6efd);
+    color:var(--chip-ink,#fff);
+    box-shadow:0 6px 14px -6px var(--chip,#0d6efd);
 
 }
+
+.filter-chip .chip-count{
+
+    background:var(--chip-soft,#eef2f7);
+    color:#42505f;
+    border-radius:999px;
+    padding:1px 7px;
+    font-size:11px;
+    font-variant-numeric:tabular-nums;
+
+}
+
+.filter-chip.active .chip-count{
+
+    background:rgba(255,255,255,.28);
+    color:var(--chip-ink,#fff);
+
+}
+
+/* A chip for a severity with nothing behind it stays readable but
+   clearly offers nothing. */
+
+.filter-chip.empty{
+
+    opacity:.45;
+
+}
+
+
+/* ---------- Activity table ---------- */
 
 .activity-row{
 
@@ -390,6 +564,94 @@
 .activity-row:hover{
 
     background:#f6f9fe;
+
+}
+
+/* Left edge coloured by the row's own severity. */
+
+.activity-row td:first-child{
+
+    box-shadow:inset 3px 0 0 var(--row,#dee2e6);
+
+}
+
+.activity-table thead th{
+
+    background:#f7f9fc;
+    color:var(--cx-muted);
+    font-size:12px;
+    letter-spacing:.4px;
+    text-transform:uppercase;
+    white-space:nowrap;
+    border-bottom:1px solid rgba(16,32,64,.08);
+
+}
+
+/* Sortable headers announce themselves with a chevron that fills in
+   once the column is the one being sorted. */
+
+.activity-table th.sortable{
+
+    cursor:pointer;
+    user-select:none;
+
+}
+
+.activity-table th.sortable:hover{
+
+    color:#0d6efd;
+
+}
+
+.activity-table th .sort-icon{
+
+    opacity:.25;
+    margin-left:3px;
+    font-size:11px;
+
+}
+
+.activity-table th.sorted .sort-icon{
+
+    opacity:1;
+    color:#0d6efd;
+
+}
+
+.activity-table th.sorted{
+
+    color:#0d6efd;
+
+}
+
+.filter-row th{
+
+    background:#fff;
+    padding:6px 8px;
+    border-bottom:1px solid rgba(16,32,64,.08);
+
+}
+
+.filter-row .form-control,
+.filter-row .form-select{
+
+    font-size:12px;
+    padding:4px 8px;
+    border-color:#e3e8ef;
+
+}
+
+.filter-row .form-control:focus,
+.filter-row .form-select:focus{
+
+    border-color:#0d6efd;
+    box-shadow:0 0 0 .15rem rgba(13,110,253,.15);
+
+}
+
+.match-count{
+
+    font-variant-numeric:tabular-nums;
 
 }
 
@@ -411,6 +673,9 @@
 }
 
 </style>
+
+
+<div class="dash">
 
 
 <!-- ============ HERO ============ -->
@@ -462,7 +727,7 @@
 
         <a class="stat-card"
            href="/cases"
-           style="--accent:#0d6efd; --accent-soft:#e9f2ff;">
+           style="--accent:#0d6efd; --accent-2:#5b8def; --accent-soft:#e9f2ff;">
 
             <div class="d-flex justify-content-between align-items-start">
 
@@ -489,7 +754,7 @@
     <div class="col-md-6 col-xl-3">
 
         <div class="stat-card"
-             style="--accent:#198754; --accent-soft:#e6f4ec;">
+             style="--accent:#12a150; --accent-2:#4bc38a; --accent-soft:#e4f6ec;">
 
             <div class="d-flex justify-content-between align-items-start">
 
@@ -516,7 +781,7 @@
     <div class="col-md-6 col-xl-3">
 
         <div class="stat-card"
-             style="--accent:#ffc107; --accent-soft:#fff8e1;">
+             style="--accent:#7c3aed; --accent-2:#a78bfa; --accent-soft:#f1eaff;">
 
             <div class="d-flex justify-content-between align-items-start">
 
@@ -543,7 +808,7 @@
     <div class="col-md-6 col-xl-3">
 
         <div class="stat-card {% if critical_count %}pulse{% endif %}"
-             style="--accent:#dc3545; --accent-soft:#fdeaec;">
+             style="--accent:#dc3545; --accent-2:#f2727f; --accent-soft:#fdeaec;">
 
             <div class="d-flex justify-content-between align-items-start">
 
@@ -576,7 +841,7 @@
 
     <div class="col-lg-7">
 
-        <div class="card h-100 card-hover">
+        <div class="card h-100 card-hover" style="--head:#0d6efd;">
 
             <div class="card-header d-flex justify-content-between align-items-center">
 
@@ -616,10 +881,10 @@
 
     <div class="col-lg-5">
 
-        <div class="card h-100 card-hover">
+        <div class="card h-100 card-hover" style="--head:#7c3aed;">
 
             <div class="card-header">
-                <i class="bi bi-pie-chart-fill text-primary"></i>
+                <i class="bi bi-pie-chart-fill" style="color:#7c3aed"></i>
                 Severity Breakdown
             </div>
 
@@ -674,7 +939,7 @@
 
 <!-- ============ RECENT CASES ============ -->
 
-<div class="card mb-4 card-hover">
+<div class="card mb-4 card-hover" style="--head:#12a150;">
 
     <div class="card-header d-flex justify-content-between align-items-center">
 
@@ -805,7 +1070,7 @@
 
     <div class="col-lg-7">
 
-        <div class="card h-100 card-hover">
+        <div class="card h-100 card-hover" style="--head:#dc3545;">
 
             <div class="card-header">
                 <i class="bi bi-shield-exclamation text-danger"></i>
@@ -835,10 +1100,17 @@
 
                             </div>
 
+                            {# The bar wears the rule's own severity, so the
+                               ranking and the risk read together. #}
                             <div class="rank-track">
                                 <div class="rank-fill"
                                      data-width="{{ rule.percent }}"
-                                     style="background:linear-gradient(90deg,#0d6efd,#3a9bfc)"></div>
+                                     style="background:linear-gradient(90deg,{{
+                                        '#dc3545,#f2727f' if rule.severity == 'critical' else
+                                        '#fd7e14,#ffa94d' if rule.severity == 'high' else
+                                        '#f0b400,#ffd43b' if rule.severity == 'medium' else
+                                        '#0dcaf0,#66e0f5' if rule.severity == 'low' else
+                                        '#6c757d,#adb5bd' }})"></div>
                             </div>
 
                         </div>
@@ -862,10 +1134,10 @@
 
     <div class="col-lg-5">
 
-        <div class="card h-100 card-hover">
+        <div class="card h-100 card-hover" style="--head:#0d9488;">
 
             <div class="card-header">
-                <i class="bi bi-pc-display text-primary"></i>
+                <i class="bi bi-pc-display" style="color:#0d9488"></i>
                 Most Active Hosts
             </div>
 
@@ -891,7 +1163,7 @@
                             <div class="rank-track">
                                 <div class="rank-fill"
                                      data-width="{{ host.percent }}"
-                                     style="background:linear-gradient(90deg,#198754,#4bc38a)"></div>
+                                     style="background:linear-gradient(90deg,#0d9488,#5eead4)"></div>
                             </div>
 
                         </div>
@@ -918,36 +1190,21 @@
 
 <!-- ============ RECENT ACTIVITY ============ -->
 
-<div class="card card-hover">
+<div class="card card-hover" style="--head:#e8590c;">
 
     <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
 
         <span>
-            <i class="bi bi-clock-history text-primary"></i>
+            <i class="bi bi-clock-history" style="color:#e8590c"></i>
             Recent Investigation Activity
+            <span class="badge rounded-pill bg-light text-secondary ms-1 fw-semibold">
+                last {{ activity_limit }}
+            </span>
         </span>
 
         <div class="d-flex flex-wrap align-items-center gap-2">
 
-            <div class="d-flex gap-1" role="group" aria-label="Filter by severity">
-
-                <button type="button" class="filter-chip active" data-filter="all">
-                    All
-                </button>
-
-                <button type="button" class="filter-chip" data-filter="critical">
-                    Critical
-                </button>
-
-                <button type="button" class="filter-chip" data-filter="high">
-                    High
-                </button>
-
-                <button type="button" class="filter-chip" data-filter="medium">
-                    Medium
-                </button>
-
-            </div>
+            <span class="text-muted small match-count" id="activityCount"></span>
 
             <div class="input-group input-group-sm" style="width:220px;">
 
@@ -958,11 +1215,46 @@
                 <input id="activitySearch"
                        type="search"
                        class="form-control"
-                       placeholder="Search activity...">
+                       placeholder="Search all columns...">
 
             </div>
 
+            <button type="button"
+                    id="activityReset"
+                    class="btn btn-sm btn-outline-secondary"
+                    title="Clear every filter and sort">
+                <i class="bi bi-arrow-counterclockwise"></i>
+            </button>
+
         </div>
+
+    </div>
+
+    {# One button per severity, each in its own colour and carrying the
+       number of rows behind it. #}
+
+    <div class="px-3 pt-3 d-flex flex-wrap gap-2"
+         role="group"
+         aria-label="Filter by severity">
+
+        {% for chip in activity_filters %}
+
+            <button type="button"
+                    class="filter-chip {% if chip.name == 'all' %}active{% endif %}
+                           {% if chip.count == 0 %}empty{% endif %}"
+                    data-filter="{{ chip.name }}"
+                    data-overall="{{ chip.overall|default(0) }}"
+                    title="{{ chip.count }} of the latest {{ activity_limit }}{%
+                        if chip.name != 'all' %} &bull; {{ chip.overall }} across all cases{% endif %}"
+                    style="--chip:{{ chip.color }};
+                           --chip-ink:{{ chip.ink }};
+                           --chip-soft:{{ chip.color }}1f;">
+                <i class="bi {{ chip.icon }}"></i>
+                {{ chip.label }}
+                <span class="chip-count">{{ chip.count }}</span>
+            </button>
+
+        {% endfor %}
 
     </div>
 
@@ -970,16 +1262,94 @@
 
         <div class="table-responsive">
 
-            <table class="table table-hover align-middle mb-0">
+            <table class="table table-hover align-middle mb-0 activity-table"
+                   id="activityTable">
 
                 <thead>
 
+                    {# Click a header to sort by it; click again to reverse.
+                       Severity sorts by real rank, not alphabetically. #}
+
                     <tr>
-                        <th><i class="bi bi-calendar3"></i> Time</th>
-                        <th><i class="bi bi-bullseye"></i> Detection</th>
-                        <th><i class="bi bi-pc-display"></i> Host</th>
-                        <th><i class="bi bi-flag-fill"></i> Severity</th>
+                        <th class="sortable" data-sort="time" data-type="text">
+                            <i class="bi bi-calendar3"></i> Time
+                            <i class="bi bi-arrow-down-up sort-icon"></i>
+                        </th>
+                        <th class="sortable" data-sort="rule" data-type="text">
+                            <i class="bi bi-bullseye"></i> Detection
+                            <i class="bi bi-arrow-down-up sort-icon"></i>
+                        </th>
+                        <th class="sortable" data-sort="host" data-type="text">
+                            <i class="bi bi-pc-display"></i> Host
+                            <i class="bi bi-arrow-down-up sort-icon"></i>
+                        </th>
+                        <th class="sortable" data-sort="case" data-type="text">
+                            <i class="bi bi-folder2-open"></i> Case
+                            <i class="bi bi-arrow-down-up sort-icon"></i>
+                        </th>
+                        <th class="sortable" data-sort="rank" data-type="number">
+                            <i class="bi bi-flag-fill"></i> Severity
+                            <i class="bi bi-arrow-down-up sort-icon"></i>
+                        </th>
                         <th class="text-end">Action</th>
+                    </tr>
+
+                    {# Per-column filters. Free text where the values are
+                       open-ended, a dropdown where they are a known set. #}
+
+                    <tr class="filter-row">
+
+                        <th>
+                            <input type="search"
+                                   class="form-control form-control-sm"
+                                   data-col="time"
+                                   placeholder="e.g. 2026-07">
+                        </th>
+
+                        <th>
+                            <input type="search"
+                                   class="form-control form-control-sm"
+                                   data-col="rule"
+                                   placeholder="Filter detection">
+                        </th>
+
+                        <th>
+                            <select class="form-select form-select-sm"
+                                    data-col="host">
+                                <option value="">All hosts</option>
+                                {% for host in activity_hosts %}
+                                <option value="{{ host|lower }}">{{ host }}</option>
+                                {% endfor %}
+                            </select>
+                        </th>
+
+                        <th>
+                            <select class="form-select form-select-sm"
+                                    data-col="case">
+                                <option value="">All cases</option>
+                                {% for case_id, case_name in activity_cases %}
+                                <option value="{{ case_id }}">{{ case_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </th>
+
+                        <th>
+                            <select class="form-select form-select-sm"
+                                    data-col="severity"
+                                    id="severitySelect">
+                                <option value="">All severities</option>
+                                {% for chip in activity_filters %}
+                                    {% if chip.name != 'all' %}
+                                    <option value="{{ chip.name }}">
+                                        {{ chip.label }} ({{ chip.count }})
+                                    </option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                        </th>
+
+                        <th></th>
+
                     </tr>
 
                 </thead>
@@ -988,7 +1358,18 @@
 
                     {% for item in recent_activity %}
 
-                        <tr class="activity-row" data-severity="{{ item.severity }}">
+                        {# Sorting and filtering read these attributes rather
+                           than the rendered cells, so display formatting and
+                           sort order stay independent. #}
+
+                        <tr class="activity-row"
+                            data-severity="{{ item.severity }}"
+                            data-rank="{{ item.rank }}"
+                            data-time="{{ item.time_display }}"
+                            data-rule="{{ (item.rule_title or 'Unknown detection')|lower }}"
+                            data-host="{{ (item.computer or '')|lower }}"
+                            data-case="{{ item.case_id or '' }}"
+                            style="--row:{{ item.color }};">
 
                             <td class="text-nowrap small text-muted">
                                 {% if item.time_display %}
@@ -1001,20 +1382,21 @@
 
                             <td>
 
-                                <i class="bi {{ item.icon }}" style="color:{{
-                                    '#dc3545' if item.severity == 'critical' else
-                                    '#fd7e14' if item.severity == 'high' else
-                                    '#ffc107' if item.severity == 'medium' else
-                                    '#0dcaf0' if item.severity == 'low' else '#6c757d'
-                                }}"></i>
+                                <i class="bi {{ item.icon }}"
+                                   style="color:{{ item.color }}"></i>
 
                                 <span class="fw-semibold">
                                     {{ item.rule_title or 'Unknown detection' }}
                                 </span>
 
-                                {% if item.channel %}
+                                {% if item.channel or item.event_id %}
                                     <div class="small text-muted ms-4">
-                                        {{ item.channel }}
+                                        {{ item.channel or '' }}
+                                        {% if item.event_id %}
+                                            <span class="badge bg-light text-secondary">
+                                                ID {{ item.event_id }}
+                                            </span>
+                                        {% endif %}
                                     </div>
                                 {% endif %}
 
@@ -1022,6 +1404,17 @@
 
                             <td class="small">
                                 {{ item.computer or '—' }}
+                            </td>
+
+                            <td class="small">
+                                {% if item.case_id %}
+                                    <a href="/analysis/dashboard/{{ item.case_id }}"
+                                       class="text-decoration-none fw-semibold">
+                                        {{ item.case_name or 'Case #' ~ item.case_id }}
+                                    </a>
+                                {% else %}
+                                    &mdash;
+                                {% endif %}
                             </td>
 
                             <td>
@@ -1048,7 +1441,7 @@
 
                         <tr>
 
-                            <td colspan="5">
+                            <td colspan="6">
                                 <div class="empty-state">
                                     <i class="bi bi-inbox"></i>
                                     No recent investigation activity.
@@ -1059,13 +1452,26 @@
 
                     {% endfor %}
 
-                    <!-- Shown when a filter/search hides every row -->
+                    {# Shown when a filter/search hides every row. The feed is
+                       only the latest {{ activity_limit }} events, so when a
+                       severity is empty here but exists elsewhere the message
+                       points at the explorer that holds the rest. #}
                     <tr id="noMatchRow" class="d-none">
 
-                        <td colspan="5">
+                        <td colspan="6">
                             <div class="empty-state">
                                 <i class="bi bi-funnel"></i>
-                                No activity matches your filter.
+                                <span id="noMatchText">
+                                    No activity matches your filter.
+                                </span>
+                                <div class="mt-3 d-none" id="noMatchAction">
+                                    <a href="#"
+                                       id="noMatchLink"
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-box-arrow-up-right"></i>
+                                        Search all events
+                                    </a>
+                                </div>
                             </div>
                         </td>
 
@@ -1080,6 +1486,9 @@
     </div>
 
 </div>
+
+
+</div><!-- /dash -->
 
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -1155,60 +1564,261 @@
     });
 
 
-    // ---------- Activity filtering (severity chips + search) ----------
+    // ---------- Activity table: filter + sort ----------
+    //
+    // Severity has three ways in — the chips, the header dropdown and
+    // the search box — so they share one state object and one render
+    // pass rather than fighting each other.
 
+    const table      = document.getElementById('activityTable');
     const rows       = Array.from(document.querySelectorAll('.activity-row'));
     const searchBox  = document.getElementById('activitySearch');
     const noMatchRow = document.getElementById('noMatchRow');
     const chips      = Array.from(document.querySelectorAll('.filter-chip'));
+    const counter    = document.getElementById('activityCount');
+    const resetBtn   = document.getElementById('activityReset');
+    const sevSelect  = document.getElementById('severitySelect');
 
-    let activeSeverity = 'all';
+    if (table && rows.length) {
 
-    function applyFilters() {
+        const body    = table.querySelector('tbody');
+        const columns = Array.from(table.querySelectorAll('.filter-row [data-col]'));
+        const headers = Array.from(table.querySelectorAll('th.sortable'));
 
-        const term = (searchBox.value || '').trim().toLowerCase();
-        let visible = 0;
+        // The order the server sent, to return to when sorting is cleared.
+        const original = rows.slice();
 
-        rows.forEach(row => {
+        let severity = 'all';
+        let sortKey  = null;
+        let sortDir  = 1;
 
-            const matchesSeverity =
-                activeSeverity === 'all' || row.dataset.severity === activeSeverity;
 
-            const matchesTerm =
-                !term || row.textContent.toLowerCase().includes(term);
+        function matches(row) {
 
-            const show = matchesSeverity && matchesTerm;
+            if (severity !== 'all' && row.dataset.severity !== severity) {
+                return false;
+            }
 
-            row.classList.toggle('d-none', !show);
+            const term = (searchBox.value || '').trim().toLowerCase();
 
-            if (show) visible++;
+            if (term && !row.textContent.toLowerCase().includes(term)) {
+                return false;
+            }
 
-        });
+            // Every header filter must hold: they narrow, never widen.
+            return columns.every(control => {
 
-        // Only offer the "no matches" message when there were rows to begin with.
-        if (noMatchRow) {
-            noMatchRow.classList.toggle('d-none', visible > 0 || rows.length === 0);
+                const wanted = (control.value || '').trim().toLowerCase();
+
+                if (!wanted) { return true; }
+
+                const column = control.dataset.col;
+
+                // Dropdowns hold the exact value; typed filters match
+                // anywhere in it.
+                if (control.tagName === 'SELECT') {
+                    return (row.dataset[column] || '') === wanted;
+                }
+
+                return (row.dataset[column] || '').toLowerCase().includes(wanted);
+
+            });
+
         }
 
-    }
 
-    chips.forEach(chip => {
+        function render() {
 
-        chip.addEventListener('click', () => {
+            let visible = 0;
 
-            chips.forEach(c => c.classList.remove('active'));
-            chip.classList.add('active');
+            rows.forEach(row => {
 
-            activeSeverity = chip.dataset.filter;
+                const show = matches(row);
 
-            applyFilters();
+                row.classList.toggle('d-none', !show);
+
+                if (show) { visible++; }
+
+            });
+
+            if (noMatchRow) {
+                noMatchRow.classList.toggle('d-none', visible > 0);
+            }
+
+            if (counter) {
+                counter.textContent = visible === rows.length
+                    ? rows.length + ' events'
+                    : visible + ' of ' + rows.length + ' events';
+            }
+
+            if (visible === 0) { explainEmpty(); }
+
+        }
+
+
+        // The table only holds the newest slice of events. When a severity
+        // is empty here but not empty overall, say so and hand over to the
+        // explorer rather than leaving a dead end.
+        function explainEmpty() {
+
+            const text   = document.getElementById('noMatchText');
+            const action = document.getElementById('noMatchAction');
+            const link   = document.getElementById('noMatchLink');
+
+            if (!text || !action || !link) { return; }
+
+            const chip = chips.find(c => c.dataset.filter === severity);
+            const elsewhere = chip ? Number(chip.dataset.overall || 0) : 0;
+
+            if (severity !== 'all' && elsewhere > 0) {
+
+                text.textContent =
+                    'No ' + severity + ' events among the latest ' + rows.length
+                    + ' — but ' + elsewhere.toLocaleString()
+                    + ' exist across all cases.';
+
+                link.href = '/analysis/events/?severity=' + severity;
+
+                action.classList.remove('d-none');
+
+                return;
+
+            }
+
+            text.textContent = 'No activity matches your filter.';
+
+            action.classList.add('d-none');
+
+        }
+
+
+        function sortBy(key, type) {
+
+            // Same column again reverses; a new column starts ascending.
+            if (sortKey === key) {
+                sortDir = -sortDir;
+            } else {
+                sortKey = key;
+                sortDir = 1;
+            }
+
+            const ordered = original.slice().sort((a, b) => {
+
+                if (type === 'number') {
+                    return (Number(a.dataset[key]) - Number(b.dataset[key])) * sortDir;
+                }
+
+                return String(a.dataset[key] || '')
+                    .localeCompare(String(b.dataset[key] || '')) * sortDir;
+
+            });
+
+            // The no-match row must stay last, so re-append it after.
+            ordered.forEach(row => body.appendChild(row));
+
+            if (noMatchRow) { body.appendChild(noMatchRow); }
+
+            headers.forEach(header => {
+
+                const on = header.dataset.sort === sortKey;
+
+                header.classList.toggle('sorted', on);
+
+                const icon = header.querySelector('.sort-icon');
+
+                if (icon) {
+                    icon.className = 'bi sort-icon ' + (
+                        on
+                            ? (sortDir === 1 ? 'bi-sort-down-alt' : 'bi-sort-up-alt')
+                            : 'bi-arrow-down-up'
+                    );
+                }
+
+            });
+
+        }
+
+
+        // Chips and the severity dropdown are the same filter; keep them
+        // showing the same answer whichever one was used.
+        function setSeverity(value) {
+
+            severity = value;
+
+            chips.forEach(chip =>
+                chip.classList.toggle('active', chip.dataset.filter === value));
+
+            if (sevSelect) {
+                sevSelect.value = value === 'all' ? '' : value;
+            }
+
+            render();
+
+        }
+
+
+        chips.forEach(chip => {
+            chip.addEventListener('click', () => setSeverity(chip.dataset.filter));
+        });
+
+        columns.forEach(control => {
+
+            const event = control.tagName === 'SELECT' ? 'change' : 'input';
+
+            control.addEventListener(event, () => {
+
+                if (control.dataset.col === 'severity') {
+                    setSeverity(control.value || 'all');
+                    return;
+                }
+
+                render();
+
+            });
 
         });
 
-    });
+        headers.forEach(header => {
+            header.addEventListener('click', () =>
+                sortBy(header.dataset.sort, header.dataset.type));
+        });
 
-    if (searchBox) {
-        searchBox.addEventListener('input', applyFilters);
+        if (searchBox) {
+            searchBox.addEventListener('input', render);
+        }
+
+        if (resetBtn) {
+
+            resetBtn.addEventListener('click', () => {
+
+                searchBox.value = '';
+                columns.forEach(control => { control.value = ''; });
+
+                sortKey = null;
+                sortDir = 1;
+
+                original.forEach(row => body.appendChild(row));
+
+                if (noMatchRow) { body.appendChild(noMatchRow); }
+
+                headers.forEach(header => {
+
+                    header.classList.remove('sorted');
+
+                    const icon = header.querySelector('.sort-icon');
+
+                    if (icon) { icon.className = 'bi sort-icon bi-arrow-down-up'; }
+
+                });
+
+                setSeverity('all');
+
+            });
+
+        }
+
+        render();
+
     }
 
 

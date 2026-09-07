@@ -23,7 +23,22 @@ SEVERITY_META = [
     ("informational", "#6c757d", "bi-dot"),
 ]
 
+# Readable foreground once a severity's own colour becomes a solid
+# background — white would fail on the yellow and cyan steps.
+SEVERITY_INK = {
+    "critical":      "#ffffff",
+    "high":          "#3d1c00",
+    "medium":        "#3f2d00",
+    "low":           "#053640",
+    "informational": "#ffffff",
+}
+
 ACTIVITY_DAYS = 14
+
+# Rows in the recent-activity table. Filtering and sorting happen in the
+# browser, so this is the whole working set — big enough to be worth
+# slicing, small enough to ship in one page.
+RECENT_ACTIVITY_LIMIT = 60
 
 # Shortcuts shown on each recent-case card. Every analysis route is
 # case-scoped (/<tool>/<case_id>), so these are built per case.
@@ -240,11 +255,23 @@ def dashboard():
     recent_events = (
         Event.query
         .order_by(Event.timestamp.desc())
-        .limit(10)
+        .limit(RECENT_ACTIVITY_LIMIT)
         .all()
     )
 
     severity_icons = {name: icon for name, _, icon in SEVERITY_META}
+    severity_colors = {name: colour for name, colour, _ in SEVERITY_META}
+
+    # Worst first, so the table can sort by risk rather than alphabet.
+    severity_ranks = {
+        name: index
+        for index, (name, _, _) in enumerate(SEVERITY_META)
+    }
+
+    # Case names, so a row says which investigation it came from.
+    case_names = dict(
+        db.session.query(Case.id, Case.case_name).all()
+    )
 
     recent_activity = []
 
@@ -252,18 +279,75 @@ def dashboard():
 
         severity = (event.severity or "informational").lower()
 
+        # Spelling varies between parsers; the table filters on one key.
+        if severity in ("med",):
+            severity = "medium"
+        elif severity in ("info", "information"):
+            severity = "informational"
+
         recent_activity.append({
+            "id": event.id,
             "time": to_ist(event.timestamp),
             "time_display": format_ist(event.timestamp),
             "description": f"{event.rule_title} ({event.computer})",
             "rule_title": event.rule_title,
             "computer": event.computer,
             "channel": event.channel,
+            "event_id": event.event_id,
             "case_id": event.case_id,
+            "case_name": case_names.get(event.case_id),
             "severity": severity,
+            "rank": severity_ranks.get(severity, len(SEVERITY_META)),
+            "color": severity_colors.get(severity, "#6c757d"),
             "icon": severity_icons.get(severity, "bi-dot"),
             "status": severity.capitalize(),
         })
+
+    # One button per severity, counted over the rows actually in the
+    # table so a button never promises results it cannot show.
+    activity_filters = [{
+        "name": "all",
+        "label": "All",
+        "count": len(recent_activity),
+        "color": "#0d6efd",
+        "ink": "#ffffff",
+        "icon": "bi-collection",
+    }]
+
+    # How many exist in total, not just in this window — a severity with
+    # nothing recent can still point at the full explorer.
+    overall = {row["name"]: row["count"] for row in severity_breakdown}
+
+    for name, colour, icon in SEVERITY_META:
+        activity_filters.append({
+            "name": name,
+            "label": name.capitalize(),
+            "count": sum(
+                1
+                for item in recent_activity
+                if item["severity"] == name
+            ),
+            "overall": overall.get(name, 0),
+            "color": colour,
+            "ink": SEVERITY_INK.get(name, "#ffffff"),
+            "icon": icon,
+        })
+
+    # Distinct values for the header dropdowns.
+    activity_hosts = sorted({
+        item["computer"]
+        for item in recent_activity
+        if item["computer"]
+    })
+
+    activity_cases = sorted(
+        {
+            (item["case_id"], item["case_name"] or "Case #%s" % item["case_id"])
+            for item in recent_activity
+            if item["case_id"]
+        },
+        key=lambda row: row[1].lower()
+    )
 
     return render_template(
         "dashboard.html",
@@ -292,4 +376,8 @@ def dashboard():
         top_hosts=_top_hosts(),
 
         recent_activity=recent_activity,
+        activity_filters=activity_filters,
+        activity_hosts=activity_hosts,
+        activity_cases=activity_cases,
+        activity_limit=RECENT_ACTIVITY_LIMIT,
     )
