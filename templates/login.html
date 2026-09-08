@@ -23,13 +23,18 @@ body{
 
     font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
 
-    color:#0f172a;
+    color:#e2e8f0;
 
+    /* Deep console navy with slow aurora glows over it, so the light
+       login card reads as the one lit surface on the page. */
     background:
-    radial-gradient(circle at top left,#1e3a8a 0%,transparent 38%),
-    radial-gradient(circle at bottom right,#38bdf8 0%,transparent 32%),
-    radial-gradient(circle at 60% 20%,#7c3aed 0%,transparent 28%),
-    linear-gradient(135deg,#eef5ff,#dbeafe);
+    radial-gradient(900px 620px at 12% 8%,  rgba(37,99,235,.42) 0%, transparent 62%),
+    radial-gradient(760px 560px at 88% 92%, rgba(6,182,212,.34) 0%, transparent 60%),
+    radial-gradient(700px 520px at 72% 12%, rgba(124,58,237,.36) 0%, transparent 58%),
+    radial-gradient(680px 520px at 30% 95%, rgba(14,116,144,.30) 0%, transparent 60%),
+    linear-gradient(160deg,#070d1b 0%,#0b1428 45%,#0a1120 100%);
+
+    background-attachment:fixed;
 
 }
 
@@ -44,13 +49,65 @@ body::before{
     inset:0;
 
     background-image:
-    linear-gradient(rgba(255,255,255,.25) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(255,255,255,.25) 1px,transparent 1px);
+    linear-gradient(rgba(148,197,255,.10) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(148,197,255,.10) 1px,transparent 1px);
 
-    background-size:40px 40px;
+    background-size:44px 44px;
 
-    opacity:.35;
+    /* Fades out toward the edges so the grid never reads as a border. */
+    mask-image:radial-gradient(circle at 40% 45%,#000 0%,transparent 78%);
+    -webkit-mask-image:radial-gradient(circle at 40% 45%,#000 0%,transparent 78%);
 
+    pointer-events:none;
+
+}
+
+/* A slow drifting sheen, the same idea as the page headers elsewhere. */
+
+body::after{
+
+    content:"";
+
+    position:fixed;
+
+    top:-30%;
+    left:-10%;
+
+    width:70vw;
+    height:70vw;
+
+    border-radius:50%;
+
+    background:radial-gradient(circle,rgba(56,189,248,.13),transparent 62%);
+
+    animation:aurora 16s ease-in-out infinite alternate;
+
+    pointer-events:none;
+
+}
+
+@keyframes aurora{
+
+    from{ transform:translate(0,0) scale(1); }
+    to{   transform:translate(14vw,10vh) scale(1.12); }
+
+}
+
+@media (prefers-reduced-motion:reduce){
+
+    body::after{ animation:none; }
+
+}
+
+/* The network canvas sits above the gradient and grid, below content. */
+
+#netCanvas{
+
+    position:fixed;
+    inset:0;
+    width:100%;
+    height:100%;
+    z-index:1;
     pointer-events:none;
 
 }
@@ -85,12 +142,12 @@ body::before{
     gap:14px;
     font-size:48px;
     font-weight:800;
-    color:#0f172a;
+    color:#f8fafc;
     line-height:1;
 
 }
 
-.logo span{ color:#2563eb; }
+.logo span{ color:#38bdf8; }
 
 .logo-mark{
 
@@ -103,7 +160,7 @@ body::before{
     font-size:31px;
     color:#fff;
     background:linear-gradient(135deg,#1e3a8a,#2563eb 55%,#38bdf8);
-    box-shadow:0 16px 34px -12px rgba(37,99,235,.75);
+    box-shadow:0 16px 34px -12px rgba(56,189,248,.55);
 
 }
 
@@ -111,10 +168,12 @@ body::before{
 
     margin-top:16px;
     font-size:20px;
-    color:#475569;
+    color:#a8b8d0;
     max-width:520px;
 
 }
+
+.tagline b{ color:#e2e8f0; }
 
 .features{
 
@@ -131,17 +190,26 @@ body::before{
     align-items:center;
     gap:14px;
 
-    background:rgba(255,255,255,.68);
+    background:rgba(255,255,255,.055);
     backdrop-filter:blur(10px);
-    border:1px solid rgba(255,255,255,.7);
+    border:1px solid rgba(148,197,255,.14);
 
     padding:14px 18px;
     border-radius:14px;
     font-size:15.5px;
     font-weight:500;
-    color:#1e293b;
+    color:#dbe4f0;
 
-    box-shadow:0 10px 25px rgba(15,23,42,.06);
+    box-shadow:0 10px 25px rgba(0,0,0,.22);
+    transition:background .2s ease, border-color .2s ease, transform .2s ease;
+
+}
+
+.feature:hover{
+
+    background:rgba(255,255,255,.09);
+    border-color:rgba(148,197,255,.28);
+    transform:translateX(3px);
 
 }
 
@@ -183,6 +251,10 @@ body::before{
     padding:42px;
     box-shadow:0 25px 60px rgba(15,23,42,.16);
 
+    /* The card is a light panel on a dark page, so it sets its own
+       dark text rather than inheriting the light body colour. */
+    color:#0f172a;
+
 }
 
 .login-card h2{
@@ -190,13 +262,15 @@ body::before{
     text-align:center;
     font-weight:700;
     font-size:26px;
+    color:#0b1b3a;
+    letter-spacing:-.2px;
 
 }
 
 .subtitle{
 
     text-align:center;
-    color:#64748b;
+    color:#475569;
     font-size:14px;
     margin:6px 0 28px;
 
@@ -208,7 +282,7 @@ body::before{
     font-weight:700;
     letter-spacing:.4px;
     text-transform:uppercase;
-    color:#64748b;
+    color:#475569;
     margin-bottom:6px;
     display:flex;
     align-items:center;
@@ -306,26 +380,6 @@ body::before{
 
 }
 
-.hint{
-
-    background:#eef4ff;
-    border:1px dashed #c7dbff;
-    border-radius:12px;
-    padding:10px 14px;
-    font-size:13px;
-    color:#3b5a8a;
-    text-align:center;
-    margin-bottom:22px;
-
-}
-
-.hint code{
-
-    color:#1e40af;
-    font-weight:700;
-
-}
-
 .login-credit{
 
     margin-top:26px;
@@ -381,6 +435,13 @@ body::before{
 
 <body>
 
+{# The live layer: hosts, the links between them, traffic moving along
+   those links, and a forensic scan sweeping the estate. Purely
+   decorative, so it is hidden from assistive tech and never takes
+   pointer events. If the canvas fails, the CSS gradient and grid
+   underneath still stand on their own. #}
+<canvas id="netCanvas" aria-hidden="true"></canvas>
+
 <div class="wrapper">
 
 
@@ -394,7 +455,7 @@ body::before{
             <i class="bi bi-shield-lock-fill"></i>
         </span>
 
-        <span style="color:#0f172a;">Cyber<span>X</span></span>
+        <span>Cyber<span>X</span></span>
 
     </div>
 
@@ -447,12 +508,6 @@ body::before{
             {{ error }}
         </div>
         {% endif %}
-
-        <div class="hint">
-            <i class="bi bi-info-circle"></i>
-            Default credentials &mdash;
-            <code>analyst</code> / <code>analyst123</code>
-        </div>
 
         <form method="POST">
 
@@ -550,6 +605,268 @@ body::before{
 
 
 </div>
+
+
+<script>
+/* ============================================================
+   Background: a network of hosts, the links between them, the
+   traffic crossing those links, and a scan sweeping down the
+   estate. Sized to the viewport, paused when the tab is hidden,
+   and reduced to a single still frame when the visitor has asked
+   for less motion.
+   ============================================================ */
+(function () {
+
+    var canvas = document.getElementById("netCanvas");
+
+    if (!canvas || !canvas.getContext) { return; }
+
+    var ctx = canvas.getContext("2d");
+
+    if (!ctx) { return; }
+
+    var still = window.matchMedia
+        && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    var LINK_DISTANCE = 165;
+    var nodes = [];
+    var packets = [];
+    var width = 0;
+    var height = 0;
+    var sweep = 0;
+    var frame = null;
+
+
+    function resize() {
+
+        // Capped so a 4K display does not quadruple the fill cost.
+        var dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+        width = canvas.clientWidth;
+        height = canvas.clientHeight;
+
+        canvas.width = Math.floor(width * dpr);
+        canvas.height = Math.floor(height * dpr);
+
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        build();
+
+    }
+
+
+    function build() {
+
+        // One host per ~26k px², so the density holds on any screen.
+        var count = Math.max(
+            18,
+            Math.min(Math.round((width * height) / 26000), 80)
+        );
+
+        nodes = [];
+
+        for (var i = 0; i < count; i++) {
+            nodes.push({
+                x: Math.random() * width,
+                y: Math.random() * height,
+                vx: (Math.random() - 0.5) * 0.22,
+                vy: (Math.random() - 0.5) * 0.22,
+                r: Math.random() * 1.6 + 1.1,
+                // A few hosts pulse, standing out as the busy ones.
+                pulse: Math.random() < 0.18 ? Math.random() * Math.PI * 2 : null
+            });
+        }
+
+        packets = [];
+
+    }
+
+
+    function step() {
+
+        nodes.forEach(function (node) {
+
+            node.x += node.vx;
+            node.y += node.vy;
+
+            // Bounce rather than wrap, so nothing pops across the view.
+            if (node.x <= 0 || node.x >= width) { node.vx *= -1; }
+            if (node.y <= 0 || node.y >= height) { node.vy *= -1; }
+
+            if (node.pulse !== null) { node.pulse += 0.045; }
+
+        });
+
+        // Traffic: a new packet now and then, retired on arrival.
+        if (packets.length < 14 && Math.random() < 0.05) {
+
+            var a = Math.floor(Math.random() * nodes.length);
+            var b = Math.floor(Math.random() * nodes.length);
+
+            if (a !== b) {
+                packets.push({ a: a, b: b, t: 0, speed: 0.004 + Math.random() * 0.006 });
+            }
+
+        }
+
+        packets = packets.filter(function (packet) {
+            packet.t += packet.speed;
+            return packet.t < 1;
+        });
+
+        sweep += 0.0016;
+
+        if (sweep > 1.25) { sweep = -0.25; }
+
+    }
+
+
+    function draw() {
+
+        ctx.clearRect(0, 0, width, height);
+
+        // ---- links between nearby hosts ----
+        for (var i = 0; i < nodes.length; i++) {
+
+            for (var j = i + 1; j < nodes.length; j++) {
+
+                var dx = nodes[i].x - nodes[j].x;
+                var dy = nodes[i].y - nodes[j].y;
+                var dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist > LINK_DISTANCE) { continue; }
+
+                // Closer hosts are linked more strongly.
+                var alpha = (1 - dist / LINK_DISTANCE) * 0.34;
+
+                ctx.strokeStyle = "rgba(86,178,238," + alpha.toFixed(3) + ")";
+                ctx.lineWidth = 1;
+
+                ctx.beginPath();
+                ctx.moveTo(nodes[i].x, nodes[i].y);
+                ctx.lineTo(nodes[j].x, nodes[j].y);
+                ctx.stroke();
+
+            }
+
+        }
+
+        // ---- packets in flight ----
+        packets.forEach(function (packet) {
+
+            var from = nodes[packet.a];
+            var to = nodes[packet.b];
+
+            if (!from || !to) { return; }
+
+            var x = from.x + (to.x - from.x) * packet.t;
+            var y = from.y + (to.y - from.y) * packet.t;
+
+            // Fade in and out rather than appearing at full strength.
+            var fade = Math.sin(packet.t * Math.PI);
+
+            ctx.fillStyle = "rgba(125,232,255," + (fade * 0.9).toFixed(3) + ")";
+            ctx.beginPath();
+            ctx.arc(x, y, 2.1, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.strokeStyle = "rgba(125,232,255," + (fade * 0.3).toFixed(3) + ")";
+            ctx.lineWidth = 1.4;
+            ctx.beginPath();
+            ctx.moveTo(x - (to.x - from.x) * 0.03, y - (to.y - from.y) * 0.03);
+            ctx.lineTo(x, y);
+            ctx.stroke();
+
+        });
+
+        // ---- hosts ----
+        nodes.forEach(function (node) {
+
+            var radius = node.r;
+            var alpha = 0.62;
+
+            if (node.pulse !== null) {
+                var beat = (Math.sin(node.pulse) + 1) / 2;
+                radius = node.r + beat * 1.9;
+                alpha = 0.45 + beat * 0.45;
+
+                ctx.fillStyle = "rgba(56,189,248," + (beat * 0.13).toFixed(3) + ")";
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, radius * 3.4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            ctx.fillStyle = "rgba(147,215,255," + alpha.toFixed(3) + ")";
+            ctx.beginPath();
+            ctx.arc(node.x, node.y, radius, 0, Math.PI * 2);
+            ctx.fill();
+
+        });
+
+        // ---- scan sweep ----
+        var band = height * 0.22;
+        var y0 = sweep * height;
+
+        var gradient = ctx.createLinearGradient(0, y0 - band, 0, y0 + band);
+        gradient.addColorStop(0, "rgba(56,189,248,0)");
+        gradient.addColorStop(0.5, "rgba(56,189,248,.055)");
+        gradient.addColorStop(1, "rgba(56,189,248,0)");
+
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, y0 - band, width, band * 2);
+
+        ctx.strokeStyle = "rgba(125,232,255,.16)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(0, y0);
+        ctx.lineTo(width, y0);
+        ctx.stroke();
+
+    }
+
+
+    function loop() {
+        step();
+        draw();
+        frame = window.requestAnimationFrame(loop);
+    }
+
+
+    function start() {
+        if (frame === null && !still) { frame = window.requestAnimationFrame(loop); }
+    }
+
+    function stop() {
+        if (frame !== null) { window.cancelAnimationFrame(frame); frame = null; }
+    }
+
+
+    resize();
+
+    // Debounced: a drag-resize would otherwise rebuild on every pixel.
+    var resizeTimer = null;
+
+    window.addEventListener("resize", function () {
+        window.clearTimeout(resizeTimer);
+        resizeTimer = window.setTimeout(function () {
+            resize();
+            if (still) { draw(); }
+        }, 180);
+    });
+
+    // Nothing to animate behind a hidden tab.
+    document.addEventListener("visibilitychange", function () {
+        if (document.hidden) { stop(); } else { start(); }
+    });
+
+    if (still) {
+        draw();
+    } else {
+        start();
+    }
+
+})();
+</script>
 
 
 <script>
