@@ -1,5 +1,3 @@
-from datetime import timedelta
-
 from flask import Blueprint, render_template
 from sqlalchemy import func
 
@@ -9,7 +7,8 @@ from models.case import Case
 from models.evidence import Evidence
 from models.event import Event
 
-from utils.timezone import format_ist, ist_day_start_as_utc, now_ist, to_ist
+from utils import case_stats
+from utils.timezone import format_ist, to_ist
 
 dashboard_bp = Blueprint("dashboard", __name__)
 
@@ -33,8 +32,6 @@ SEVERITY_INK = {
     "informational": "#ffffff",
 }
 
-ACTIVITY_DAYS = 14
-
 # Rows in the recent-activity table. Filtering and sorting happen in the
 # browser, so this is the whole working set — big enough to be worth
 # slicing, small enough to ship in one page.
@@ -42,13 +39,16 @@ RECENT_ACTIVITY_LIMIT = 60
 
 # Shortcuts shown on each recent-case card. Every analysis route is
 # case-scoped (/<tool>/<case_id>), so these are built per case.
+#
+# Reports is deliberately absent: its blueprint is not registered, so
+# the link only ever produced a 404.
 CASE_TOOLS = [
     ("Analysis",  "analysis",  "bi-graph-up-arrow"),
     ("Timeline",  "timeline",  "bi-clock-history"),
     ("Events",    "events",    "bi-list-ul"),
     ("Evidence",  "evidence",  "bi-hdd-fill"),
     ("Incidents", "incidents", "bi-shield-exclamation"),
-    ("Reports",   "reports",   "bi-file-earmark-text"),
+    ("Memory",    "memory",    "bi-memory"),
 ]
 
 
@@ -88,33 +88,120 @@ def _severity_breakdown():
     return breakdown
 
 
-def _activity_series():
-    """Event counts per IST calendar day for the last ACTIVITY_DAYS days."""
-    today = now_ist().date()
-    start = today - timedelta(days=ACTIVITY_DAYS - 1)
+def _hourly_profile():
+    """Events per hour of the IST day, pooled across the whole dataset.
 
-    # The column holds naive UTC, so the lower bound is IST midnight in UTC terms.
+    Anchored to time-of-day rather than to a calendar window, so it says
+    something ("this estate is busy at 03:00") no matter how old the
+    evidence is.
+    """
+
     rows = (
         db.session.query(Event.timestamp)
         .filter(Event.timestamp.isnot(None))
-        .filter(Event.timestamp >= ist_day_start_as_utc(start))
         .all()
     )
 
-    buckets = {start + timedelta(days=offset): 0 for offset in range(ACTIVITY_DAYS)}
+    buckets = [0] * 24
 
     for (timestamp,) in rows:
-        day = to_ist(timestamp).date()
-        if day in buckets:
-            buckets[day] += 1
+        buckets[to_ist(timestamp).hour] += 1
 
-    days = sorted(buckets)
+    total = sum(buckets)
+    peak = max(buckets) if buckets else 0
+
+    # Outside 07:00-19:00 is worth calling out on its own.
+    off_hours = sum(buckets[:7]) + sum(buckets[19:])
 
     return {
-        "labels": [day.strftime("%d %b") for day in days],
-        "values": [buckets[day] for day in days],
-        "total": sum(buckets.values()),
+        "labels": ["%02d" % hour for hour in range(24)],
+        "counts": buckets,
+        "total": total,
+        "peak": peak,
+        "peak_hour": "%02d:00" % buckets.index(peak) if peak else None,
+        "off_hours": off_hours,
+        "off_share": round(off_hours / total * 100) if total else 0,
     }
+
+
+def _events_per_case():
+    """Event counts per case, in the palette each case wears elsewhere."""
+
+    counts = dict(
+        db.session.query(Event.case_id, func.count(Event.id))
+        .group_by(Event.case_id)
+        .all()
+    )
+
+    chips = case_stats.case_chips()
+
+    rows = [
+        {
+            "id": case_id,
+            "name": chip["name"],
+            "color": chip["color"],
+            "count": counts.get(case_id, 0),
+        }
+        for case_id, chip in chips.items()
+        if counts.get(case_id, 0)
+    ]
+
+    return sorted(rows, key=lambda row: row["count"], reverse=True)
+
+
+def _top_channels(limit=6):
+    """Busiest log sources — where the events are actually coming from."""
+
+    rows = (
+        db.session.query(Event.channel, func.count(Event.id))
+        .filter(Event.channel.isnot(None))
+        .group_by(Event.channel)
+        .order_by(func.count(Event.id).desc())
+        .limit(limit)
+        .all()
+    )
+
+    if not rows:
+        return []
+
+    top = rows[0][1] or 1
+
+    return [
+        {
+            "label": channel,
+            "count": hits,
+            "percent": round(hits / top * 100),
+        }
+        for channel, hits in rows
+    ]
+
+
+def _evidence_mix():
+    """Artifact types held, with the storage each accounts for."""
+
+    rows = (
+        db.session.query(
+            Evidence.artifact_type,
+            func.count(Evidence.id),
+            func.sum(Evidence.filesize),
+        )
+        .group_by(Evidence.artifact_type)
+        .order_by(func.count(Evidence.id).desc())
+        .all()
+    )
+
+    # A fixed slot per type, so a type keeps its colour between reloads.
+    palette = ["#2a78d6", "#7c3aed", "#0d9488", "#eb6834", "#db2777", "#12a150"]
+
+    return [
+        {
+            "label": artifact or "Unclassified",
+            "count": hits,
+            "size": case_stats.human_size(total or 0),
+            "color": palette[index % len(palette)],
+        }
+        for index, (artifact, hits, total) in enumerate(rows)
+    ]
 
 
 def _recent_cases(limit=4):
@@ -249,7 +336,26 @@ def dashboard():
     closed_cases = total_cases - open_cases
 
     severity_breakdown = _severity_breakdown()
-    activity = _activity_series()
+
+    hourly = _hourly_profile()
+    events_per_case = _events_per_case()
+    top_channels = _top_channels()
+    evidence_mix = _evidence_mix()
+
+    # How much calendar the parsed events actually cover.
+    span = (
+        db.session.query(
+            func.min(Event.timestamp),
+            func.max(Event.timestamp)
+        )
+        .filter(Event.timestamp.isnot(None))
+        .first()
+    )
+
+    coverage_days = (
+        (to_ist(span[1]).date() - to_ist(span[0]).date()).days + 1
+        if span and span[0] and span[1] else 0
+    )
 
     # Latest activity feed
     recent_events = (
@@ -364,10 +470,11 @@ def dashboard():
 
         severity_breakdown=severity_breakdown,
 
-        activity_labels=activity["labels"],
-        activity_values=activity["values"],
-        activity_total=activity["total"],
-        activity_days=ACTIVITY_DAYS,
+        hourly=hourly,
+        events_per_case=events_per_case,
+        top_channels=top_channels,
+        evidence_mix=evidence_mix,
+        coverage_days=coverage_days,
 
         recent_cases=_recent_cases(),
         case_tools=CASE_TOOLS,

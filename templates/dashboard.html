@@ -317,15 +317,27 @@ body{
     display:flex;
     align-items:center;
     justify-content:space-between;
-    padding:9px 10px;
+    gap:8px;
+    padding:8px 10px;
     border-radius:10px;
-    transition:background .18s ease;
+    color:inherit;
+    text-decoration:none;
+    transition:background .18s ease, transform .18s ease;
 
 }
 
 .sev-row:hover{
 
     background:#f6f9fe;
+    color:inherit;
+    transform:translateX(2px);
+
+}
+
+.sev-row strong{
+
+    font-variant-numeric:tabular-nums;
+    white-space:nowrap;
 
 }
 
@@ -548,6 +560,88 @@ body{
 .filter-chip.empty{
 
     opacity:.45;
+
+}
+
+
+/* ---------- Activity card ----------
+
+   Capped to the height of the cards above it, so the feed no longer
+   runs to the bottom of the page. The chips and column filters stay
+   put; only the rows scroll. */
+
+.activity-card{
+
+    height:520px;
+    display:flex;
+    flex-direction:column;
+
+}
+
+.activity-card > .card-body{
+
+    flex:1;
+    min-height:0;
+    display:flex;
+    flex-direction:column;
+    padding-top:0;
+
+}
+
+.activity-scroll{
+
+    flex:1;
+    min-height:0;
+    overflow:auto;
+
+}
+
+/* The header has two rows, and both must stay visible while scrolling. */
+
+.activity-scroll thead th{
+
+    position:sticky;
+    z-index:3;
+
+}
+
+.activity-scroll thead tr:first-child th{ top:0; }
+
+.activity-scroll thead tr.filter-row th{ top:41px; }
+
+.activity-scroll::-webkit-scrollbar{ width:9px; height:9px; }
+
+.activity-scroll::-webkit-scrollbar-thumb{
+
+    background:#d7dee8;
+    border-radius:20px;
+
+}
+
+.activity-scroll::-webkit-scrollbar-thumb:hover{ background:#b9c4d2; }
+
+
+/* ---------- Card header stats ---------- */
+
+.head-stat{
+
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    padding:3px 10px;
+    border-radius:999px;
+    background:#eef2f7;
+    color:#42505f;
+    font-size:12px;
+    font-weight:700;
+    font-variant-numeric:tabular-nums;
+
+}
+
+.head-stat.off{
+
+    background:#ece9fb;
+    color:#4c1d95;
 
 }
 
@@ -797,8 +891,13 @@ body{
             </div>
 
             <div class="stat-foot">
-                <i class="bi bi-activity"></i>
-                {{ activity_total }} in last {{ activity_days }} days
+                <i class="bi bi-calendar-range"></i>
+                {% if coverage_days %}
+                    Spanning {{ "{:,}".format(coverage_days) }}
+                    day{{ '' if coverage_days == 1 else 's' }}
+                {% else %}
+                    No timestamped events yet
+                {% endif %}
             </div>
 
         </div>
@@ -839,47 +938,7 @@ body{
 
 <div class="row g-4 mb-4">
 
-    <div class="col-lg-7">
-
-        <div class="card h-100 card-hover" style="--head:#0d6efd;">
-
-            <div class="card-header d-flex justify-content-between align-items-center">
-
-                <span>
-                    <i class="bi bi-graph-up-arrow text-primary"></i>
-                    Detection Activity
-                </span>
-
-                <span class="badge bg-primary-subtle text-primary-emphasis">
-                    Last {{ activity_days }} days
-                </span>
-
-            </div>
-
-            <div class="card-body">
-
-                {% if activity_total %}
-
-                    <div class="chart-wrap">
-                        <canvas id="activityChart"></canvas>
-                    </div>
-
-                {% else %}
-
-                    <div class="empty-state">
-                        <i class="bi bi-graph-up"></i>
-                        No events recorded in the last {{ activity_days }} days.
-                    </div>
-
-                {% endif %}
-
-            </div>
-
-        </div>
-
-    </div>
-
-    <div class="col-lg-5">
+    <div class="col-xl-4">
 
         <div class="card h-100 card-hover" style="--head:#7c3aed;">
 
@@ -902,16 +961,18 @@ body{
 
                             {% for sev in severity_breakdown %}
 
-                                <div class="sev-row">
+                                <a class="sev-row"
+                                   href="/analysis/events/?severity={{ sev.name }}"
+                                   title="Open the explorer filtered to {{ sev.label|lower }}">
 
                                     <span class="text-truncate">
                                         <span class="sev-dot" style="background:{{ sev.color }}"></span>
                                         {{ sev.label }}
                                     </span>
 
-                                    <strong>{{ sev.count }}</strong>
+                                    <strong>{{ "{:,}".format(sev.count) }}</strong>
 
-                                </div>
+                                </a>
 
                             {% endfor %}
 
@@ -924,6 +985,254 @@ body{
                     <div class="empty-state">
                         <i class="bi bi-pie-chart"></i>
                         No events parsed yet.
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ---------- Events per case ---------- -->
+
+    <div class="col-xl-4">
+
+        <div class="card h-100 card-hover" style="--head:#2a78d6;">
+
+            <div class="card-header">
+                <i class="bi bi-diagram-3-fill" style="color:#2a78d6"></i>
+                Events by Case
+            </div>
+
+            <div class="card-body">
+
+                {% if events_per_case %}
+
+                    <div class="row align-items-center g-3">
+
+                        <div class="col-5">
+                            <canvas id="casesChart"></canvas>
+                        </div>
+
+                        <div class="col-7">
+
+                            {% for row in events_per_case %}
+
+                                <a class="sev-row"
+                                   href="/analysis/dashboard/{{ row.id }}"
+                                   title="Open {{ row.name }}">
+
+                                    <span class="text-truncate">
+                                        <span class="sev-dot" style="background:{{ row.color }}"></span>
+                                        {{ row.name }}
+                                    </span>
+
+                                    <strong>{{ "{:,}".format(row.count) }}</strong>
+
+                                </a>
+
+                            {% endfor %}
+
+                        </div>
+
+                    </div>
+
+                {% else %}
+
+                    <div class="empty-state">
+                        <i class="bi bi-diagram-3"></i>
+                        No events parsed yet.
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ---------- Evidence mix ---------- -->
+
+    <div class="col-xl-4">
+
+        <div class="card h-100 card-hover" style="--head:#0d9488;">
+
+            <div class="card-header">
+                <i class="bi bi-hdd-stack-fill" style="color:#0d9488"></i>
+                Evidence Mix
+            </div>
+
+            <div class="card-body">
+
+                {% if evidence_mix %}
+
+                    <div class="row align-items-center g-3">
+
+                        <div class="col-5">
+                            <canvas id="evidenceChart"></canvas>
+                        </div>
+
+                        <div class="col-7">
+
+                            {% for row in evidence_mix %}
+
+                                <a class="sev-row"
+                                   href="/analysis/evidence/"
+                                   title="{{ row.count }} × {{ row.label }}, {{ row.size }}">
+
+                                    <span class="text-truncate">
+                                        <span class="sev-dot" style="background:{{ row.color }}"></span>
+                                        {{ row.label }}
+                                    </span>
+
+                                    <span class="text-end">
+                                        <strong>{{ row.count }}</strong>
+                                        <small class="text-muted d-block">{{ row.size }}</small>
+                                    </span>
+
+                                </a>
+
+                            {% endfor %}
+
+                        </div>
+
+                    </div>
+
+                {% else %}
+
+                    <div class="empty-state">
+                        <i class="bi bi-hdd"></i>
+                        No evidence uploaded yet.
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ============ WHEN + WHERE ============ -->
+
+<div class="row g-4 mb-4">
+
+    <!-- ---------- Hour-of-day profile ---------- -->
+
+    <div class="col-xl-8">
+
+        <div class="card h-100 card-hover" style="--head:#e8590c;">
+
+            <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+
+                <span>
+                    <i class="bi bi-clock-fill" style="color:#e8590c"></i>
+                    Activity by Hour of Day
+                </span>
+
+                {% if hourly.total %}
+                <span class="d-flex gap-2">
+                    <span class="head-stat" title="Busiest hour">
+                        <i class="bi bi-fire"></i>
+                        {{ hourly.peak_hour }}
+                    </span>
+                    <span class="head-stat off"
+                          title="Events outside 07:00-19:00">
+                        <i class="bi bi-moon-stars-fill"></i>
+                        {{ hourly.off_share }}% off-hours
+                    </span>
+                </span>
+                {% endif %}
+
+            </div>
+
+            <div class="card-body">
+
+                {% if hourly.total %}
+
+                    <div class="chart-wrap" style="height:230px;">
+                        <canvas id="hourChart"></canvas>
+                    </div>
+
+                    <small class="text-muted d-block mt-2">
+                        All {{ "{:,}".format(hourly.total) }} timestamped events,
+                        bucketed by IST hour. Bars outside working hours are
+                        shaded darker.
+                    </small>
+
+                {% else %}
+
+                    <div class="empty-state">
+                        <i class="bi bi-clock"></i>
+                        No timestamped events yet.
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ---------- Log sources ---------- -->
+
+    <div class="col-xl-4">
+
+        <div class="card h-100 card-hover" style="--head:#0ea5e9;">
+
+            <div class="card-header">
+                <i class="bi bi-diagram-2-fill" style="color:#0ea5e9"></i>
+                Top Log Sources
+            </div>
+
+            <div class="card-body">
+
+                {% if top_channels %}
+
+                    {% for channel in top_channels %}
+
+                        <a class="rank-item d-block text-decoration-none"
+                           href="/analysis/events/?channel={{ channel.label|urlencode }}"
+                           title="Open the explorer for this channel">
+
+                            <div class="rank-head">
+
+                                <span class="rank-title">
+                                    <i class="bi bi-journal-text text-muted"></i>
+                                    {{ channel.label }}
+                                </span>
+
+                                <strong class="flex-shrink-0">
+                                    {{ "{:,}".format(channel.count) }}
+                                </strong>
+
+                            </div>
+
+                            <div class="rank-track">
+                                <div class="rank-fill"
+                                     data-width="{{ channel.percent }}"
+                                     style="background:linear-gradient(90deg,#0ea5e9,#7dd3fc)"></div>
+                            </div>
+
+                        </a>
+
+                    {% endfor %}
+
+                {% else %}
+
+                    <div class="empty-state">
+                        <i class="bi bi-diagram-2"></i>
+                        No log sources yet.
                     </div>
 
                 {% endif %}
@@ -1068,7 +1377,7 @@ body{
 
 <div class="row g-4 mb-4">
 
-    <div class="col-lg-7">
+    <div class="col-xl-6">
 
         <div class="card h-100 card-hover" style="--head:#dc3545;">
 
@@ -1132,7 +1441,7 @@ body{
 
     </div>
 
-    <div class="col-lg-5">
+    <div class="col-xl-6">
 
         <div class="card h-100 card-hover" style="--head:#0d9488;">
 
@@ -1190,7 +1499,7 @@ body{
 
 <!-- ============ RECENT ACTIVITY ============ -->
 
-<div class="card card-hover" style="--head:#e8590c;">
+<div class="card card-hover activity-card" style="--head:#e8590c;">
 
     <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
 
@@ -1260,7 +1569,7 @@ body{
 
     <div class="card-body">
 
-        <div class="table-responsive">
+        <div class="table-responsive activity-scroll">
 
             <table class="table table-hover align-middle mb-0 activity-table"
                    id="activityTable">
@@ -1824,75 +2133,177 @@ body{
 
     // ---------- Charts ----------
 
-    const activityCanvas = document.getElementById('activityChart');
+    const nf = new Intl.NumberFormat();
 
-    if (activityCanvas && window.Chart) {
+    // Shared hover layer, so every chart on the page behaves alike.
+    const tooltipLook = {
+        backgroundColor: '#1b2537',
+        padding: 10,
+        cornerRadius: 8,
+        displayColors: false
+    };
 
-        const ctx = activityCanvas.getContext('2d');
 
-        // Vertical fade under the line.
-        const fill = ctx.createLinearGradient(0, 0, 0, 240);
-        fill.addColorStop(0, 'rgba(13,110,253,.35)');
-        fill.addColorStop(1, 'rgba(13,110,253,0)');
+    // ---------- Activity by hour of day ----------
 
-        new Chart(ctx, {
+    const hourCanvas = document.getElementById('hourChart');
 
-            type: 'line',
+    if (hourCanvas && window.Chart) {
+
+        const hours = {{ hourly.counts | tojson }};
+
+        // Off-hours bars are darker, so "when" reads without the axis.
+        const colours = hours.map((value, hour) =>
+            (hour < 7 || hour >= 19) ? '#7c2d12' : '#f97316');
+
+        new Chart(hourCanvas.getContext('2d'), {
+
+            type: 'bar',
 
             data: {
-
-                labels: {{ activity_labels | tojson }},
-
+                labels: {{ hourly.labels | tojson }},
                 datasets: [{
                     label: 'Events',
-                    data: {{ activity_values | tojson }},
-                    borderColor: '#0d6efd',
-                    backgroundColor: fill,
-                    borderWidth: 2.5,
-                    fill: true,
-                    tension: .35,
-                    pointRadius: 3,
-                    pointHoverRadius: 6,
-                    pointBackgroundColor: '#fff',
-                    pointBorderColor: '#0d6efd',
-                    pointBorderWidth: 2
+                    data: hours,
+                    backgroundColor: colours,
+                    hoverBackgroundColor: colours.map(c => c + 'cc'),
+                    borderRadius: 4,
+                    borderSkipped: false
                 }]
-
             },
 
             options: {
-
                 responsive: true,
                 maintainAspectRatio: false,
-
-                interaction: { mode: 'index', intersect: false },
-
                 plugins: {
                     legend: { display: false },
-                    tooltip: {
-                        backgroundColor: '#1b2537',
-                        padding: 10,
-                        cornerRadius: 8,
-                        displayColors: false
-                    }
+                    tooltip: Object.assign({}, tooltipLook, {
+                        callbacks: {
+                            title: (items) => items[0].label + ':00 - '
+                                + items[0].label + ':59 IST',
+                            label: (item) => nf.format(item.parsed.y) + ' events'
+                        }
+                    })
                 },
-
                 scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { autoSkip: false, maxRotation: 0, font: { size: 10 } }
+                    },
                     y: {
                         beginAtZero: true,
-                        ticks: { precision: 0 },
-                        grid: { color: '#eef1f5' }
-                    },
-                    x: {
-                        grid: { display: false }
+                        grid: { color: '#eef1f5' },
+                        ticks: {
+                            precision: 0,
+                            callback: (value) => nf.format(value)
+                        }
                     }
                 }
-
             }
 
         });
 
     }
+
+
+    // ---------- Events by case ----------
+
+    const casesCanvas = document.getElementById('casesChart');
+
+    if (casesCanvas && window.Chart) {
+
+        const rows = {{ events_per_case | tojson }};
+
+        new Chart(casesCanvas.getContext('2d'), {
+
+            type: 'doughnut',
+
+            data: {
+                labels: rows.map(r => r.name),
+                datasets: [{
+                    data: rows.map(r => r.count),
+                    backgroundColor: rows.map(r => r.color),
+                    borderWidth: 2,
+                    borderColor: '#fff',
+                    hoverOffset: 8
+                }]
+            },
+
+            options: {
+                responsive: true,
+                cutout: '62%',
+                onClick: (event, elements) => {
+                    if (!elements.length) { return; }
+                    window.location.href =
+                        '/analysis/dashboard/' + rows[elements[0].index].id;
+                },
+                onHover: (event, elements) => {
+                    event.native.target.style.cursor =
+                        elements.length ? 'pointer' : 'default';
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: Object.assign({}, tooltipLook, {
+                        callbacks: {
+                            label: (item) => {
+                                const total = item.dataset.data
+                                    .reduce((sum, v) => sum + v, 0);
+                                const share = total
+                                    ? Math.round(item.parsed / total * 100) : 0;
+                                return nf.format(item.parsed)
+                                    + ' events (' + share + '%)';
+                            }
+                        }
+                    })
+                }
+            }
+
+        });
+
+    }
+
+
+    // ---------- Evidence mix ----------
+
+    const evidenceCanvas = document.getElementById('evidenceChart');
+
+    if (evidenceCanvas && window.Chart) {
+
+        const mix = {{ evidence_mix | tojson }};
+
+        new Chart(evidenceCanvas.getContext('2d'), {
+
+            type: 'doughnut',
+
+            data: {
+                labels: mix.map(r => r.label),
+                datasets: [{
+                    data: mix.map(r => r.count),
+                    backgroundColor: mix.map(r => r.color),
+                    borderWidth: 2,
+                    borderColor: '#fff',
+                    hoverOffset: 8
+                }]
+            },
+
+            options: {
+                responsive: true,
+                cutout: '62%',
+                plugins: {
+                    legend: { display: false },
+                    tooltip: Object.assign({}, tooltipLook, {
+                        callbacks: {
+                            label: (item) => nf.format(item.parsed) + ' files - '
+                                + mix[item.dataIndex].size
+                        }
+                    })
+                }
+            }
+
+        });
+
+    }
+
 
     const severityCanvas = document.getElementById('severityChart');
 
