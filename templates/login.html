@@ -326,22 +326,41 @@ body::before{
 
 }
 
-.version{
+.login-credit{
 
     margin-top:26px;
+    padding-top:20px;
+    border-top:1px solid #e6ecf5;
+    text-align:center;
+
+}
+
+.login-credit img{
+
+    height:70px;
+    width:auto;
+    max-width:min(340px, 70vw);
+    object-fit:contain;
+    opacity:.9;
+
+}
+
+.version{
+
+    margin-top:8px;
     text-align:center;
     color:#2563eb;
-    font-weight:600;
-    font-size:13px;
+    font-weight:700;
+    font-size:13.5px;
 
 }
 
 .footer{
 
-    margin-top:8px;
+    margin-top:4px;
     text-align:center;
     color:#94a3b8;
-    font-size:13px;
+    font-size:12px;
 
 }
 
@@ -505,12 +524,24 @@ body::before{
 
         </form>
 
-        <div class="version">
-            CyberX DFIR Framework v2.0 (Beta)
-        </div>
+        {# Same credit block the rest of the product carries, at the
+           bottom of the only page that does not extend base.html. #}
+        <div class="login-credit">
 
-        <div class="footer">
-            Made with <i class="bi bi-heart-fill text-danger"></i> in India
+            <img src="{{ url_for('static', filename='logo-footer.png') }}"
+                 alt="CyberX"
+                 width="432"
+                 height="240"
+                 decoding="async">
+
+            <div class="version">
+                CyberX DFIR Framework
+            </div>
+
+            <div class="footer">
+                Made with <i class="bi bi-heart-fill text-danger"></i> in India
+            </div>
+
         </div>
 
     </div>

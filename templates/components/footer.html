@@ -1,0 +1,97 @@
+{# Credit footer, centred at the bottom of every page.
+
+   Uses logo-footer.png, a 432px-wide copy of static/logo.png. The
+   original is 6199px and 4MB, which is far too heavy to ship on every
+   page; it is left in place untouched. The copy is cut at twice its
+   display height so it stays sharp on high-density screens, and it
+   loads lazily since it sits below the fold everywhere. #}
+
+<footer class="cx-footer">
+
+    <a href="/dashboard" class="cx-footer-logo" aria-label="CyberX DFIR home">
+        <img src="{{ url_for('static', filename='logo-footer.png') }}"
+             alt="CyberX"
+             width="432"
+             height="240"
+             loading="lazy"
+             decoding="async">
+    </a>
+
+    <div class="cx-footer-title">
+        CyberX DFIR Framework
+    </div>
+
+    <div class="cx-footer-note">
+        Digital Forensics &amp; Incident Response &bull;
+        Made with <i class="bi bi-heart-fill"></i> in India
+    </div>
+
+</footer>
+
+
+<style>
+
+.cx-footer{
+
+    margin-top:8px;
+    padding:26px 20px 30px;
+    text-align:center;
+    border-top:1px solid rgba(16,32,64,.08);
+    background:rgba(255,255,255,.55);
+
+}
+
+.cx-footer-logo{
+
+    display:inline-block;
+    line-height:0;
+    opacity:.9;
+    transition:opacity .2s ease, transform .2s ease;
+
+}
+
+.cx-footer-logo:hover{
+
+    opacity:1;
+    transform:translateY(-1px);
+
+}
+
+/* Height-constrained: the source asset is very wide, so a fixed
+   height keeps it proportionate at any viewport size. Half the
+   asset's own height, so it renders sharp on 2x displays. */
+
+.cx-footer-logo img{
+
+    height:78px;
+    width:auto;
+    max-width:min(420px, 80vw);
+    object-fit:contain;
+
+}
+
+.cx-footer-title{
+
+    margin-top:10px;
+    font-size:14px;
+    font-weight:700;
+    color:#334155;
+
+}
+
+.cx-footer-note{
+
+    margin-top:4px;
+    font-size:12px;
+    color:#94a3b8;
+
+}
+
+.cx-footer-note .bi-heart-fill{
+
+    color:#e11d48;
+    font-size:10px;
+
+}
+
+</style>
